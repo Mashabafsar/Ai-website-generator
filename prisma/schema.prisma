@@ -1,0 +1,205 @@
+// Agency Partner Interactive — AI Website Builder
+// SQLite + Prisma. SQLite has no native enums, so enum-like fields are stored
+// as strings; allowed values live in TypeScript constants (see lib/constants).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth models
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions     Session[]
+  accounts     Account[]
+  project      Project?
+  wallet       CreditWallet?
+  ledger       CreditLedger[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// Website builder domain models
+// ---------------------------------------------------------------------------
+
+// One project per user is enforced by the unique constraint on userId.
+model Project {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  businessName String
+  slug         String
+  status       String   @default("DRAFT") // ProjectStatus
+
+  // Structured data stored as JSON strings.
+  blueprint      String? // WebsiteBlueprint JSON
+  assembledPages String? // Assembled ShadCN page tree JSON
+  theme          String? // Theme tokens JSON
+
+  // GitHub (always synced after generation, regardless of payment)
+  githubRepoUrl    String?
+  githubCommitSha  String?
+  githubSyncStatus String  @default("PENDING") // PENDING | SYNCED | FAILED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questionnaire Questionnaire?
+  quote         Quote?
+  payments      Payment[]
+  deployment    Deployment?
+
+  @@index([userId])
+}
+
+model Questionnaire {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  answers   String   // JSON of questionnaire answers
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Quote {
+  id           String   @id @default(cuid())
+  projectId    String   @unique
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  packageType  String   // PackageType
+  oneTimeTotal Int
+  monthlyTotal Int      @default(0)
+  currency     String   @default("USD")
+  lineItems    String   // JSON array of line items
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  projectId             String
+  project               Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  type                  String   // website_package | credit_pack
+  packageType           String?  // PackageType (for website_package)
+  status                String   @default("PENDING") // PaymentStatus
+  amount                Int      @default(0)
+  currency              String   @default("USD")
+
+  stripeSessionId       String?  @unique
+  stripePaymentIntentId String?
+  stripeSubscriptionId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model Deployment {
+  id         String   @id @default(cuid())
+  projectId  String   @unique
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  status     String   @default("PENDING") // DeploymentStatus
+  subdomain  String?
+  liveUrl    String?
+  provider   String   @default("vercel")
+  logs       String?  // JSON array of status log entries
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Credit / token system
+// ---------------------------------------------------------------------------
+
+model CreditWallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CreditLedger {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount         Int      // positive = grant, negative = spend
+  balanceAfter   Int
+  reason         String   // CreditLedgerReason
+  projectId      String?
+  stripePaymentId String?
+  idempotencyKey String   @unique
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
