@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Github, Pencil } from "lucide-react";
+import { Github, Pencil, Repeat } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
 import { ProjectStatus } from "@/lib/constants";
@@ -39,6 +39,13 @@ export default async function PreviewPage({
           <StatusBadge status={project.status} />
         </div>
         <div className="flex items-center gap-2">
+          {/* Not happy with the look? The library can rebuild this site on any
+              other design for the price of a generation. */}
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/templates">
+              <Repeat className="h-4 w-4" /> Try another design
+            </Link>
+          </Button>
           {project.githubRepoUrl && (
             <Button asChild variant="outline" size="sm">
               <a href={project.githubRepoUrl} target="_blank" rel="noreferrer">

@@ -1,13 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
-import { ProjectStatus, GithubSyncStatus, CreditLedgerReason } from "@/lib/constants";
+import {
+  ProjectStatus,
+  GithubSyncStatus,
+  CreditLedgerReason,
+  DeploymentStatus,
+} from "@/lib/constants";
 import { assertAndSpend, refundSpend, InsufficientCreditsError } from "@/lib/credits/credits";
-import { questionnaireSchema } from "@/lib/questionnaire/schema";
+import { questionnaireSchema, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
+import type { SiteTemplate } from "@/lib/templates/types";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
 import { createTheme } from "@/lib/agents/theme";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { assembleSite } from "@/lib/agents/section-assembly";
 import { sanitizeBlueprint } from "@/lib/agents/security";
+import { conformToTemplate } from "@/lib/agents/template-fill";
+import { getTemplateById } from "@/lib/templates/store";
 import { runQa, type QaReport } from "@/lib/agents/qa";
 import { getAiProvider } from "@/lib/ai/provider";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
@@ -29,6 +37,18 @@ export class NoQuestionnaireError extends Error {
   constructor() {
     super("Complete the questionnaire before generating.");
     this.name = "NoQuestionnaireError";
+  }
+}
+export class NoTemplateError extends Error {
+  constructor() {
+    super("Choose a website design before generating.");
+    this.name = "NoTemplateError";
+  }
+}
+export class SameTemplateError extends Error {
+  constructor() {
+    super("Your website already uses this design.");
+    this.name = "SameTemplateError";
   }
 }
 
@@ -69,14 +89,95 @@ export async function generateWebsite(params: {
     throw new AlreadyGeneratedError();
   }
   if (!project.questionnaire) throw new NoQuestionnaireError();
+  if (!project.templateId) throw new NoTemplateError();
 
   const answers = questionnaireSchema.parse(JSON.parse(project.questionnaire.answers));
-  const requirements = analyzeRequirements(answers);
+  const template = await getTemplateById(project.templateId);
+  if (!template) throw new NoTemplateError();
 
-  const spendKey = `heavy_generate:${projectId}`;
+  return runGeneration({
+    userId,
+    projectId,
+    template,
+    answers,
+    spendKey: `heavy_generate:${projectId}`,
+  });
+}
+
+/**
+ * Rebuild the site on a different design. Content is rewritten to fit the new
+ * template's slots, so this costs the same as a first generation and is charged
+ * against a fresh idempotency key. Allowed at any point in the journey; a paid
+ * project stays paid and only its deployment is marked as needing a refresh.
+ */
+export async function switchProjectTemplate(params: {
+  userId: string;
+  projectId: string;
+  templateId: string;
+}): Promise<GenerateResult> {
+  const { userId, projectId, templateId } = params;
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId },
+    include: { questionnaire: true },
+  });
+  if (!project) throw new Error("Project not found");
+  if (!project.questionnaire) throw new NoQuestionnaireError();
+  if (project.templateId === templateId) throw new SameTemplateError();
+
+  // A switch mid-generation would race the running pipeline over the same row.
+  if (project.status === ProjectStatus.GENERATING) {
+    const ageMs = Date.now() - new Date(project.updatedAt).getTime();
+    if (ageMs < 2 * 60_000) throw new GenerationInProgressError();
+  }
+
+  const template = await getTemplateById(templateId);
+  if (!template) throw new NoTemplateError();
+
+  const answers = questionnaireSchema.parse(JSON.parse(project.questionnaire.answers));
+  const designVersion = project.designVersion + 1;
+
+  return runGeneration({
+    userId,
+    projectId,
+    template,
+    answers,
+    spendKey: `heavy_generate:${projectId}:v${designVersion}`,
+    designVersion,
+    // Paying for the website is separate from choosing its look, so a redesign
+    // never pushes the user back behind the paywall they already cleared.
+    keepPaidStatus: PAID_STATUSES.has(project.status),
+  });
+}
+
+/** Statuses that mean the website itself has already been bought. */
+const PAID_STATUSES = new Set<string>([
+  ProjectStatus.PAID,
+  ProjectStatus.EXPORTED,
+  ProjectStatus.DEPLOYING,
+  ProjectStatus.LIVE,
+]);
+
+/**
+ * The shared pipeline: spend credits, ask the model for copy, snap it onto the
+ * locked layout, then persist and back up. Refunds and marks the project FAILED
+ * if anything throws.
+ */
+async function runGeneration(params: {
+  userId: string;
+  projectId: string;
+  template: SiteTemplate;
+  answers: QuestionnaireAnswers;
+  spendKey: string;
+  designVersion?: number;
+  keepPaidStatus?: boolean;
+}): Promise<GenerateResult> {
+  const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus } = params;
+
+  const requirements = analyzeRequirements(answers, template);
   const cost = env.credits.costHeavyGenerate;
 
-  // Spend credits up-front (idempotent per project); refund on hard failure.
+  // Spend credits up-front (idempotent per attempt); refund on hard failure.
   const { balanceAfter } = await assertAndSpend({
     userId,
     amount: cost,
@@ -87,32 +188,45 @@ export async function generateWebsite(params: {
 
   await prisma.project.update({
     where: { id: projectId },
-    data: { status: ProjectStatus.GENERATING },
+    data: {
+      status: ProjectStatus.GENERATING,
+      ...(designVersion ? { designVersion } : {}),
+    },
   });
 
   try {
     const provider = getAiProvider();
     let blueprint = await provider.generateBlueprint(requirements);
 
+    // The model only writes copy — snap its output back onto the locked layout.
+    blueprint = conformToTemplate(blueprint, requirements);
     blueprint = sanitizeBlueprint(blueprint);
-    const qa = runQa(blueprint);
+    const qa = runQa(blueprint, requirements.contact);
 
     const theme = createTheme(requirements.colorPreference, requirements.visualStyle);
     blueprint = await sourceImages(blueprint);
-    const site = assembleSite(blueprint, theme);
+    const site = {
+      ...assembleSite(blueprint, theme),
+      contact: requirements.contact,
+      renderer: template.renderer,
+      templateSlug: template.slug,
+    };
 
     await prisma.project.update({
       where: { id: projectId },
       data: {
         businessName: requirements.business.name,
         slug: slugify(requirements.business.name),
+        templateId: template.id,
         blueprint: JSON.stringify(blueprint),
         assembledPages: JSON.stringify(site),
         theme: JSON.stringify(theme),
-        status: ProjectStatus.GENERATED,
+        status: keepPaidStatus ? ProjectStatus.PAID : ProjectStatus.GENERATED,
         githubSyncStatus: GithubSyncStatus.PENDING,
       },
     });
+
+    if (designVersion) await settleAfterRedesign(projectId, Boolean(keepPaidStatus));
 
     // Always back up to GitHub (payment-independent). Best-effort; won't throw.
     await trySyncProjectToGitHub(projectId);
@@ -127,6 +241,23 @@ export async function generateWebsite(params: {
     });
     throw err;
   }
+}
+
+/**
+ * A new design can change the billable feature set and always invalidates
+ * what is currently deployed. An unpaid quote is dropped so it gets recomputed;
+ * a paid one stands, and only the deployment is flagged for a refresh.
+ */
+async function settleAfterRedesign(projectId: string, paid: boolean): Promise<void> {
+  if (!paid) {
+    await prisma.quote.deleteMany({ where: { projectId } });
+  }
+
+  // Keep liveUrl so the old site stays reachable until the user redeploys.
+  await prisma.deployment.updateMany({
+    where: { projectId },
+    data: { status: DeploymentStatus.PENDING },
+  });
 }
 
 export { InsufficientCreditsError };

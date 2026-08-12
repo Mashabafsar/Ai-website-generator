@@ -91,6 +91,14 @@ model Project {
   slug         String
   status       String   @default("DRAFT") // ProjectStatus
 
+  // The complete website design the user picked from the library. AI only fills
+  // this template's content slots — it never plans or reorders the layout.
+  templateId   String?
+
+  // Incremented every time the design is switched. Credit spends are keyed on
+  // it, because a repeated idempotency key would silently charge nothing.
+  designVersion Int @default(1)
+
   // Structured data stored as JSON strings.
   blueprint      String? // WebsiteBlueprint JSON
   assembledPages String? // Assembled ShadCN page tree JSON
@@ -110,6 +118,35 @@ model Project {
   deployment    Deployment?
 
   @@index([userId])
+  @@index([templateId])
+}
+
+// A complete, fixed website design users choose from the library. `sections` is
+// the locked ordered list of content slots the AI fills; users never compose it.
+model Template {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  name            String
+  tagline         String  @default("")
+  bestFor         String  @default("")
+  thumbnailUrl    String  @default("")
+  previewImageUrl String  @default("")
+
+  accent           String @default("#5D4AFE")
+  colorPreference  String @default("Brand blue & violet")
+  visualStyle      String @default("Modern")
+  tone             String @default("Modern & trustworthy")
+
+  sections  String // JSON array of ordered section variant slugs
+  renderer  String @default("standard-sections") // standard-sections | forgetech | techvantage
+
+  published Boolean @default(false)
+  sortOrder Int     @default(100)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
 }
 
 model Questionnaire {

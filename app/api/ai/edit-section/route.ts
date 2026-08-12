@@ -1,6 +1,6 @@
 import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { getOwnedProject } from "@/lib/projects/projects";
-import { editSectionWithAi } from "@/lib/agents/editor";
+import { editSectionWithAi, SectionNotFoundError } from "@/lib/agents/editor";
 import { InsufficientCreditsError } from "@/lib/credits/credits";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -40,6 +40,9 @@ export async function POST(req: Request) {
     });
     return jsonOk(result);
   } catch (err) {
+    if (err instanceof SectionNotFoundError) {
+      return jsonError(err.message, 404, "SECTION_NOT_FOUND");
+    }
     if (err instanceof InsufficientCreditsError) {
       return jsonError("Not enough credits for an AI edit.", 402, "INSUFFICIENT_CREDITS", {
         required: err.required,

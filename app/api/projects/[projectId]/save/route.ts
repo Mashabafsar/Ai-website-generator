@@ -1,6 +1,10 @@
 import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { getOwnedProject } from "@/lib/projects/projects";
-import { saveProjectContent, BlueprintInvalidError } from "@/lib/agents/editor";
+import {
+  saveProjectContent,
+  BlueprintInvalidError,
+  TemplateStructureError,
+} from "@/lib/agents/editor";
 import type { WebsiteBlueprint, ThemeTokens } from "@/lib/blueprint/types";
 
 type Ctx = { params: Promise<{ projectId: string }> };
@@ -22,6 +26,9 @@ export async function POST(req: Request, { params }: Ctx) {
   } catch (err) {
     if (err instanceof BlueprintInvalidError) {
       return jsonError("Invalid content", 400, "VALIDATION", err.errors);
+    }
+    if (err instanceof TemplateStructureError) {
+      return jsonError(err.message, 400, "TEMPLATE_LOCKED");
     }
     console.error("Save error:", err);
     return jsonError("Could not save changes", 500);

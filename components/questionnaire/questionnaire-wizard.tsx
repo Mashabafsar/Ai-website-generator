@@ -10,11 +10,6 @@ import {
   questionnaireSchema,
   defaultQuestionnaire,
   type QuestionnaireAnswers,
-  TONES,
-  VISUAL_STYLES,
-  COLOR_PREFERENCES,
-  PAGE_OPTIONS,
-  FEATURE_OPTIONS,
 } from "@/lib/questionnaire/schema";
 import { PackageType } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -25,32 +20,27 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const FEATURE_LABELS: Record<string, string> = {
-  contact_form: "Contact form",
-  gallery: "Gallery",
-  testimonials: "Testimonials",
-  faq: "FAQ",
-  pricing_table: "Pricing table",
-  newsletter: "Newsletter",
-};
-
-const STEPS = ["Business", "Offering", "Design", "Structure"] as const;
+const STEPS = ["Business", "Offering", "Details"] as const;
 
 const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   0: ["businessName", "industry", "description", "location"],
   1: ["targetAudience", "services"],
-  2: ["tone", "visualStyle", "colorPreference"],
-  3: ["pages", "features", "contactEmail", "contactPhone", "packageType"],
+  2: ["contactEmail", "contactPhone", "packageType"],
 };
 
 export function QuestionnaireWizard({
   projectId,
+  templateId,
   initialAnswers,
   alreadyGenerated,
+  generateCost,
 }: {
   projectId: string;
+  /** The locked design. Layout, palette, and tone are fixed by the template. */
+  templateId: string;
   initialAnswers: QuestionnaireAnswers | null;
   alreadyGenerated: boolean;
+  generateCost: number;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -59,14 +49,12 @@ export function QuestionnaireWizard({
 
   const form = useForm<QuestionnaireAnswers>({
     resolver: zodResolver(questionnaireSchema),
-    defaultValues: initialAnswers ?? defaultQuestionnaire,
+    defaultValues: { ...(initialAnswers ?? defaultQuestionnaire), templateId },
     mode: "onTouched",
   });
 
   const { control, register, handleSubmit, trigger, watch, setValue, formState } = form;
   const services = watch("services");
-  const pages = watch("pages");
-  const features = watch("features");
 
   async function next() {
     const ok = await trigger(STEP_FIELDS[step]);
@@ -80,21 +68,13 @@ export function QuestionnaireWizard({
     setServiceInput("");
   }
 
-  function toggleArray<T extends string>(key: "pages" | "features", value: T) {
-    const current = (key === "pages" ? pages : features) as string[];
-    const nextVal = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
-    setValue(key, nextVal as never, { shouldValidate: true });
-  }
-
   async function onSubmit(values: QuestionnaireAnswers) {
     setSubmitting(true);
     try {
       const saveRes = await fetch(`/api/projects/${projectId}/questionnaire`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, templateId }),
       });
       if (!saveRes.ok) throw new Error("Could not save your answers");
 
@@ -105,7 +85,7 @@ export function QuestionnaireWizard({
         return;
       }
 
-      toast.loading("Generating your website…", { id: "gen" });
+      toast.loading("Writing your content…", { id: "gen" });
       const genRes = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,6 +132,8 @@ export function QuestionnaireWizard({
       <Card>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <input type="hidden" {...register("templateId")} value={templateId} readOnly />
+
             {step === 0 && (
               <>
                 <Field label="Business name" error={err.businessName?.message}>
@@ -176,9 +158,15 @@ export function QuestionnaireWizard({
             {step === 1 && (
               <>
                 <Field label="Target audience" error={err.targetAudience?.message}>
-                  <Input placeholder="Families and working professionals" {...register("targetAudience")} />
+                  <Input
+                    placeholder="Families and working professionals"
+                    {...register("targetAudience")}
+                  />
                 </Field>
-                <Field label="Services or products" error={err.services?.message as string | undefined}>
+                <Field
+                  label="Services or products"
+                  error={err.services?.message as string | undefined}
+                >
                   <div className="flex gap-2">
                     <Input
                       value={serviceInput}
@@ -225,48 +213,13 @@ export function QuestionnaireWizard({
 
             {step === 2 && (
               <>
-                <SelectField label="Brand tone" name="tone" control={control} options={TONES} />
-                <SelectField label="Visual style" name="visualStyle" control={control} options={VISUAL_STYLES} />
-                <SelectField
-                  label="Color preference"
-                  name="colorPreference"
-                  control={control}
-                  options={COLOR_PREFERENCES}
-                />
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <Field
-                  label="Sections"
-                  hint="Your site is a single scrollable page — these become sections on it."
-                  error={err.pages?.message as string | undefined}
-                >
-                  <div className="flex flex-wrap gap-2">
-                    {PAGE_OPTIONS.map((pageOpt) => (
-                      <Chip
-                        key={pageOpt}
-                        active={pages.includes(pageOpt)}
-                        onClick={() => toggleArray("pages", pageOpt)}
-                      >
-                        {pageOpt}
-                      </Chip>
-                    ))}
-                  </div>
-                </Field>
-                <Field label="Features">
-                  <div className="flex flex-wrap gap-2">
-                    {FEATURE_OPTIONS.map((f) => (
-                      <Chip key={f} active={features.includes(f)} onClick={() => toggleArray("features", f)}>
-                        {FEATURE_LABELS[f]}
-                      </Chip>
-                    ))}
-                  </div>
-                </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Contact email" error={err.contactEmail?.message}>
-                    <Input type="email" placeholder="hello@business.com" {...register("contactEmail")} />
+                    <Input
+                      type="email"
+                      placeholder="hello@business.com"
+                      {...register("contactEmail")}
+                    />
                   </Field>
                   <Field label="Contact phone" error={err.contactPhone?.message}>
                     <Input placeholder="(555) 123-4567" {...register("contactPhone")} />
@@ -318,7 +271,9 @@ export function QuestionnaireWizard({
                   ) : (
                     <Sparkles className="h-4 w-4" />
                   )}
-                  {alreadyGenerated ? "Save answers" : "Generate website"}
+                  {alreadyGenerated
+                    ? "Save answers"
+                    : `Generate content (${generateCost} credits)`}
                 </Button>
               )}
             </div>
@@ -347,61 +302,6 @@ function Field({
       {children}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
-  );
-}
-
-function SelectField({
-  label,
-  name,
-  control,
-  options,
-}: {
-  label: string;
-  name: "tone" | "visualStyle" | "colorPreference";
-  control: ReturnType<typeof useForm<QuestionnaireAnswers>>["control"];
-  options: readonly string[];
-}) {
-  return (
-    <Field label={label}>
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) => (
-          <div className="flex flex-wrap gap-2">
-            {options.map((opt) => (
-              <Chip key={opt} active={field.value === opt} onClick={() => field.onChange(opt)}>
-                {opt}
-              </Chip>
-            ))}
-          </div>
-        )}
-      />
-    </Field>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-        active
-          ? "border-transparent brand-gradient text-white"
-          : "border-border bg-background hover:bg-secondary"
-      )}
-    >
-      {children}
-    </button>
   );
 }
 

@@ -94,10 +94,26 @@ export type AssembledPage = {
   sections: AssembledSection[];
 };
 
+/**
+ * The business's real contact details. Designs without a contact section still
+ * need them — ForgeTech, for example, puts the email in its header and wires
+ * its closing call-to-action to a mailto link.
+ */
+export type SiteContact = {
+  email?: string;
+  phone?: string;
+  /** The business's own location, as given in the questionnaire. */
+  address?: string;
+};
+
 export type AssembledSite = {
   pages: AssembledPage[];
   theme: ThemeTokens;
   seo: SiteSeo;
   logo?: CompanyLogo;
   businessName?: string;
+  contact?: SiteContact;
+  /** Which renderer draws this site: "standard-sections" or a bespoke design. */
+  renderer?: string;
+  templateSlug?: string;
 };

@@ -32,7 +32,11 @@ export async function getUserProjectWithRelations(userId: string) {
  * Create the user's single project. Enforces one-project-per-user via the unique
  * constraint on Project.userId; throws ProjectLimitError if one already exists.
  */
-export async function createProjectForUser(userId: string, businessName: string): Promise<Project> {
+export async function createProjectForUser(
+  userId: string,
+  businessName: string,
+  templateId: string
+): Promise<Project> {
   const existing = await prisma.project.findUnique({ where: { userId } });
   if (existing) throw new ProjectLimitError();
 
@@ -43,6 +47,7 @@ export async function createProjectForUser(userId: string, businessName: string)
       businessName: name,
       slug: slugify(name),
       status: ProjectStatus.DRAFT,
+      templateId,
     },
   });
 }

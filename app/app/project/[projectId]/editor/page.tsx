@@ -6,6 +6,8 @@ import { ProjectStatus } from "@/lib/constants";
 import { ProjectTabs } from "@/components/app/project-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
+import { getTemplateById } from "@/lib/templates/store";
+import { env } from "@/lib/env";
 import type { ThemeTokens } from "@/lib/blueprint/types";
 
 export const metadata: Metadata = { title: "Editor" };
@@ -42,6 +44,9 @@ export default async function EditorPage({
   if (!project.blueprint) redirect(`/app/project/${projectId}/questionnaire`);
 
   const theme = project.theme ?? project.assembledPages?.theme ?? FALLBACK_THEME;
+  const template = project.templateId ? await getTemplateById(project.templateId) : null;
+  const renderer = template?.renderer ?? project.assembledPages?.renderer;
+  const templateSlug = template?.slug ?? project.assembledPages?.templateSlug;
 
   return (
     <div className="space-y-6">
@@ -54,7 +59,16 @@ export default async function EditorPage({
 
       <ProjectTabs projectId={projectId} />
 
-      <EditorWorkspace projectId={projectId} initialBlueprint={project.blueprint} initialTheme={theme} />
+      <EditorWorkspace
+        projectId={projectId}
+        initialBlueprint={project.blueprint}
+        initialTheme={theme}
+        templateName={template?.name ?? "Your design"}
+        renderer={renderer}
+        templateSlug={templateSlug}
+        contact={project.assembledPages?.contact}
+        editCost={env.credits.costLightEdit}
+      />
     </div>
   );
 }

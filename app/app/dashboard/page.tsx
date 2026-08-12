@@ -52,15 +52,16 @@ function EmptyState() {
             <Sparkles className="mr-1 h-3 w-3" /> Free credits ready
           </Badge>
           <h2 className="font-display text-3xl font-bold text-white">
-            Create your website
+            Pick a design to start
           </h2>
           <p className="mt-3 text-white/70">
-            Answer a short questionnaire and our AI will generate a complete,
-            editable website — saved to GitHub automatically.
+            Choose a complete website design from the library, tell us about your
+            business, and our AI writes the content for it — saved to GitHub
+            automatically.
           </p>
           <Button asChild size="lg" variant="brand" className="mt-6 group">
-            <Link href="/app/new-project">
-              Start questionnaire
+            <Link href="/app/templates">
+              Browse templates
               <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </Button>
@@ -221,11 +222,13 @@ function githubStatusLabel(status: string, hasGenerated: boolean): string {
 function nextStep(project: {
   id: string;
   status: string;
+  templateId: string | null;
   questionnaire: unknown;
 }): { label: string; href: string } {
   const base = `/app/project/${project.id}`;
   switch (project.status) {
     case ProjectStatus.DRAFT:
+      if (!project.templateId) return { label: "Choose a design", href: "/app/templates" };
       return project.questionnaire
         ? { label: "Generate website", href: `${base}/questionnaire` }
         : { label: "Continue questionnaire", href: `${base}/questionnaire` };

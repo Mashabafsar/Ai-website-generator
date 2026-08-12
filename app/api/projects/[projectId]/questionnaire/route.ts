@@ -2,6 +2,7 @@ import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { questionnaireSchema } from "@/lib/questionnaire/schema";
+import { getTemplateById, getTemplateBySlug } from "@/lib/templates/store";
 import { slugify } from "@/lib/utils";
 
 type Ctx = { params: Promise<{ projectId: string }> };
@@ -34,6 +35,14 @@ export async function POST(req: Request, { params }: Ctx) {
 
   const answers = parsed.data;
 
+  // The design is locked to a published template row; never trust the client id.
+  const template =
+    (await getTemplateById(answers.templateId)) ?? (await getTemplateBySlug(answers.templateId));
+  if (!template || !template.published) {
+    return jsonError("Select a design from the template library", 400, "TEMPLATE_REQUIRED");
+  }
+  answers.templateId = template.id;
+
   await prisma.$transaction([
     prisma.questionnaire.upsert({
       where: { projectId },
@@ -42,7 +51,11 @@ export async function POST(req: Request, { params }: Ctx) {
     }),
     prisma.project.update({
       where: { id: projectId },
-      data: { businessName: answers.businessName, slug: slugify(answers.businessName) },
+      data: {
+        businessName: answers.businessName,
+        slug: slugify(answers.businessName),
+        templateId: template.id,
+      },
     }),
   ]);
 

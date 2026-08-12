@@ -5,7 +5,7 @@ import { getCurrentUserId } from "@/lib/auth/session";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const userId = await getCurrentUserId();
-  if (userId) redirect("/app/dashboard");
+  if (userId) redirect("/app/templates");
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">

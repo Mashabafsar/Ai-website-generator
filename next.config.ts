@@ -14,6 +14,27 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "download.shutterstock.com" },
     ],
   },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // The SQLite database, uploads and exports all live inside the project,
+      // so every signup or save would otherwise trip the dev file watcher and
+      // trigger a Fast Refresh in the middle of a navigation.
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/prisma/*.db",
+          "**/prisma/*.db-journal",
+          "**/public/uploads/**",
+          "**/generated-projects/**",
+          "**/tmp/**",
+        ],
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

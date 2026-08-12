@@ -8,9 +8,13 @@ import { sanitizeBlueprint, sanitizeText } from "@/lib/agents/security";
 import { getAiProvider, type SectionContent } from "@/lib/ai/provider";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
-import { getVariantSpec } from "@/lib/sections/registry";
-import { shortId } from "@/lib/utils";
-import type { WebsiteBlueprint, ThemeTokens } from "@/lib/blueprint/types";
+import { getTemplateById } from "@/lib/templates/store";
+import type {
+  AssembledSite,
+  SiteContact,
+  WebsiteBlueprint,
+  ThemeTokens,
+} from "@/lib/blueprint/types";
 
 export class BlueprintInvalidError extends Error {
   errors: string[];
@@ -18,6 +22,22 @@ export class BlueprintInvalidError extends Error {
     super("Invalid blueprint");
     this.name = "BlueprintInvalidError";
     this.errors = errors;
+  }
+}
+
+/** Raised when an edit targets a section that isn't part of the site. */
+export class SectionNotFoundError extends Error {
+  constructor() {
+    super("Section not found");
+    this.name = "SectionNotFoundError";
+  }
+}
+
+/** Raised when an edit would change a fixed template's locked layout. */
+export class TemplateStructureError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TemplateStructureError";
   }
 }
 
@@ -36,7 +56,8 @@ async function persistAndSync(
 ): Promise<void> {
   const clean = sanitizeBlueprint(blueprint);
   const withImages = await sourceImages(clean);
-  const site = assembleSite(withImages, theme);
+  const metadata = await siteMetadata(projectId);
+  const site = { ...assembleSite(withImages, theme), ...metadata };
   await prisma.project.update({
     where: { id: projectId },
     data: {
@@ -50,8 +71,68 @@ async function persistAndSync(
 }
 
 /**
+ * Site-level metadata that lives outside the blueprint: which renderer draws the
+ * site, and the business's contact details. Reassembling on every save would
+ * otherwise drop a bespoke design back to the generic section renderer and lose
+ * the contact details that designs without a contact block rely on.
+ */
+async function siteMetadata(
+  projectId: string
+): Promise<{ renderer?: string; templateSlug?: string; contact?: SiteContact }> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { templateId: true, assembledPages: true, questionnaire: true },
+  });
+  if (!project) return {};
+
+  let existing: AssembledSite | null = null;
+  try {
+    existing = project.assembledPages
+      ? (JSON.parse(project.assembledPages) as AssembledSite)
+      : null;
+  } catch {
+    // A corrupt cache is not worth failing a save over.
+  }
+
+  const contact = project.questionnaire
+    ? contactFromQuestionnaire(project.questionnaire.answers)
+    : existing?.contact;
+
+  if (project.templateId) {
+    const template = await getTemplateById(project.templateId);
+    if (template) {
+      return { renderer: template.renderer, templateSlug: template.slug, contact };
+    }
+  }
+
+  // Projects generated before a template was attached keep whatever was stored.
+  if (existing?.renderer) {
+    return { renderer: existing.renderer, templateSlug: existing.templateSlug, contact };
+  }
+  return { contact };
+}
+
+function contactFromQuestionnaire(answers: string): SiteContact | undefined {
+  try {
+    const parsed = JSON.parse(answers) as {
+      contactEmail?: string;
+      contactPhone?: string;
+      location?: string;
+    };
+    const email = parsed.contactEmail?.trim() || undefined;
+    const phone = parsed.contactPhone?.trim() || undefined;
+    const address = parsed.location?.trim() || undefined;
+    return email || phone || address ? { email, phone, address } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Manual editor save (no AI, free). Accepts a full edited blueprint + theme,
- * validates against the registry, reassembles, persists, and syncs GitHub.
+ * validates against the registry, reassembles, persists, and syncs GitHub. The
+ * template's section list is enforced here so no client can restructure a
+ * finished design.
  */
 export async function saveProjectContent(params: {
   projectId: string;
@@ -60,48 +141,34 @@ export async function saveProjectContent(params: {
 }): Promise<void> {
   const result = validateBlueprint(params.blueprint);
   if (!result.valid) throw new BlueprintInvalidError(result.errors);
+  await assertMatchesTemplate(params.projectId, result.blueprint);
   await persistAndSync(params.projectId, result.blueprint, params.theme);
 }
 
-/** Add a new section (from the registry) with default content to a page. */
-export async function addSection(params: {
-  projectId: string;
-  pageSlug: string;
-  variant: string;
-  requirementsName?: string;
-}): Promise<void> {
-  const { projectId, pageSlug, variant } = params;
-  const spec = getVariantSpec(variant);
-  if (!spec) throw new Error("Unknown variant");
+/** Rejects saves that add, remove, reorder, or swap any of the locked slots. */
+async function assertMatchesTemplate(
+  projectId: string,
+  blueprint: WebsiteBlueprint
+): Promise<void> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { templateId: true },
+  });
+  if (!project?.templateId) return;
 
-  const { blueprint, theme } = await loadBlueprint(projectId);
-  const page = blueprint.pages.find((p) => p.slug === pageSlug);
-  if (!page) throw new Error("Page not found");
+  const template = await getTemplateById(project.templateId);
+  if (!template) return;
 
-  const ctx = {
-    businessName: blueprint.business.name,
-    industry: blueprint.business.industry,
-    description: blueprint.business.description,
-    audience: "your customers",
-    services: [],
-    tone: blueprint.design.tone,
-    location: blueprint.business.location,
-  };
+  const incoming = blueprint.pages.flatMap((page) => page.sections.map((s) => s.variant));
+  const expected = template.sections;
+  const matches =
+    incoming.length === expected.length && incoming.every((v, i) => v === expected[i]);
 
-  // Insert before the footer if present.
-  const footerIdx = page.sections.findIndex((s) => s.type === "footer");
-  const newSection = {
-    id: shortId(spec.type),
-    type: spec.type,
-    variant: spec.variant,
-    content: spec.defaults(ctx),
-    imageKeywords: spec.needsImage ? spec.keywords(ctx) : undefined,
-    selectedImage: null,
-  };
-  if (footerIdx >= 0) page.sections.splice(footerIdx, 0, newSection);
-  else page.sections.push(newSection);
-
-  await persistAndSync(projectId, blueprint, theme);
+  if (!matches) {
+    throw new TemplateStructureError(
+      `The ${template.name} design has a fixed layout. Edit the content of its sections instead of changing their order or number.`
+    );
+  }
 }
 
 /**
@@ -120,7 +187,7 @@ export async function editSectionWithAi(params: {
   const { blueprint, theme } = await loadBlueprint(projectId);
   const page = blueprint.pages.find((p) => p.slug === pageSlug);
   const section = page?.sections.find((s) => s.id === sectionId);
-  if (!section) throw new Error("Section not found");
+  if (!section) throw new SectionNotFoundError();
 
   const cleanInstruction = sanitizeText(instruction).slice(0, 300);
 

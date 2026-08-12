@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/** Where both sign-in and sign-up land: the design library. */
+const AFTER_AUTH = "/app/templates";
+
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           name: name.trim() || email.split("@")[0],
           email: email.trim(),
           password,
-          callbackURL: "/app/dashboard",
+          callbackURL: AFTER_AUTH,
         });
         if (error) throw new Error(error.message || "Could not create account");
         toast.success("Welcome! Your free credits are ready.");
@@ -36,15 +37,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         const { error } = await signIn.email({
           email: email.trim(),
           password,
-          callbackURL: "/app/dashboard",
+          callbackURL: AFTER_AUTH,
         });
         if (error) throw new Error(error.message || "Invalid email or password");
       }
-      router.push("/app/dashboard");
-      router.refresh();
+      // A full page load is what makes the new session cookie visible to the
+      // server on the very next render. A client-side router.push() races with
+      // the cookie write and silently leaves the user sitting on this form.
+      window.location.assign(AFTER_AUTH);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
       setLoading(false);
     }
   }

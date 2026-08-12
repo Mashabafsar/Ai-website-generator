@@ -19,7 +19,7 @@ import { getCurrentUserId } from "@/lib/auth/session";
 
 export default async function LandingPage() {
   const userId = await getCurrentUserId();
-  if (userId) redirect("/app/dashboard");
+  if (userId) redirect("/app/templates");
 
   return (
     <div className="min-h-screen bg-brand-navy">

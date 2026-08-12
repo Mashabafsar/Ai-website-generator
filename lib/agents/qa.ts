@@ -1,4 +1,4 @@
-import type { WebsiteBlueprint } from "@/lib/blueprint/types";
+import type { SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { getVariantSpec } from "@/lib/sections/registry";
 
 export type QaReport = {
@@ -11,7 +11,7 @@ export type QaReport = {
  * QA Agent — rules-based checks on the generated blueprint before it's shown or
  * shipped. Errors block a clean pass; warnings are surfaced to the user.
  */
-export function runQa(blueprint: WebsiteBlueprint): QaReport {
+export function runQa(blueprint: WebsiteBlueprint, contact?: SiteContact): QaReport {
   const warnings: string[] = [];
   const errors: string[] = [];
 
@@ -41,7 +41,10 @@ export function runQa(blueprint: WebsiteBlueprint): QaReport {
     }
   }
 
-  if (!allTypes.has("contact")) warnings.push("No contact section found.");
+  // Some designs carry contact details in the header and closing CTA rather than
+  // a dedicated block, so only flag sites a visitor genuinely cannot reach.
+  const reachable = allTypes.has("contact") || Boolean(contact?.email || contact?.phone);
+  if (!reachable) warnings.push("Visitors have no way to get in touch.");
   if (!allTypes.has("cta")) warnings.push("No call-to-action section found.");
   if (!blueprint.seo.title) warnings.push("Missing SEO title.");
   if (!blueprint.seo.description) warnings.push("Missing SEO description.");

@@ -1,5 +1,7 @@
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SectionContext } from "@/lib/sections/registry";
+import type { SiteTemplate } from "@/lib/templates/types";
+import { featuresFromVariants } from "@/lib/quote/features";
 
 export type NormalizedRequirements = {
   business: { name: string; industry: string; description: string; location?: string };
@@ -8,28 +10,41 @@ export type NormalizedRequirements = {
   tone: string;
   visualStyle: string;
   colorPreference: string;
-  pages: string[];
   features: string[];
-  contact: { email?: string; phone?: string };
+  contact: { email?: string; phone?: string; address?: string };
   packageType: string;
   quoteSignals: string[];
   context: SectionContext;
+  /** The locked design the content must be written for. */
+  template: {
+    id: string;
+    slug: string;
+    name: string;
+    renderer: string;
+    /** Ordered content slots the AI must fill — it may not change this list. */
+    sections: string[];
+  };
 };
 
 /**
- * Requirement Analyst Agent — turns raw questionnaire answers into clean,
- * structured requirements the rest of the pipeline can rely on. Rules-based
- * (no model needed) per the architecture's MVP guidance.
+ * Requirement Analyst Agent — turns raw questionnaire answers plus the selected
+ * template into clean, structured requirements. Design decisions come from the
+ * template; the questionnaire only supplies business facts. Rules-based.
  */
-export function analyzeRequirements(answers: QuestionnaireAnswers): NormalizedRequirements {
+export function analyzeRequirements(
+  answers: QuestionnaireAnswers,
+  template: SiteTemplate
+): NormalizedRequirements {
   const services = answers.services.map((s) => s.trim()).filter(Boolean);
   const location = answers.location?.trim() || undefined;
+  const features = featuresFromVariants(template.sections);
 
-  const quoteSignals: string[] = ["service_business", "multi_section_homepage"];
-  if (answers.features.includes("contact_form")) quoteSignals.push("contact_form");
-  if (answers.features.includes("gallery")) quoteSignals.push("gallery");
-  if (answers.features.includes("pricing_table")) quoteSignals.push("pricing");
-  if (answers.pages.length > 3) quoteSignals.push("multi_page");
+  const quoteSignals = ["service_business", "multi_section_homepage", `template:${template.slug}`];
+  for (const feature of features) {
+    if (feature === "contact_form") quoteSignals.push("contact_form");
+    if (feature === "gallery") quoteSignals.push("gallery");
+    if (feature === "pricing_table") quoteSignals.push("pricing");
+  }
 
   const context: SectionContext = {
     businessName: answers.businessName.trim(),
@@ -37,7 +52,7 @@ export function analyzeRequirements(answers: QuestionnaireAnswers): NormalizedRe
     description: answers.description.trim(),
     audience: answers.targetAudience.trim(),
     services,
-    tone: answers.tone,
+    tone: template.tone,
     location,
     contactEmail: answers.contactEmail?.trim() || undefined,
     contactPhone: answers.contactPhone?.trim() || undefined,
@@ -52,14 +67,20 @@ export function analyzeRequirements(answers: QuestionnaireAnswers): NormalizedRe
     },
     audience: context.audience,
     services,
-    tone: answers.tone,
-    visualStyle: answers.visualStyle,
-    colorPreference: answers.colorPreference,
-    pages: answers.pages,
-    features: answers.features,
-    contact: { email: context.contactEmail, phone: context.contactPhone },
+    tone: template.tone,
+    visualStyle: template.visualStyle,
+    colorPreference: template.colorPreference,
+    features,
+    contact: { email: context.contactEmail, phone: context.contactPhone, address: location },
     packageType: answers.packageType,
     quoteSignals,
     context,
+    template: {
+      id: template.id,
+      slug: template.slug,
+      name: template.name,
+      renderer: template.renderer,
+      sections: template.sections,
+    },
   };
 }

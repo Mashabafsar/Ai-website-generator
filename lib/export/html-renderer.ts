@@ -4,6 +4,8 @@ import type {
   AssembledPage,
   StockImageReference,
 } from "@/lib/blueprint/types";
+import { renderForgeTechPage } from "@/lib/export/forgetech-html";
+import { renderTechvantagePage } from "@/lib/export/techvantage-html";
 
 // Renders an AssembledSite to a set of static, hostable HTML files. Tailwind is
 // loaded via the Play CDN and theme tokens are injected as CSS variables, so the
@@ -438,6 +440,15 @@ ${footer}
 
 /** Returns a map of relative file path -> file contents for the whole site. */
 export function renderSiteToFiles(site: AssembledSite): Record<string, string> {
+  // Bespoke designs ship their own markup so the exported site matches the
+  // design the customer chose in the library.
+  if (site.renderer === "forgetech" || site.templateSlug === "forgetech") {
+    return { "index.html": renderForgeTechPage(site) };
+  }
+  if (site.renderer === "techvantage" || site.templateSlug === "techvantage") {
+    return { "index.html": renderTechvantagePage(site) };
+  }
+
   const files: Record<string, string> = {};
   for (const page of site.pages) {
     const path = page.slug === "home" ? "index.html" : `${page.slug}/index.html`;
