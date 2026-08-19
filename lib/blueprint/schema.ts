@@ -58,6 +58,13 @@ export const themeSchema = z.object({
       svg: z.string(),
     })
     .optional(),
+  logoUrl: z
+    .string()
+    .max(2_000_000)
+    .refine((v) => /^(\/|https:\/\/|data:image\/(png|jpeg|webp|gif);)/.test(v), {
+      message: "Logo must be an uploaded path, https URL, or raster image data URL",
+    })
+    .optional(),
 });
 
 export const blueprintSchema = z.object({

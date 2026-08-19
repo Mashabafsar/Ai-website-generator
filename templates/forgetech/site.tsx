@@ -1,7 +1,7 @@
 import { Nunito_Sans, Space_Grotesk } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
-import { FT } from "@/components/templates/forgetech/tokens";
-import { list, slotAt, text, toSlots } from "@/components/templates/content";
+import { FT } from "./tokens";
+import { list, slotAt, text, toSlots } from "../shared/content";
 
 const display = Space_Grotesk({
   subsets: ["latin"],
@@ -74,6 +74,9 @@ export function ForgeTechSite({
     blueprint?.business.name ||
     "ForgeTech";
   const monogram = initials(businessName);
+  // Only a logo the user actually uploaded replaces the template mark; the
+  // auto-generated `site.logo` wordmark is never used here.
+  const customLogo = site?.theme.logoUrl?.trim() || "";
 
   const heroImage = hero.image || ASSETS.hero;
   const aboutImage = about.image || ASSETS.about;
@@ -147,12 +150,16 @@ export function ForgeTechSite({
       <div className="border-b px-4 py-3.5 md:px-8" style={{ borderColor: FT.line }}>
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-x-8 gap-y-3">
           <a href="#ft-top" className="flex items-center gap-3">
-            <span
-              className="grid h-10 w-10 place-items-center text-sm font-bold text-white"
-              style={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
-            >
-              {monogram}
-            </span>
+            {customLogo ? (
+              <img src={customLogo} alt="" className="h-10 w-10 object-contain" />
+            ) : (
+              <span
+                className="grid h-10 w-10 place-items-center text-sm font-bold text-white"
+                style={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
+              >
+                {monogram}
+              </span>
+            )}
             <span
               className="text-lg font-bold tracking-tight sm:text-xl"
               style={{ fontFamily: "var(--ft-display)" }}
@@ -685,12 +692,16 @@ export function ForgeTechSite({
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="max-w-sm">
               <div className="flex items-center gap-3">
-                <span
-                  className="grid h-10 w-10 place-items-center text-sm font-bold text-white"
-                  style={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
-                >
-                  {monogram}
-                </span>
+                {customLogo ? (
+                  <img src={customLogo} alt="" className="h-10 w-10 object-contain" />
+                ) : (
+                  <span
+                    className="grid h-10 w-10 place-items-center text-sm font-bold text-white"
+                    style={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
+                  >
+                    {monogram}
+                  </span>
+                )}
                 <span className="text-lg font-bold" style={{ fontFamily: "var(--ft-display)" }}>
                   {businessName}
                 </span>

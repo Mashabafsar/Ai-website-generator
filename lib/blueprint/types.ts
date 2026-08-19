@@ -53,6 +53,12 @@ export type ThemeTokens = {
   radius: string;
   fontStyle: string;
   logo?: CompanyLogo;
+  /**
+   * URL of a logo mark uploaded by the user. Unlike `logo`, which is always
+   * auto-generated, this is only set when the user supplies their own artwork,
+   * so templates can use it to decide whether to swap their built-in mark.
+   */
+  logoUrl?: string;
 };
 
 export type WebsiteBlueprint = {

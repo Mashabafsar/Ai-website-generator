@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "providers": {},
+  "resources": {},
+  "environments": {
+    "default": {
+      "output": ".env",
+      "resources": [],
+      "variables": [
+        {
+          "variableName": "stripe-credit-pack-100",
+          "envKey": "STRIPE_CREDIT_PACK_100_PRICE_ID"
+        },
+        {
+          "variableName": "stripe-credit-pack-1000",
+          "envKey": "STRIPE_CREDIT_PACK_1000_PRICE_ID"
+        },
+        {
+          "variableName": "stripe-credit-pack-300",
+          "envKey": "STRIPE_CREDIT_PACK_300_PRICE_ID"
+        },
+        {
+          "variableName": "stripe-publishable-key",
+          "envKey": "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
+        },
+        {
+          "variableName": "stripe-secret-key",
+          "envKey": "STRIPE_SECRET_KEY"
+        },
+        {
+          "variableName": "stripe-webhook-secret",
+          "envKey": "STRIPE_WEBHOOK_SECRET"
+        }
+      ]
+    }
+  },
+  "variables": {
+    "stripe-credit-pack-100": {
+      "name": "stripe-credit-pack-100",
+      "backendId": "fprjvar_61VCzJIj68X7oYXZh16VCykU11SQWeIHIylCNlJFAIVM"
+    },
+    "stripe-credit-pack-1000": {
+      "name": "stripe-credit-pack-1000",
+      "backendId": "fprjvar_61VCzJUcNZDMSNCCd16VCykU11SQWeIHIylCNlJFALhI"
+    },
+    "stripe-credit-pack-300": {
+      "name": "stripe-credit-pack-300",
+      "backendId": "fprjvar_61VCzJOwyE0OEFyrX16VCykU11SQWeIHIylCNlJFAL7w"
+    },
+    "stripe-publishable-key": {
+      "name": "stripe-publishable-key",
+      "backendId": "fprjvar_61VCzJ6jSvoQ9tfwb16VCykU11SQWeIHIylCNlJFAUTY"
+    },
+    "stripe-secret-key": {
+      "name": "stripe-secret-key",
+      "backendId": "fprjvar_61VCzJ0gebWJSE79q16VCykU11SQWeIHIylCNlJFADU0"
+    },
+    "stripe-webhook-secret": {
+      "name": "stripe-webhook-secret",
+      "backendId": "fprjvar_61VCzJCfd3ghyiFhg16VCykU11SQWeIHIylCNlJFAXH6"
+    }
+  }
+}

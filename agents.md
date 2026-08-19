@@ -946,3 +946,13 @@ Managed Hosting: GitHub Repository Agent → Deployment Agent
 ## 25. Final Agent Summary
 
 The AI Website Generator should be built around structured agents, not one large AI prompt. The heavy model creates the first complete website blueprint. The platform then uses approved ShadCN UI sections to assemble the site. Stock images are selected through provider APIs. Later edits are handled by a cheaper lightweight model. The quote, payment, GitHub storage, ZIP export, and subdomain deployment are all automated through deterministic backend agents.
+
+<!-- stripe-projects-cli managed:agents-md:start -->
+## Stripe Projects CLI
+
+This repository is initialized for the Stripe project "website builder".
+
+## Tools used
+
+- [Stripe CLI](https://docs.stripe.com/stripe-cli) with the `projects` plugin to manage third-party services, credentials, and deployments for this project. Use the stripe-projects-cli to manage deploying and access to third party services.
+<!-- stripe-projects-cli managed:agents-md:end -->

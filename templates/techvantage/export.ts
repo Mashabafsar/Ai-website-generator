@@ -1,8 +1,8 @@
-import { TV } from "@/components/templates/techvantage/tokens";
-import { list, slotAt, text, toSlots } from "@/components/templates/content";
+import { TV } from "./tokens";
+import { list, slotAt, text, toSlots } from "../shared/content";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
-// Static HTML twin of components/templates/techvantage/techvantage-site.tsx.
+// Static HTML twin of templates/techvantage/site.tsx.
 // Exported and deployed sites must look like the design the customer chose, so
 // the Techvantage layout is mirrored here rather than falling back to the
 // generic section renderer. Both read the same locked slots via the same helpers.
@@ -138,6 +138,9 @@ export function renderTechvantagePage(site: AssembledSite): string {
 
   const businessName =
     text(footer.content, "businessName") || site.businessName || "Techvantage";
+  // Only a logo the user actually uploaded replaces the template mark; the
+  // auto-generated `site.logo` wordmark is never used here.
+  const customLogo = site.theme.logoUrl?.trim() || "";
 
   const contactEmail = site.contact?.email?.trim() || "";
   const contactPhone = site.contact?.phone?.trim() || "";
@@ -210,7 +213,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
 <div style="background:${PANEL}">
   <div class="${SHELL} flex flex-wrap items-center gap-x-8 gap-y-4 py-6 lg:py-8">
     <a href="#tv-top" class="flex shrink-0 items-center gap-2">
-      <img src="${A.logo}" alt="" width="50" height="39" class="h-8 w-auto lg:h-[39px]" />
+      <img src="${esc(customLogo || A.logo)}" alt="" width="50" height="39" class="h-8 w-auto object-contain lg:h-[39px]" />
       <span class="text-2xl font-bold text-white lg:text-[33px]" style="font-family:var(--tv-display)">${esc(
         businessName
       )}</span>
@@ -265,7 +268,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
       ${serviceTitles
         .slice(0, 3)
         .map(
-          (title, i) => `<article class="rounded-[24px] border p-8" style="border-color:${TV.line}">
+          (title, i) => `<article class="rounded-[24px] border p-8 transition-transform hover:-translate-y-1" style="border-color:${TV.line}">
         <img src="${A.serviceIcons[i % A.serviceIcons.length]}" alt="" width="64" height="64" class="size-16" />
         <h3 class="mt-7 text-[24px] font-medium leading-[30px]" style="font-family:var(--tv-display);color:${TV.ink}">${esc(
           title
@@ -550,7 +553,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
     <div class="grid gap-12 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
       <div>
         <div class="flex items-center gap-2">
-          <img src="${A.logo}" alt="" width="50" height="39" class="h-8 w-auto" />
+          <img src="${esc(customLogo || A.logo)}" alt="" width="50" height="39" class="h-8 w-auto object-contain" />
           <span class="text-[26px] font-bold text-white" style="font-family:var(--tv-display)">${esc(
             businessName
           )}</span>

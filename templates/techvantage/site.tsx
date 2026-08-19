@@ -1,7 +1,7 @@
 import { Inter, Urbanist } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
-import { TV } from "@/components/templates/techvantage/tokens";
-import { list, slotAt, text, toSlots } from "@/components/templates/content";
+import { TV } from "./tokens";
+import { list, slotAt, text, toSlots } from "../shared/content";
 
 const display = Urbanist({
   subsets: ["latin"],
@@ -108,6 +108,9 @@ export function TechvantageSite({
     site?.businessName ||
     blueprint?.business.name ||
     "Techvantage";
+  // Only a logo the user actually uploaded replaces the template mark; the
+  // auto-generated `site.logo` wordmark is never used here.
+  const customLogo = site?.theme.logoUrl?.trim() || "";
 
   const details = contact ?? site?.contact;
   const contactEmail = details?.email?.trim() || "";
@@ -179,7 +182,13 @@ export function TechvantageSite({
       <div style={{ background: PANEL }}>
         <Shell className="flex flex-wrap items-center gap-x-8 gap-y-4 py-6 lg:py-8">
           <a href="#tv-top" className="flex shrink-0 items-center gap-2">
-            <img src={ASSETS.logo} alt="" width={50} height={39} className="h-8 w-auto lg:h-[39px]" />
+            <img
+              src={customLogo || ASSETS.logo}
+              alt=""
+              width={50}
+              height={39}
+              className="h-8 w-auto object-contain lg:h-[39px]"
+            />
             <span
               className="text-2xl font-bold text-white lg:text-[33px]"
               style={{ fontFamily: "var(--tv-display)" }}
@@ -263,7 +272,7 @@ export function TechvantageSite({
             {serviceTitles.slice(0, 3).map((title, i) => (
               <article
                 key={`${title}-${i}`}
-                className="rounded-[24px] border p-8 transition-shadow hover:shadow-[0_18px_50px_-28px_rgba(12,61,255,0.45)]"
+                className="rounded-[24px] border p-8 transition-transform hover:-translate-y-1"
                 style={{ borderColor: TV.line }}
               >
                 <img
@@ -683,7 +692,13 @@ export function TechvantageSite({
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
             <div>
               <div className="flex items-center gap-2">
-                <img src={ASSETS.logo} alt="" width={50} height={39} className="h-8 w-auto" />
+                <img
+                  src={customLogo || ASSETS.logo}
+                  alt=""
+                  width={50}
+                  height={39}
+                  className="h-8 w-auto object-contain"
+                />
                 <span
                   className="text-[26px] font-bold text-white"
                   style={{ fontFamily: "var(--tv-display)" }}

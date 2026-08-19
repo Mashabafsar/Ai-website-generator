@@ -78,6 +78,37 @@ export const TECHVANTAGE_SEED: TemplateSeed = {
   ],
 };
 
+/** CraftedSpaces — the bespoke interior and architectural Figma design. */
+export const CRAFTEDSPACES_SEED: TemplateSeed = {
+  slug: "craftedspaces",
+  name: "CraftedSpaces",
+  tagline: "Warm modern interiors, refined details, and architecture-led balance.",
+  bestFor: "Interior studios, architects, boutique renovation firms & design consultancies",
+  thumbnailUrl: "/templates/craftedspaces/preview.png",
+  previewImageUrl: "/templates/craftedspaces/preview.png",
+  accent: "#1A1A1A",
+  colorPreference: "Stone & charcoal",
+  visualStyle: "Minimal",
+  tone: "Elegant & premium",
+  renderer: "craftedspaces",
+  published: true,
+  sortOrder: 2,
+  // Slot order maps 1:1 onto the CraftedSpaces renderer.
+  sections: [
+    "hero-background-image",
+    "portfolio-case-studies",
+    "about-with-image",
+    "features-grid",
+    "services-cards",
+    "testimonials-grid",
+    "portfolio-case-studies",
+    "features-grid",
+    "faq-accordion",
+    "cta-banner",
+    "footer-simple",
+  ],
+};
+
 /**
  * Layout skeletons built from the approved section library. They are seeded but
  * left unpublished: the gallery only offers designs that have been fully art
@@ -271,7 +302,12 @@ export const STANDARD_SEEDS: TemplateSeed[] = [
   },
 ];
 
-export const ALL_SEEDS: TemplateSeed[] = [FORGETECH_SEED, TECHVANTAGE_SEED, ...STANDARD_SEEDS];
+export const ALL_SEEDS: TemplateSeed[] = [
+  FORGETECH_SEED,
+  TECHVANTAGE_SEED,
+  CRAFTEDSPACES_SEED,
+  ...STANDARD_SEEDS,
+];
 
 export const DEFAULT_TEMPLATE_SLUG = FORGETECH_SEED.slug;
 

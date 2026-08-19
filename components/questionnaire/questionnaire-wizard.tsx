@@ -131,7 +131,21 @@ export function QuestionnaireWizard({
 
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            // Never let Enter implicitly submit the form (which would start
+            // generation early). Generation only runs from the explicit button on
+            // the last step. Textareas keep their normal multi-line behavior.
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !(e.target instanceof HTMLTextAreaElement)
+              ) {
+                e.preventDefault();
+              }
+            }}
+            className="space-y-5"
+          >
             <input type="hidden" {...register("templateId")} value={templateId} readOnly />
 
             {step === 0 && (
@@ -265,7 +279,14 @@ export function QuestionnaireWizard({
                   Next <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" variant="brand" disabled={submitting}>
+                // Explicit click only — generation must be a deliberate action,
+                // never an accidental Enter keypress while filling the form.
+                <Button
+                  type="button"
+                  variant="brand"
+                  disabled={submitting}
+                  onClick={handleSubmit(onSubmit)}
+                >
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (

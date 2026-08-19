@@ -2,8 +2,7 @@ import type { CSSProperties } from "react";
 import type { AssembledSite } from "@/lib/blueprint/types";
 import { SECTION_COMPONENTS } from "@/components/website-sections/sections";
 import { SiteHeader } from "@/components/website-sections/ui";
-import { ForgeTechSite } from "@/components/templates/forgetech/forgetech-site";
-import { TechvantageSite } from "@/components/templates/techvantage/techvantage-site";
+import { BespokePreview, hasBespokePreview } from "@/templates/preview-registry";
 
 const NAV: Array<{ type: string; label: string }> = [
   { type: "about", label: "About" },
@@ -20,11 +19,8 @@ const NAV: Array<{ type: string; label: string }> = [
 export function SitePreview({ site, pageSlug }: { site: AssembledSite; pageSlug?: string }) {
   // Bespoke designs draw themselves; everything else goes through the approved
   // section component registry.
-  if (site.renderer === "forgetech" || site.templateSlug === "forgetech") {
-    return <ForgeTechSite site={site} />;
-  }
-  if (site.renderer === "techvantage" || site.templateSlug === "techvantage") {
-    return <TechvantageSite site={site} />;
+  if (hasBespokePreview(site.renderer) || hasBespokePreview(site.templateSlug)) {
+    return <BespokePreview site={site} />;
   }
 
   const page = site.pages.find((p) => p.slug === pageSlug) ?? site.pages[0];

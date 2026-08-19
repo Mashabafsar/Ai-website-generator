@@ -1,7 +1,12 @@
 // A template is one complete website design. Users pick exactly one; they never
 // assemble a site out of individual sections.
 
-export const TEMPLATE_RENDERERS = ["standard-sections", "forgetech", "techvantage"] as const;
+export const TEMPLATE_RENDERERS = [
+  "standard-sections",
+  "forgetech",
+  "techvantage",
+  "craftedspaces",
+] as const;
 export type TemplateRenderer = (typeof TEMPLATE_RENDERERS)[number];
 
 export type SiteTemplate = {

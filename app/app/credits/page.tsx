@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Coins } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getBalance } from "@/lib/credits/credits";
+import { reconcileCreditCheckout } from "@/lib/stripe/reconcile";
 import { prisma } from "@/lib/prisma";
 import { CreditPacks } from "@/components/app/credit-packs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,9 +21,31 @@ const REASON_LABEL: Record<string, string> = {
   ADJUSTMENT: "Adjustment",
 };
 
-export default async function CreditsPage() {
+export default async function CreditsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ purchase?: string; session_id?: string }>;
+}) {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/login");
+
+  // Fallback to the webhook: if the user just came back from Stripe, grant the
+  // purchased credits right away — but ONLY once Stripe confirms the payment is
+  // paid (idempotent, so the webhook can't double-count).
+  const { purchase, session_id: sessionId } = await searchParams;
+  let purchaseConfirmed = false;
+  let purchaseCredited = 0;
+  if (sessionId) {
+    try {
+      const result = await reconcileCreditCheckout({ userId, sessionId });
+      if (result) {
+        purchaseConfirmed = true;
+        purchaseCredited = result.credited;
+      }
+    } catch {
+      // Non-fatal: the webhook remains the backstop.
+    }
+  }
 
   const [balance, entries] = await Promise.all([
     getBalance(userId),
@@ -36,7 +59,11 @@ export default async function CreditsPage() {
   return (
     <div className="space-y-8">
       <Suspense fallback={null}>
-        <PurchaseToast />
+        <PurchaseToast
+          purchase={purchase}
+          confirmed={purchaseConfirmed}
+          credited={purchaseCredited}
+        />
       </Suspense>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

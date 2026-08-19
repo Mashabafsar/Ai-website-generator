@@ -1,0 +1,32 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "isolatedModules": false,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "validate.ts",
+    "registry.ts",
+    "forgetech/metadata.ts",
+    "forgetech/demo.ts",
+    "forgetech/motion.ts",
+    "forgetech/slots.ts",
+    "forgetech/assets.ts",
+    "techvantage/metadata.ts",
+    "techvantage/demo.ts",
+    "techvantage/motion.ts",
+    "techvantage/slots.ts",
+    "techvantage/assets.ts",
+    "craftedspaces/metadata.ts",
+    "craftedspaces/demo.ts",
+    "craftedspaces/motion.ts",
+    "craftedspaces/slots.ts",
+    "craftedspaces/assets.ts",
+    "../lib/templates/registry.ts",
+    "../lib/templates/types.ts",
+    "../lib/sections/registry.ts"
+  ]
+}

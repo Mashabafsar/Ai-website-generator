@@ -1,8 +1,8 @@
-import { FT } from "@/components/templates/forgetech/tokens";
-import { list, slotAt, text, toSlots } from "@/components/templates/content";
+import { FT } from "./tokens";
+import { list, slotAt, text, toSlots } from "../shared/content";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
-// Static HTML twin of components/templates/forgetech/forgetech-site.tsx. Exported
+// Static HTML twin of templates/forgetech/site.tsx. Exported
 // and deployed sites must look like the design the customer chose, so the
 // ForgeTech layout is mirrored here rather than falling back to the generic
 // section renderer. Both read the same locked slots through the same helpers.
@@ -70,6 +70,12 @@ export function renderForgeTechPage(site: AssembledSite): string {
   const businessName =
     text(footer.content, "businessName") || site.businessName || "ForgeTech";
   const monogram = initials(businessName);
+  // Only a logo the user actually uploaded replaces the template mark; the
+  // auto-generated `site.logo` wordmark is never used here.
+  const customLogo = site.theme.logoUrl?.trim() || "";
+  const mark = customLogo
+    ? `<img src="${esc(customLogo)}" alt="" class="h-10 w-10 object-contain" />`
+    : `<span class="grid h-10 w-10 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${esc(monogram)}</span>`;
 
   const heroImage = hero.image || FALLBACK.hero;
   const aboutImage = about.image || FALLBACK.about;
@@ -132,7 +138,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
 <div class="border-b px-4 py-3.5 md:px-8" style="border-color:${FT.line}">
   <div class="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-x-8 gap-y-3">
     <a href="#ft-top" class="flex items-center gap-3">
-      <span class="grid h-10 w-10 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${esc(monogram)}</span>
+      ${mark}
       <span class="text-lg font-bold tracking-tight sm:text-xl" style="font-family:var(--ft-display)">${esc(businessName)}</span>
     </a>
     <div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
@@ -473,7 +479,7 @@ ${
     <div class="flex flex-wrap items-start justify-between gap-8">
       <div class="max-w-sm">
         <div class="flex items-center gap-3">
-          <span class="grid h-10 w-10 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${esc(monogram)}</span>
+          ${mark}
           <span class="text-lg font-bold" style="font-family:var(--ft-display)">${esc(businessName)}</span>
         </div>
         <p class="mt-4 text-sm leading-relaxed text-white/60">${esc(

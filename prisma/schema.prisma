@@ -138,7 +138,7 @@ model Template {
   tone             String @default("Modern & trustworthy")
 
   sections  String // JSON array of ordered section variant slugs
-  renderer  String @default("standard-sections") // standard-sections | forgetech | techvantage
+  renderer  String @default("standard-sections") // standard-sections | forgetech | techvantage | craftedspaces
 
   published Boolean @default(false)
   sortOrder Int     @default(100)

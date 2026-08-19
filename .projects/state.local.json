@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "project": {
+    "catalog": "prod",
+    "initializedAt": "2026-08-12T12:31:57.496Z",
+    "merchantDisplayName": "Agency Partner Interactive",
+    "merchantId": "acct_1U3an7AEidLvAOFD",
+    "projectId": "project_61VCzHQLpSTkfvcrp16VCykU11SQWeIHIylCNlJFAS9g",
+    "projectName": "website builder"
+  },
+  "providers": {},
+  "resources": {},
+  "managedProjectVariableEnvKeys": {
+    ".env": [
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+      "STRIPE_CREDIT_PACK_100_PRICE_ID",
+      "STRIPE_CREDIT_PACK_1000_PRICE_ID",
+      "STRIPE_CREDIT_PACK_300_PRICE_ID",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET"
+    ]
+  }
+}

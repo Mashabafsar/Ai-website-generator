@@ -341,14 +341,17 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     label: "Testimonials — grid",
     description: "Social proof from happy customers.",
     componentName: "TestimonialsGrid",
-    needsImage: false,
+    // Some designs (e.g. CraftedSpaces) use a background photo behind the quote.
+    // Sourcing it makes the image match the business instead of a stock fallback.
+    needsImage: true,
+    imageOrientation: "landscape",
     fields: [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "quotes", label: "Quotes", type: "string[]", required: true },
       { key: "authors", label: "Authors", type: "string[]", required: true },
       { key: "roles", label: "Roles", type: "string[]" },
     ],
-    keywords: () => [],
+    keywords: (ctx) => [`${ctx.industry} lifestyle`, ctx.industry, "happy customers"],
     defaults: (ctx) => ({
       heading: "What our clients say",
       quotes: [

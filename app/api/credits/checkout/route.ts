@@ -24,7 +24,9 @@ export async function POST(req: Request) {
   }
 
   const priceId = creditPackPriceId(body.packId);
-  const successUrl = `${env.appUrl}/app/credits?purchase=success`;
+  // {CHECKOUT_SESSION_ID} is substituted by Stripe so the app can reconcile the
+  // purchase on return, even if the webhook never arrives (e.g. on localhost).
+  const successUrl = `${env.appUrl}/app/credits?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${env.appUrl}/app/credits?purchase=cancelled`;
 
   const session = await stripe.checkout.sessions.create({

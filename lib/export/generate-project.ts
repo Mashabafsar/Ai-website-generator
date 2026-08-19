@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import { renderSiteToFiles } from "@/lib/export/html-renderer";
+import { bespokeAssetPaths } from "@/templates/export-registry";
 import type { AssembledSite, StockImageReference, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { slugify } from "@/lib/utils";
 
@@ -23,55 +24,9 @@ function collectUploadPaths(blueprint: WebsiteBlueprint): string[] {
   return [...paths];
 }
 
-/** Images a bespoke design ships with and falls back to when a slot has none. */
-function designAssetPaths(site: AssembledSite): string[] {
-  if (site.renderer === "forgetech" || site.templateSlug === "forgetech") {
-    return [
-      "templates/forgetech/hero.jpg",
-      "templates/forgetech/about.jpg",
-      "templates/forgetech/project.jpg",
-    ];
-  }
-  if (site.renderer === "techvantage" || site.templateSlug === "techvantage") {
-    // Techvantage's icons and logo are part of the design, not stock content, so
-    // the whole asset folder travels with the export.
-    return [
-      "hero.jpg",
-      "about-1.jpg",
-      "about-2.jpg",
-      "approach.jpg",
-      "case-1.jpg",
-      "case-2.jpg",
-      "case-3.jpg",
-      "case-4.jpg",
-      "article-1.jpg",
-      "article-2.jpg",
-      "article-3.jpg",
-      "avatar.png",
-      "cta-bg.jpg",
-      "logo.svg",
-      "check.svg",
-      "arrow-up-right.svg",
-      "phone-glyph.svg",
-      "contact-phone-glyph.svg",
-      "contact-email.svg",
-      "contact-location.svg",
-      "icon-consulting.svg",
-      "icon-software.svg",
-      "icon-cloud.svg",
-      "icon-tailored.svg",
-      "icon-technology.svg",
-      "icon-secure.svg",
-      "icon-record.svg",
-      "social-1.svg",
-      "social-2.svg",
-      "social-3.svg",
-      "social-4.svg",
-      "social-5.svg",
-    ].map((file) => `templates/techvantage/${file}`);
-  }
-  return [];
-}
+// Images a bespoke design ships with (and falls back to when a slot has none)
+// come from the template registry, so the export bundle can never drift from the
+// renderer. See templates/[slug]/assets.ts.
 
 /**
  * Turns an assembled site + blueprint into a complete, hostable project: static
@@ -95,7 +50,7 @@ export async function generateProjectFiles(params: {
 
   // Include user-uploaded images and any design assets the layout falls back to,
   // so ZIP / GitHub sites stay self-contained.
-  for (const rel of [...collectUploadPaths(blueprint), ...designAssetPaths(site)]) {
+  for (const rel of [...collectUploadPaths(blueprint), ...bespokeAssetPaths(site)]) {
     try {
       const abs = path.join(process.cwd(), "public", rel);
       const buf = await readFile(abs);

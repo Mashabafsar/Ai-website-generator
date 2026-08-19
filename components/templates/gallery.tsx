@@ -101,7 +101,7 @@ export function TemplateGallery({
         {templates.map((template) => (
           <article
             key={template.id}
-            className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
+            className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
           >
             <button
               type="button"

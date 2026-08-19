@@ -5,6 +5,7 @@ import {
   BlueprintInvalidError,
   TemplateStructureError,
 } from "@/lib/agents/editor";
+import { themeSchema } from "@/lib/blueprint/schema";
 import type { WebsiteBlueprint, ThemeTokens } from "@/lib/blueprint/types";
 
 type Ctx = { params: Promise<{ projectId: string }> };
@@ -20,8 +21,13 @@ export async function POST(req: Request, { params }: Ctx) {
   const body = await readJson<{ blueprint: WebsiteBlueprint; theme: ThemeTokens }>(req);
   if (!body?.blueprint || !body?.theme) return jsonError("Missing blueprint or theme", 400);
 
+  const theme = themeSchema.safeParse(body.theme);
+  if (!theme.success) {
+    return jsonError("Invalid theme", 400, "VALIDATION", theme.error.issues);
+  }
+
   try {
-    await saveProjectContent({ projectId, blueprint: body.blueprint, theme: body.theme });
+    await saveProjectContent({ projectId, blueprint: body.blueprint, theme: theme.data });
     return jsonOk({ ok: true });
   } catch (err) {
     if (err instanceof BlueprintInvalidError) {

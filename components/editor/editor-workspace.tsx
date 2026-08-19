@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Lock, Save, Sparkles, Wand2 } from "lucide-react";
+import { ChevronDown, Loader2, Lock, Save, Sparkles, Upload, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import type {
   WebsiteBlueprint,
@@ -153,6 +153,8 @@ export function EditorWorkspace({
         </div>
 
         <ThemeEditor
+          projectId={projectId}
+          businessName={blueprint.business.name}
           theme={theme}
           onChange={(t) => {
             setTheme(t);
@@ -195,27 +197,144 @@ export function EditorWorkspace({
   );
 }
 
-function ThemeEditor({ theme, onChange }: { theme: ThemeTokens; onChange: (t: ThemeTokens) => void }) {
+function ThemeEditor({
+  projectId,
+  businessName,
+  theme,
+  onChange,
+}: {
+  projectId: string;
+  businessName: string;
+  theme: ThemeTokens;
+  onChange: (t: ThemeTokens) => void;
+}) {
   const set = (key: keyof ThemeTokens["colors"], value: string) =>
     onChange({ ...theme, colors: { ...theme.colors, [key]: value } });
 
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="mb-3 text-sm font-semibold">Brand colors</div>
-      <div className="grid grid-cols-3 gap-3">
-        {(["primary", "secondary", "accent"] as const).map((key) => (
-          <div key={key} className="space-y-1">
-            <Label className="text-xs capitalize">{key}</Label>
-            <input
-              type="color"
-              value={theme.colors[key]}
-              onChange={(e) => set(key, e.target.value)}
-              className="h-8 w-8 cursor-pointer rounded border"
-              aria-label={`${key} color`}
-            />
-          </div>
-        ))}
+    <div className="space-y-4 rounded-xl border bg-card p-4">
+      <div>
+        <div className="mb-3 text-sm font-semibold">Brand colors</div>
+        <div className="grid grid-cols-3 gap-3">
+          {(["primary", "secondary", "accent"] as const).map((key) => (
+            <div key={key} className="space-y-1">
+              <Label className="text-xs capitalize">{key}</Label>
+              <input
+                type="color"
+                value={theme.colors[key]}
+                onChange={(e) => set(key, e.target.value)}
+                className="h-8 w-8 cursor-pointer rounded border"
+                aria-label={`${key} color`}
+              />
+            </div>
+          ))}
+        </div>
       </div>
+
+      <LogoUploader
+        projectId={projectId}
+        businessName={businessName}
+        value={theme.logoUrl}
+        onChange={(url) => onChange({ ...theme, logoUrl: url ?? undefined })}
+      />
+    </div>
+  );
+}
+
+function LogoUploader({
+  projectId,
+  businessName,
+  value,
+  onChange,
+}: {
+  projectId: string;
+  businessName: string;
+  value?: string;
+  onChange: (url: string | null) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function upload(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("altText", `${businessName} logo`);
+      const res = await fetch(`/api/projects/${projectId}/images/upload`, {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      onChange(data.image.url as string);
+      toast.success("Logo updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="border-t pt-4">
+      <div className="mb-1 text-sm font-semibold">Logo</div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Upload your own mark to replace the template icon. The name beside it always reads{" "}
+        <span className="font-medium text-foreground">{businessName}</span> in the template&apos;s own
+        type style.
+      </p>
+
+      <div className="flex items-center gap-3">
+        <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md border bg-muted/40">
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value} alt={`${businessName} logo`} className="h-full w-full object-contain p-1" />
+          ) : (
+            <span className="text-[10px] text-muted-foreground">None</span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
+          >
+            {uploading ? (
+              <Loader2 className="mr-1 size-3.5 animate-spin" />
+            ) : (
+              <Upload className="mr-1 size-3.5" />
+            )}
+            {value ? "Replace logo" : "Upload logo"}
+          </Button>
+          {value ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => onChange(null)}
+            >
+              Use template icon
+            </Button>
+          ) : null}
+          <span className="text-[11px] text-muted-foreground">PNG, JPEG, WebP, or GIF · max 2MB</span>
+        </div>
+      </div>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => void upload(e.target.files?.[0] ?? null)}
+      />
     </div>
   );
 }

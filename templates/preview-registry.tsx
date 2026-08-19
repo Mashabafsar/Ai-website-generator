@@ -1,0 +1,62 @@
+// Client-safe map of renderer -> React renderer, each wrapped in the shared
+// motion runtime. Imported by the editor / live preview / public demo. Contains
+// no Node-only export code.
+
+import type { AssembledSite, WebsiteBlueprint, SiteContact } from "@/lib/blueprint/types";
+import { TemplateMotionRoot } from "./shared/motion/root";
+import type { MotionProfile } from "./shared/motion/profile";
+import type { TemplatePreview } from "./contracts";
+import { getTemplateModule } from "./registry";
+
+import { ForgeTechSite } from "./forgetech/site";
+import { TechvantageSite } from "./techvantage/site";
+import { CraftedSpacesSite } from "./craftedspaces/site";
+
+import { forgetechMotion } from "./forgetech/motion";
+import { techvantageMotion } from "./techvantage/motion";
+import { craftedspacesMotion } from "./craftedspaces/motion";
+
+type PreviewEntry = { Component: TemplatePreview; motion: MotionProfile };
+
+const PREVIEWS: Record<string, PreviewEntry> = {
+  forgetech: { Component: ForgeTechSite, motion: forgetechMotion },
+  techvantage: { Component: TechvantageSite, motion: techvantageMotion },
+  craftedspaces: { Component: CraftedSpacesSite, motion: craftedspacesMotion },
+};
+
+/** True when a design has a dedicated bespoke React renderer. */
+export function hasBespokePreview(key: string | null | undefined): boolean {
+  return Boolean(key && PREVIEWS[key]);
+}
+
+/**
+ * Renders a bespoke design (by renderer or slug) wrapped in the shared motion
+ * runtime. Returns null for the generic `standard-sections` path so the caller
+ * can fall back to the section registry.
+ */
+export function BespokePreview({
+  site,
+  blueprint,
+  contact,
+}: {
+  site?: AssembledSite | null;
+  blueprint?: WebsiteBlueprint | null;
+  contact?: SiteContact | null;
+}) {
+  const key =
+    (site?.renderer && PREVIEWS[site.renderer] && site.renderer) ||
+    (site?.templateSlug && PREVIEWS[site.templateSlug] && site.templateSlug) ||
+    null;
+
+  if (!key) return null;
+
+  const entry = PREVIEWS[key];
+  const motion = getTemplateModule(key)?.motion ?? entry.motion;
+  const { Component } = entry;
+
+  return (
+    <TemplateMotionRoot profile={motion}>
+      <Component site={site} blueprint={blueprint} contact={contact} />
+    </TemplateMotionRoot>
+  );
+}

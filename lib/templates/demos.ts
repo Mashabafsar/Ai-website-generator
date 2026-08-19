@@ -1,40 +1,26 @@
-// Sample content behind each design's public live demo. The library preview
-// shows the finished, scrollable website rather than a screenshot, so every
-// published design needs an entry here — add one when a design is uploaded.
+// Adapter over the bespoke template registry (templates/registry.ts). Demo
+// content now lives beside each design in templates/[slug]/demo.ts and is
+// registered through its metadata, so publishing a design automatically gives it
+// a live demo — nothing to wire here.
 
-import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
+import type { AssembledSite } from "@/lib/blueprint/types";
 import type { SiteTemplate } from "@/lib/templates/types";
+import type { TemplateDemoData } from "@/templates/contracts";
 import { createTheme } from "@/lib/agents/theme";
 import { assembleSite } from "@/lib/agents/section-assembly";
-import { forgetechDemoBlueprint } from "@/components/templates/forgetech/demo-blueprint";
-import { techvantageDemoBlueprint } from "@/components/templates/techvantage/demo-blueprint";
+import {
+  getTemplateDemo as getModuleDemo,
+  templateSlugsWithDemo as moduleSlugsWithDemo,
+} from "@/templates/registry";
 
-export type TemplateDemo = {
-  buildBlueprint: () => WebsiteBlueprint;
-  contact: SiteContact;
-};
-
-const DEMOS: Record<string, TemplateDemo> = {
-  forgetech: {
-    buildBlueprint: forgetechDemoBlueprint,
-    contact: { email: "hello@forgetech.example", phone: "(555) 214-8890" },
-  },
-  techvantage: {
-    buildBlueprint: techvantageDemoBlueprint,
-    contact: {
-      email: "info@techvantage.example",
-      phone: "(920) 006 9580",
-      address: "456 Lone Star Parkway, Austin, TX 78701",
-    },
-  },
-};
+export type TemplateDemo = TemplateDemoData;
 
 export function getTemplateDemo(slug: string): TemplateDemo | null {
-  return DEMOS[slug] ?? null;
+  return getModuleDemo(slug);
 }
 
 export function templateSlugsWithDemo(): string[] {
-  return Object.keys(DEMOS);
+  return moduleSlugsWithDemo();
 }
 
 /**
