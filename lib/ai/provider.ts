@@ -1,6 +1,7 @@
 import { env } from "@/lib/env";
 import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
 import { withTimeout } from "@/lib/ai/timeout";
+import { estimateTokens, recordUsage } from "@/lib/ai/usage";
 import {
   type SectionContent,
   buildMockBlueprint,
@@ -28,11 +29,31 @@ export class MockAiProvider implements AiProvider {
   readonly name = "mock";
 
   async generateBlueprint(req: NormalizedRequirements): Promise<WebsiteBlueprint> {
-    return buildMockBlueprint(req);
+    const blueprint = buildMockBlueprint(req);
+    const out = JSON.stringify(blueprint);
+    recordUsage({
+      provider: "mock",
+      model: "deterministic-template",
+      promptTokens: 0,
+      completionTokens: estimateTokens(out),
+      totalTokens: estimateTokens(out),
+      estimated: true,
+    });
+    return blueprint;
   }
 
   async reviseSection({ section, instruction }: { section: WebsiteSection; instruction: string }) {
-    return deterministicRevise(section, instruction);
+    const content = deterministicRevise(section, instruction);
+    const out = JSON.stringify(content);
+    recordUsage({
+      provider: "mock",
+      model: "deterministic-template",
+      promptTokens: 0,
+      completionTokens: estimateTokens(out),
+      totalTokens: estimateTokens(out),
+      estimated: true,
+    });
+    return content;
   }
 }
 
@@ -50,7 +71,40 @@ export class CursorAiProvider implements AiProvider {
     if (result.status === "error") {
       throw new Error("Cursor agent run failed");
     }
-    return typeof result.result === "string" ? result.result : JSON.stringify(result.result ?? "");
+    const output =
+      typeof result.result === "string" ? result.result : JSON.stringify(result.result ?? "");
+
+    // Prefer real token usage if the SDK exposes it; otherwise estimate.
+    const usage = (result as unknown as { usage?: Record<string, unknown> }).usage;
+    const numOr = (v: unknown, fallback: number) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+    if (usage && typeof usage === "object") {
+      const promptTokens = numOr(usage.promptTokens ?? usage.inputTokens, estimateTokens(prompt));
+      const completionTokens = numOr(usage.completionTokens ?? usage.outputTokens, estimateTokens(output));
+      recordUsage({
+        provider: "cursor",
+        model,
+        promptTokens,
+        completionTokens,
+        totalTokens: numOr(usage.totalTokens, promptTokens + completionTokens),
+        estimated: false,
+      });
+    } else {
+      const promptTokens = estimateTokens(prompt);
+      const completionTokens = estimateTokens(output);
+      recordUsage({
+        provider: "cursor",
+        model,
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+        estimated: true,
+      });
+    }
+
+    return output;
   }
 
   async generateBlueprint(req: NormalizedRequirements): Promise<WebsiteBlueprint> {

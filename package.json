@@ -11,7 +11,8 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "templates:validate": "ts-node --transpile-only --project templates/tsconfig.validate.json templates/validate.ts"
+    "templates:validate": "ts-node --transpile-only --project templates/tsconfig.validate.json templates/validate.ts",
+    "admin:grant": "node scripts/set-admin.mjs"
   },
   "prisma": {
     "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"

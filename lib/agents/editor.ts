@@ -6,6 +6,8 @@ import { validateBlueprint } from "@/lib/blueprint/schema";
 import { assembleSite } from "@/lib/agents/section-assembly";
 import { sanitizeBlueprint, sanitizeText } from "@/lib/agents/security";
 import { getAiProvider, type SectionContent } from "@/lib/ai/provider";
+import { withUsageCapture } from "@/lib/ai/usage";
+import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { getTemplateById } from "@/lib/templates/store";
@@ -203,11 +205,14 @@ export async function editSectionWithAi(params: {
   });
 
   const provider = getAiProvider();
-  const updated = await provider.reviseSection({
-    section,
-    instruction: cleanInstruction,
-    brandTone: blueprint.design.tone,
-  });
+  const { result: updated, events } = await withUsageCapture(() =>
+    provider.reviseSection({
+      section,
+      instruction: cleanInstruction,
+      brandTone: blueprint.design.tone,
+    })
+  );
+  await persistUsageEvents({ userId, projectId, operation: "light_edit", events });
 
   section.content = updated;
   await persistAndSync(projectId, blueprint, theme);

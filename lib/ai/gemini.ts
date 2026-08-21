@@ -1,9 +1,16 @@
 import { env } from "@/lib/env";
+import { estimateTokens, recordUsage } from "@/lib/ai/usage";
 
 type GeminiPart = { text?: string };
 type GeminiCandidate = { content?: { parts?: GeminiPart[] } };
+type GeminiUsage = {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  totalTokenCount?: number;
+};
 type GeminiResponse = {
   candidates?: GeminiCandidate[];
+  usageMetadata?: GeminiUsage;
   error?: { message?: string; status?: string };
 };
 
@@ -36,6 +43,33 @@ async function callGemini(prompt: string, model: string, jsonMode: boolean): Pro
     .trim();
 
   if (!text) throw new Error("Gemini returned an empty response");
+
+  const usage = data.usageMetadata;
+  if (usage && (usage.promptTokenCount || usage.candidatesTokenCount || usage.totalTokenCount)) {
+    const promptTokens = usage.promptTokenCount ?? 0;
+    const completionTokens = usage.candidatesTokenCount ?? 0;
+    recordUsage({
+      provider: "gemini",
+      model,
+      promptTokens,
+      completionTokens,
+      totalTokens: usage.totalTokenCount ?? promptTokens + completionTokens,
+      estimated: false,
+    });
+  } else {
+    // Some models/keys omit usageMetadata — fall back to a length estimate.
+    const promptTokens = estimateTokens(prompt);
+    const completionTokens = estimateTokens(text);
+    recordUsage({
+      provider: "gemini",
+      model,
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+      estimated: true,
+    });
+  }
+
   return text;
 }
 

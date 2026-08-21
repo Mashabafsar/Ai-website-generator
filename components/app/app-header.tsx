@@ -11,10 +11,13 @@ const NAV = [
 export function AppHeader({
   user,
   balance,
+  isAdmin = false,
 }: {
   user: { name: string; email: string };
   balance: number;
+  isAdmin?: boolean;
 }) {
+  const nav = isAdmin ? [...NAV, { href: "/app/admin/usage", label: "Admin" }] : NAV;
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
       {/* On narrow screens the navigation wraps onto its own row rather than
@@ -24,7 +27,7 @@ export function AppHeader({
           <Logo />
         </Link>
         <nav className="order-last flex w-full items-center gap-5 text-sm font-medium sm:order-none sm:mr-auto sm:w-auto sm:pl-2">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}

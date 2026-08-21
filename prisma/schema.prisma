@@ -21,6 +21,7 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  isAdmin       Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -29,6 +30,7 @@ model User {
   project      Project?
   wallet       CreditWallet?
   ledger       CreditLedger[]
+  aiUsage      AiUsage[]
 
   @@map("user")
 }
@@ -239,4 +241,30 @@ model CreditLedger {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// Raw LLM token consumption per AI call, for the admin usage ledger. Recorded
+// independently of credits so the true model cost of each generation/edit is
+// visible even when the flat credit price differs from actual tokens.
+model AiUsage {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  projectId        String?
+
+  operation        String   // heavy_generate | light_edit
+  provider         String   // cursor | gemini | mock
+  model            String
+
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  // True when tokens were measured from the provider; false = estimated locally.
+  estimated        Boolean  @default(false)
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([operation])
 }

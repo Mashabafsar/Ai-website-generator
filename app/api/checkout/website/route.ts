@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   const quote = await generateAndSaveQuote(project.id);
   const { mode, lineItems } = buildPackageCheckout(quote);
 
-  const successUrl = `${env.appUrl}/app/project/${project.id}/deployment?checkout=success`;
+  // {CHECKOUT_SESSION_ID} lets the delivery page confirm the payment on return,
+  // even when the Stripe webhook can't reach the app (e.g. on localhost).
+  const successUrl = `${env.appUrl}/app/project/${project.id}/deployment?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${env.appUrl}/app/project/${project.id}/quote?checkout=cancelled`;
 
   const session = await stripe.checkout.sessions.create({

@@ -21,8 +21,10 @@ export const env = {
     // Gemini is the fallback when Cursor fails (or when Cursor isn't configured).
     geminiApiKey: process.env.GEMINI_API_KEY ?? "",
     geminiModel: process.env.GEMINI_MODEL_NAME ?? "gemini-2.5-flash",
-    // How long to wait on Cursor before falling through to Gemini (ms).
-    cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 25_000),
+    // How long to wait on Cursor before falling through to Gemini (ms). Set high
+    // so website generation prefers the primary Cursor model; users may wait
+    // longer before content appears. Edits keep a shorter cap (see provider.ts).
+    cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 60_000),
     // Explicit mock mode only. When false, the FallbackAiProvider chain runs:
     // Cursor → Gemini → deterministic template.
     useMock: bool(process.env.AI_USE_MOCK, false),
@@ -32,6 +34,15 @@ export const env = {
     signupBonus: num(process.env.SIGNUP_CREDIT_BONUS, 50),
     costHeavyGenerate: num(process.env.CREDIT_COST_HEAVY_GENERATE, 50),
     costLightEdit: num(process.env.CREDIT_COST_LIGHT_EDIT, 5),
+  },
+
+  admin: {
+    // Comma-separated emails allowed into /app/admin. In development any signed-in
+    // user is allowed so the admin tools are reachable without extra setup.
+    emails: (process.env.ADMIN_EMAILS ?? "admin@admin.com")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
   },
 
   images: {

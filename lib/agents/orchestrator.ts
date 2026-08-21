@@ -18,6 +18,8 @@ import { conformToTemplate } from "@/lib/agents/template-fill";
 import { getTemplateById } from "@/lib/templates/store";
 import { runQa, type QaReport } from "@/lib/agents/qa";
 import { getAiProvider } from "@/lib/ai/provider";
+import { withUsageCapture } from "@/lib/ai/usage";
+import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { slugify } from "@/lib/utils";
 
@@ -196,7 +198,13 @@ async function runGeneration(params: {
 
   try {
     const provider = getAiProvider();
-    let blueprint = await provider.generateBlueprint(requirements);
+    const { result: generated, events } = await withUsageCapture(() =>
+      provider.generateBlueprint(requirements)
+    );
+    // Meter tokens right after the model call so usage is recorded even if a
+    // later step fails (and credits get refunded).
+    await persistUsageEvents({ userId, projectId, operation: "heavy_generate", events });
+    let blueprint = generated;
 
     // The model only writes copy — snap its output back onto the locked layout.
     blueprint = conformToTemplate(blueprint, requirements);
