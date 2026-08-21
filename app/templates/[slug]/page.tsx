@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTemplateBySlug } from "@/lib/templates/store";
-import { buildDemoSite, getTemplateDemo, templateSlugsWithDemo } from "@/lib/templates/demos";
+import { buildDemoSite, getTemplateDemo } from "@/lib/templates/demos";
 import { SitePreview } from "@/components/editor/site-preview";
 
 type Params = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return templateSlugsWithDemo().map((slug) => ({ slug }));
-}
+// Rendered on demand: this page reads template metadata from the database, so it
+// must not be prerendered at build time (DATABASE_URL isn't available then).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
