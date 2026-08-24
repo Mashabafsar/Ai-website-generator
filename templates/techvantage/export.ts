@@ -1,5 +1,6 @@
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
+import { brandCss } from "../shared/brand";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/techvantage/site.tsx.
@@ -638,7 +639,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Urbanist:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --tv-display: 'Urbanist', ui-sans-serif, system-ui, sans-serif; }
+    :root { --tv-display: 'Urbanist', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors?.primary, "#0C3DFF")} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;

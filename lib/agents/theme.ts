@@ -66,3 +66,24 @@ export function createTheme(colorPreference: string, visualStyle: string): Theme
     fontStyle: `${visualStyle.toLowerCase()} sans-serif`,
   };
 }
+
+/** The exact primary hexes the auto palettes produce (an "unchanged" default). */
+export const PALETTE_PRIMARIES = new Set(
+  Object.values(PALETTES).map((c) => c.primary.toLowerCase())
+);
+
+/**
+ * The brand accent a bespoke design should paint with. Bespoke designs ship a
+ * hand-tuned default accent; the editor's primary color overrides it. We treat a
+ * primary that still equals one of the auto palette defaults as "not customized"
+ * and keep the design's own accent, so demos and untouched projects look exactly
+ * as designed while a user-picked color takes effect immediately.
+ */
+export function effectiveBrand(
+  themePrimary: string | null | undefined,
+  designDefault: string
+): string {
+  const p = themePrimary?.trim();
+  if (!p) return designDefault;
+  return PALETTE_PRIMARIES.has(p.toLowerCase()) ? designDefault : p;
+}

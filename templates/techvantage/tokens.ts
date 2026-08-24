@@ -1,11 +1,11 @@
 // Techvantage design tokens, mapped from the Figma "Minimal" corporate theme.
 export const TV = {
-  /** Primary action blue. */
-  blue: "#0C3DFF",
+  /** Primary action blue — resolves to the editor's brand color via --brand. */
+  blue: "var(--brand, #0C3DFF)",
   /** Deeper blue used for pressed/secondary actions and link text. */
-  blueDeep: "#002FF5",
+  blueDeep: "var(--brand-strong, #002FF5)",
   /** Mid blue used for the services progress bar. */
-  blueSoft: "#2F6DFF",
+  blueSoft: "var(--brand, #2F6DFF)",
   /** Near-black navy for headings. */
   ink: "#1C2539",
   /** Darkest navy, used for the big statistic numerals. */

@@ -1,5 +1,6 @@
 import { FT } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
+import { brandCss } from "../shared/brand";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/forgetech/site.tsx. Exported
@@ -260,7 +261,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
           const image = services.itemImages[i];
           const art = image
             ? `background-image:url('${esc(image)}')`
-            : `background-image:linear-gradient(140deg,${FT.trinidadWash} 0%,${FT.trinidad}55 100%)`;
+            : `background-image:linear-gradient(140deg,${FT.trinidadWash} 0%,${FT.trinidadDeep} 100%)`;
           return `<article class="flex flex-col border bg-white" style="border-color:${FT.line}">
         <div class="h-44 bg-cover bg-center" style="background-color:${FT.trinidadWash};${art}"></div>
         <div class="flex flex-1 flex-col p-6">
@@ -508,7 +509,7 @@ ${
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --ft-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+    :root { --ft-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors?.primary, "#FF750B")} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;

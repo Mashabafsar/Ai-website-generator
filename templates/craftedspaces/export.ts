@@ -1,6 +1,7 @@
 import type { AssembledSite } from "@/lib/blueprint/types";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
+import { brandCss } from "../shared/brand";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -475,6 +476,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
+    :root { ${brandCss(site.theme?.colors?.primary, "#FFF6D2")} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;

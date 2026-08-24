@@ -2,6 +2,7 @@ import { Nunito_Sans, Space_Grotesk } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FT } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
+import { brandStyle } from "../shared/brand";
 
 const display = Space_Grotesk({
   subsets: ["latin"],
@@ -130,6 +131,7 @@ export function ForgeTechSite({
       id="ft-top"
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
+        ...brandStyle(site?.theme?.colors?.primary, "#FF750B"),
         fontFamily: "var(--ft-body), ui-sans-serif, system-ui, sans-serif",
         color: FT.ink,
         backgroundColor: "#ffffff",
@@ -358,7 +360,7 @@ export function ForgeTechSite({
                   backgroundColor: FT.trinidadWash,
                   backgroundImage: services.itemImages[i]
                     ? `url(${services.itemImages[i]})`
-                    : `linear-gradient(140deg, ${FT.trinidadWash} 0%, ${FT.trinidad}55 100%)`,
+                    : `linear-gradient(140deg, ${FT.trinidadWash} 0%, ${FT.trinidadDeep} 100%)`,
                 }}
               />
               <div className="flex flex-1 flex-col p-6">

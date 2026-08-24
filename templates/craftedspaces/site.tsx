@@ -2,6 +2,7 @@ import { Sora } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
+import { brandStyle } from "../shared/brand";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -165,6 +166,7 @@ export function CraftedSpacesSite({
       id="cs-top"
       className={`${sora.variable} scroll-smooth`}
       style={{
+        ...brandStyle(site?.theme?.colors?.primary, "#FFF6D2"),
         fontFamily: "var(--cs-font), ui-sans-serif, system-ui, sans-serif",
         color: CS.ink,
         backgroundColor: CS.canvas,

@@ -2,6 +2,7 @@ import { Inter, Urbanist } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
+import { brandStyle } from "../shared/brand";
 
 const display = Urbanist({
   subsets: ["latin"],
@@ -173,6 +174,7 @@ export function TechvantageSite({
       id="tv-top"
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
+        ...brandStyle(site?.theme?.colors?.primary, "#0C3DFF"),
         fontFamily: "var(--tv-body), ui-sans-serif, system-ui, sans-serif",
         color: TV.ink,
         backgroundColor: "#ffffff",
