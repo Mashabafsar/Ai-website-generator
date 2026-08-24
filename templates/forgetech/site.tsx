@@ -131,7 +131,7 @@ export function ForgeTechSite({
       id="ft-top"
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
-        ...brandStyle(site?.theme?.colors?.primary, "#FF750B"),
+        ...brandStyle(site?.theme?.colors, "#FF750B"),
         fontFamily: "var(--ft-body), ui-sans-serif, system-ui, sans-serif",
         color: FT.ink,
         backgroundColor: "#ffffff",

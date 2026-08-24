@@ -67,9 +67,15 @@ export function createTheme(colorPreference: string, visualStyle: string): Theme
   };
 }
 
-/** The exact primary hexes the auto palettes produce (an "unchanged" default). */
+/** The exact hexes the auto palettes produce (an "unchanged" default) per role. */
 export const PALETTE_PRIMARIES = new Set(
   Object.values(PALETTES).map((c) => c.primary.toLowerCase())
+);
+export const PALETTE_SECONDARIES = new Set(
+  Object.values(PALETTES).map((c) => c.secondary.toLowerCase())
+);
+export const PALETTE_ACCENTS = new Set(
+  Object.values(PALETTES).map((c) => c.accent.toLowerCase())
 );
 
 /**

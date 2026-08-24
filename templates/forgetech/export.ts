@@ -509,7 +509,7 @@ ${
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --ft-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors?.primary, "#FF750B")} }
+    :root { --ft-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#FF750B")} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;

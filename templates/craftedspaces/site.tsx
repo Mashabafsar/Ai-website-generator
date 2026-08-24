@@ -166,7 +166,7 @@ export function CraftedSpacesSite({
       id="cs-top"
       className={`${sora.variable} scroll-smooth`}
       style={{
-        ...brandStyle(site?.theme?.colors?.primary, "#FFF6D2"),
+        ...brandStyle(site?.theme?.colors, "#FFF6D2"),
         fontFamily: "var(--cs-font), ui-sans-serif, system-ui, sans-serif",
         color: CS.ink,
         backgroundColor: CS.canvas,

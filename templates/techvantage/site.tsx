@@ -174,7 +174,7 @@ export function TechvantageSite({
       id="tv-top"
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
-        ...brandStyle(site?.theme?.colors?.primary, "#0C3DFF"),
+        ...brandStyle(site?.theme?.colors, "#0C3DFF"),
         fontFamily: "var(--tv-body), ui-sans-serif, system-ui, sans-serif",
         color: TV.ink,
         backgroundColor: "#ffffff",
