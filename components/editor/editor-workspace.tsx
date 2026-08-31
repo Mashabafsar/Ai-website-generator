@@ -48,13 +48,15 @@ export function EditorWorkspace({
   const [theme, setTheme] = useState<ThemeTokens>(initialTheme);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeSlug, setActiveSlug] = useState(initialBlueprint.pages[0]?.slug ?? "home");
 
-  const activeSlug = blueprint.pages[0]?.slug ?? "home";
   const site = useMemo(
     () => ({ ...assembleSite(blueprint, theme), renderer, templateSlug, contact }),
     [blueprint, theme, renderer, templateSlug, contact]
   );
-  const activePage = blueprint.pages[0];
+  const activePage =
+    blueprint.pages.find((p) => p.slug === activeSlug) ?? blueprint.pages[0];
+  const multiPage = blueprint.pages.length > 1;
 
   function mutate(fn: (bp: WebsiteBlueprint) => void) {
     setBlueprint((prev) => {
@@ -66,7 +68,8 @@ export function EditorWorkspace({
   }
 
   function withSection(bp: WebsiteBlueprint, sectionId: string): WebsiteSection | undefined {
-    return bp.pages[0]?.sections.find((s) => s.id === sectionId);
+    const page = bp.pages.find((p) => p.slug === activeSlug) ?? bp.pages[0];
+    return page?.sections.find((s) => s.id === sectionId);
   }
 
   function updateField(sectionId: string, key: string, value: string | string[]) {
@@ -161,6 +164,33 @@ export function EditorWorkspace({
             setDirty(true);
           }}
         />
+
+        {multiPage && (
+          <div className="space-y-2 rounded-xl border bg-card p-4">
+            <div className="text-sm font-semibold">Pages</div>
+            <div className="flex flex-wrap gap-1.5">
+              {blueprint.pages.map((p) => (
+                <button
+                  key={p.slug}
+                  type="button"
+                  onClick={() => setActiveSlug(p.slug)}
+                  className={cn(
+                    "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+                    p.slug === activeSlug
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {p.title}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Editing the <span className="font-medium text-foreground">{activePage?.title}</span> page.
+              Its sections are locked to this design.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3">
           {activePage?.sections.map((section, i) => (

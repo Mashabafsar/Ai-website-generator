@@ -1,0 +1,25 @@
+// Design assets Whiter ships with and falls back to when a slot has no image.
+// Bundled into every ZIP / GitHub / deployment export.
+export const whiterAssets: string[] = [
+  "templates/whiter/hero.png",
+  "templates/whiter/content.png",
+  "templates/whiter/value.png",
+  "templates/whiter/about.png",
+  "templates/whiter/icon-target.svg",
+  "templates/whiter/icon-coin.svg",
+  "templates/whiter/icon-rocket.png",
+  "templates/whiter/icon-heart.svg",
+  "templates/whiter/icon-chart.svg",
+  "templates/whiter/team-1.png",
+  "templates/whiter/team-2.png",
+  "templates/whiter/team-3.png",
+  "templates/whiter/service-1.png",
+  "templates/whiter/service-2.png",
+  "templates/whiter/service-3.png",
+  "templates/whiter/portfolio-1.png",
+  "templates/whiter/portfolio-2.png",
+  "templates/whiter/portfolio-3.png",
+  "templates/whiter/blog-1.png",
+  "templates/whiter/blog-2.png",
+  "templates/whiter/blog-3.png",
+];

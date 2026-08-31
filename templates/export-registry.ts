@@ -10,11 +10,13 @@ import { getModuleForSite } from "./registry";
 import { renderForgeTechPage } from "./forgetech/export";
 import { renderTechvantagePage } from "./techvantage/export";
 import { renderCraftedSpacesPage } from "./craftedspaces/export";
+import { renderWhiterPage } from "./whiter/export";
 
 const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   forgetech: renderForgeTechPage,
   techvantage: renderTechvantagePage,
   craftedspaces: renderCraftedSpacesPage,
+  whiter: renderWhiterPage,
 };
 
 function rendererKey(site: AssembledSite): string | null {
@@ -29,13 +31,14 @@ export function hasBespokeExport(site: AssembledSite): boolean {
 }
 
 /**
- * Renders a bespoke design to a complete static HTML document with the shared
- * motion runtime injected. Returns null for the generic section path.
+ * Renders one page of a bespoke design to a complete static HTML document with
+ * the shared motion runtime injected. `pageSlug` defaults to "home"; single-page
+ * designs ignore it. Returns null for the generic section path.
  */
-export function renderBespokeSite(site: AssembledSite): string | null {
+export function renderBespokeSite(site: AssembledSite, pageSlug?: string): string | null {
   const key = rendererKey(site);
   if (!key) return null;
-  return withMotion(RENDERERS[key](site));
+  return withMotion(RENDERERS[key](site, pageSlug));
 }
 
 /** Public-relative asset paths the design ships with. */

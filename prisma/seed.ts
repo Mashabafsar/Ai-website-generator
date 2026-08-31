@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { ALL_SEEDS, assertSeedTemplatesValid } from "../lib/templates/registry";
+import { resolveSeedPages, serializeTemplatePages } from "../lib/templates/pages";
 
 const prisma = new PrismaClient();
 
@@ -17,7 +18,9 @@ async function main() {
       colorPreference: seed.colorPreference,
       visualStyle: seed.visualStyle,
       tone: seed.tone,
-      sections: JSON.stringify(seed.sections),
+      // Always store the multi-page structure; single-page designs resolve to a
+      // single "home" page, and the parser also still reads the legacy array.
+      sections: serializeTemplatePages(resolveSeedPages(seed)),
       renderer: seed.renderer,
       published: seed.published,
       sortOrder: seed.sortOrder,

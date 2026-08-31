@@ -40,6 +40,56 @@ reads templates from the DB via `lib/templates/store.ts`.
 
 ---
 
+## Multi-page templates & the page catalog
+
+A design can be **single-page** (just `home`) or **multi-page**. Multi-page
+designs declare a `pages` list in their seed; each page has its own locked,
+ordered slot list. Single-page designs keep declaring only `sections` (the home
+page) and behave exactly as before — the change is fully backward compatible.
+
+The allowed page types come from a fixed **page catalog**
+(`lib/blueprint/page-catalog.ts`):
+
+```text
+home (ALWAYS included), about, services, pricing, contact, faq, blog, portfolio
+```
+
+**The AI decides which pages to generate.** A template declares every page it
+*supports*; at generation time the heavy model picks which of the *optional*
+pages fit the business (home is always emitted). The choice is enforced
+deterministically in `conformToTemplate` (`lib/agents/template-fill.ts`): an
+optional page is kept only if the model returned a page with that slug and the
+template supports it, and each kept page is rebuilt to that page's locked slots.
+The deterministic/mock path (`lib/ai/mock-blueprint.ts`) emits **all** of a
+design's pages.
+
+Storage: `Template.sections` is a JSON string that supports two shapes, parsed
+by `lib/templates/pages.ts`:
+
+```jsonc
+// legacy single-page (still read):
+["hero-...", "features-grid", ...]
+// multi-page:
+{ "pages": [ { "slug": "home", "title": "Home", "sections": [ ... ] }, ... ] }
+```
+
+A `SiteTemplate` exposes both `sections` (the home slots, for quotes/features and
+single-page renderers) and `pages` (every page). Enforcement lives in the same
+three places as single-page locking, extended per page:
+
+- generation — `conformToTemplate` (page set + per-page slots)
+- prompting — `buildHeavyPrompt` lists each page and its slots
+- editor saves — `assertMatchesTemplate` validates each page's slot list
+
+**Rendering a specific page.** `toSlots(blueprint, site, pageSlug)` reads the
+requested page (default `home`). The bespoke React renderer (`site.tsx`) and its
+static twin (`export.ts`) both accept a `pageSlug`, render that page, and link
+between pages in their header/footer nav — `?page=<slug>` in the live preview,
+and `/` + `/<slug>/` between the exported static files. The multi-page export
+emits `index.html` for home and `<slug>/index.html` for the rest.
+
+---
+
 ## Directory structure
 
 Everything a bespoke design needs is co-located under `templates/<slug>/`:
@@ -327,6 +377,14 @@ Add the module to the three registries and the seed:
 
 Then `npm run db:seed`. Standard (`standard-sections`) designs need **only** a
 seed — no folder, no registry entries.
+
+For a **multi-page** design, additionally give the seed a `pages` array (each
+`{ slug, title, sections }`, `home` first) — see `WHITER_SEED` in
+`lib/templates/registry.ts`. Keep the seed's `sections` equal to the home page's
+slots (that's what `slots.ts` documents and the validator checks), and make sure
+the module's `demo.ts` blueprint includes a page for every declared slug with the
+exact same slot list (the validator enforces this too). The renderer's `site.tsx`
+/ `export.ts` switch on `pageSlug` to draw each page.
 
 The gallery card image is `public/templates/<slug>/preview.png`. Capture it from
 the running demo (`/templates/<slug>`) once the design looks right.

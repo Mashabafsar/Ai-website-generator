@@ -17,6 +17,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { ALL_SEEDS, assertSeedTemplatesValid } from "../lib/templates/registry";
+import { resolveSeedPages } from "../lib/templates/pages";
+import { isCatalogPage } from "../lib/blueprint/page-catalog";
 import { TEMPLATE_MODULES, getTemplateModule } from "./registry";
 
 const STANDARD = "standard-sections";
@@ -49,18 +51,55 @@ function main() {
       errors.push(`Module for renderer "${seed.renderer}" has slug "${mod.slug}" but seed slug is "${seed.slug}".`);
     }
 
-    // 6. Slot map lines up with the locked section list (count + type histogram).
-    if (mod.slots.length !== seed.sections.length) {
+    // 6. The slot map documents the HOME page; it must line up with the seed's
+    // home section list (count + type histogram).
+    const seedPages = resolveSeedPages(seed);
+    const homeSections = seedPages.find((p) => p.slug === "home")?.sections ?? seed.sections;
+    if (mod.slots.length !== homeSections.length) {
       errors.push(
-        `Design "${seed.slug}": slot map has ${mod.slots.length} regions but the seed locks ${seed.sections.length} sections.`
+        `Design "${seed.slug}": slot map has ${mod.slots.length} regions but the home page locks ${homeSections.length} sections.`
       );
     } else {
       const slotTypes = mod.slots.map((s) => s.type).sort();
-      const seedTypes = seed.sections.map(sectionTypeFromVariant).sort();
+      const seedTypes = homeSections.map(sectionTypeFromVariant).sort();
       if (JSON.stringify(slotTypes) !== JSON.stringify(seedTypes)) {
         errors.push(
-          `Design "${seed.slug}": slot map types ${JSON.stringify(slotTypes)} do not match seed section types ${JSON.stringify(seedTypes)}.`
+          `Design "${seed.slug}": slot map types ${JSON.stringify(slotTypes)} do not match home section types ${JSON.stringify(seedTypes)}.`
         );
+      }
+    }
+
+    // 6b. Multi-page integrity: every page slug is in the catalog, "home" leads,
+    // and the demo covers each declared page with the exact locked slot list.
+    if (seedPages.length > 1) {
+      if (seedPages[0].slug !== "home") {
+        errors.push(`Design "${seed.slug}": the first page must be "home" (got "${seedPages[0].slug}").`);
+      }
+      for (const page of seedPages) {
+        if (!isCatalogPage(page.slug)) {
+          errors.push(`Design "${seed.slug}": page slug "${page.slug}" is not in the page catalog.`);
+        }
+      }
+      try {
+        const bp = mod.demo.buildBlueprint();
+        const demoBySlug = new Map(bp.pages.map((p) => [p.slug, p.sections.map((s) => s.variant)]));
+        for (const page of seedPages) {
+          const demoVariants = demoBySlug.get(page.slug);
+          if (!demoVariants) {
+            errors.push(`Design "${seed.slug}": demo is missing the "${page.slug}" page declared in the seed.`);
+            continue;
+          }
+          const matches =
+            demoVariants.length === page.sections.length &&
+            demoVariants.every((v, i) => v === page.sections[i]);
+          if (!matches) {
+            errors.push(
+              `Design "${seed.slug}": demo page "${page.slug}" sections ${JSON.stringify(demoVariants)} do not match the seed's locked slots ${JSON.stringify(page.sections)}.`
+            );
+          }
+        }
+      } catch {
+        // The demo failure is reported by the check below.
       }
     }
   }

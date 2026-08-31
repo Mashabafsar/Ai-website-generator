@@ -27,12 +27,20 @@ export type TemplatePreviewProps = {
   site?: AssembledSite | null;
   /** Overrides contact details while editing. */
   contact?: SiteContact | null;
+  /**
+   * Which page to render for a multi-page design. Defaults to "home". Single-page
+   * designs ignore it.
+   */
+  pageSlug?: string;
 };
 
 export type TemplatePreview = ComponentType<TemplatePreviewProps>;
 
-/** Renders a persisted site to a single static HTML document. */
-export type TemplateHtmlRenderer = (site: AssembledSite) => string;
+/**
+ * Renders one page of a persisted site to a static HTML document. `pageSlug`
+ * defaults to "home"; single-page designs ignore it.
+ */
+export type TemplateHtmlRenderer = (site: AssembledSite, pageSlug?: string) => string;
 
 /** Sample content shown on the public `/templates/[slug]` live demo. */
 export type TemplateDemoData = {

@@ -4,18 +4,12 @@
 import type { Template as PrismaTemplate } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_TEMPLATE_SLUG } from "@/lib/templates/registry";
+import { parseSectionsField } from "@/lib/templates/pages";
 import type { SiteTemplate } from "@/lib/templates/types";
 
 export function parseTemplate(row: PrismaTemplate): SiteTemplate {
-  let sections: string[] = [];
-  try {
-    const parsed: unknown = JSON.parse(row.sections);
-    if (Array.isArray(parsed)) {
-      sections = parsed.filter((s): s is string => typeof s === "string");
-    }
-  } catch {
-    sections = [];
-  }
+  // Supports both the legacy flat array and the multi-page object shape.
+  const { pages, sections } = parseSectionsField(row.sections);
 
   return {
     id: row.id,
@@ -30,6 +24,7 @@ export function parseTemplate(row: PrismaTemplate): SiteTemplate {
     visualStyle: row.visualStyle,
     tone: row.tone,
     sections,
+    pages,
     renderer: row.renderer,
     published: row.published,
     sortOrder: row.sortOrder,

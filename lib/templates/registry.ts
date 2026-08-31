@@ -4,12 +4,19 @@
 
 // Relative imports keep this file runnable from the standalone Prisma seed script.
 import { getVariantSpec } from "../sections/registry";
-import type { SiteTemplate } from "./types";
+import { resolveSeedPages } from "./pages";
+import type { SiteTemplate, TemplatePageDef } from "./types";
 
 export type { SiteTemplate };
 
-/** Seed payload shape — Prisma assigns the id. */
-export type TemplateSeed = Omit<SiteTemplate, "id">;
+/**
+ * Seed payload shape — Prisma assigns the id. `sections` (the home page slots)
+ * stays required for backward compatibility; multi-page designs additionally
+ * declare `pages`. When `pages` is omitted the design is single-page (home only).
+ */
+export type TemplateSeed = Omit<SiteTemplate, "id" | "pages"> & {
+  pages?: TemplatePageDef[];
+};
 
 /** ForgeTech — the bespoke Figma industrial design with its own renderer. */
 export const FORGETECH_SEED: TemplateSeed = {
@@ -106,6 +113,96 @@ export const CRAFTEDSPACES_SEED: TemplateSeed = {
     "faq-accordion",
     "cta-banner",
     "footer-simple",
+  ],
+};
+
+/**
+ * Whiter — the bespoke, MULTI-PAGE SaaS/agency design (ported from the "Whiter"
+ * Bootstrap set). Bright blue accent, soft rounded cards, floating shapes. It
+ * supports the full page catalog; the AI decides which optional pages to include.
+ */
+export const WHITER_SEED: TemplateSeed = {
+  slug: "whiter",
+  name: "Whiter",
+  tagline: "Bright, friendly SaaS design with soft shapes and a full multi-page site.",
+  bestFor: "SaaS products, startups, digital agencies & no-code tools",
+  thumbnailUrl: "/templates/whiter/preview.png",
+  previewImageUrl: "/templates/whiter/preview.png",
+  accent: "#1787FC",
+  colorPreference: "Brand blue & violet",
+  visualStyle: "Modern",
+  tone: "Friendly & approachable",
+  renderer: "whiter",
+  published: true,
+  sortOrder: 3,
+  // The home page's locked slots (also mirrored as the first entry in `pages`).
+  sections: [
+    "hero-split-with-image",
+    "features-grid",
+    "about-with-image",
+    "features-grid",
+    "testimonials-grid",
+    "cta-banner",
+    "footer-simple",
+  ],
+  // Every page this multi-page design supports. "home" is mandatory; the AI
+  // chooses which of the optional pages to include for a given business.
+  pages: [
+    {
+      slug: "home",
+      title: "Home",
+      sections: [
+        "hero-split-with-image",
+        "features-grid",
+        "about-with-image",
+        "features-grid",
+        "testimonials-grid",
+        "cta-banner",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "about",
+      title: "About",
+      sections: [
+        "hero-centered",
+        "about-with-image",
+        "features-grid",
+        "testimonials-grid",
+        "cta-banner",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "services",
+      title: "Services",
+      sections: ["hero-centered", "services-cards", "process-steps", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "pricing",
+      title: "Pricing",
+      sections: ["hero-centered", "pricing-tiers", "faq-accordion", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "contact",
+      title: "Contact",
+      sections: ["hero-centered", "contact-split", "footer-simple"],
+    },
+    {
+      slug: "faq",
+      title: "FAQ",
+      sections: ["hero-centered", "faq-accordion", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "blog",
+      title: "Blog",
+      sections: ["hero-centered", "features-grid", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "portfolio",
+      title: "Portfolio",
+      sections: ["hero-centered", "portfolio-case-studies", "cta-banner", "footer-simple"],
+    },
   ],
 };
 
@@ -306,6 +403,7 @@ export const ALL_SEEDS: TemplateSeed[] = [
   FORGETECH_SEED,
   TECHVANTAGE_SEED,
   CRAFTEDSPACES_SEED,
+  WHITER_SEED,
   ...STANDARD_SEEDS,
 ];
 
@@ -314,9 +412,14 @@ export const DEFAULT_TEMPLATE_SLUG = FORGETECH_SEED.slug;
 /** Fails fast if a seed references a content slot with no component behind it. */
 export function assertSeedTemplatesValid(): void {
   for (const template of ALL_SEEDS) {
-    for (const variant of template.sections) {
-      if (!getVariantSpec(variant)) {
-        throw new Error(`Template "${template.slug}" references unknown variant "${variant}"`);
+    // Validate every page's slots (a single-page design resolves to one "home").
+    for (const page of resolveSeedPages(template)) {
+      for (const variant of page.sections) {
+        if (!getVariantSpec(variant)) {
+          throw new Error(
+            `Template "${template.slug}" page "${page.slug}" references unknown variant "${variant}"`
+          );
+        }
       }
     }
   }

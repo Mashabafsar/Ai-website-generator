@@ -1,6 +1,6 @@
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SectionContext } from "@/lib/sections/registry";
-import type { SiteTemplate } from "@/lib/templates/types";
+import type { SiteTemplate, TemplatePageDef } from "@/lib/templates/types";
 import { featuresFromVariants } from "@/lib/quote/features";
 
 export type NormalizedRequirements = {
@@ -21,8 +21,10 @@ export type NormalizedRequirements = {
     slug: string;
     name: string;
     renderer: string;
-    /** Ordered content slots the AI must fill — it may not change this list. */
+    /** The home page's ordered content slots (kept for single-page callers). */
     sections: string[];
+    /** Every page the design supports, each with its locked ordered slots. */
+    pages: TemplatePageDef[];
   };
 };
 
@@ -37,9 +39,13 @@ export function analyzeRequirements(
 ): NormalizedRequirements {
   const services = answers.services.map((s) => s.trim()).filter(Boolean);
   const location = answers.location?.trim() || undefined;
-  const features = featuresFromVariants(template.sections);
+  // Features come from every page's slots so a multi-page design's pricing /
+  // contact / gallery pages are reflected in the deterministic quote.
+  const allVariants = template.pages.flatMap((p) => p.sections);
+  const features = featuresFromVariants(allVariants.length ? allVariants : template.sections);
 
   const quoteSignals = ["service_business", "multi_section_homepage", `template:${template.slug}`];
+  if (template.pages.length > 1) quoteSignals.push("multi_page");
   for (const feature of features) {
     if (feature === "contact_form") quoteSignals.push("contact_form");
     if (feature === "gallery") quoteSignals.push("gallery");
@@ -81,6 +87,7 @@ export function analyzeRequirements(
       name: template.name,
       renderer: template.renderer,
       sections: template.sections,
+      pages: template.pages,
     },
   };
 }

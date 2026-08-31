@@ -1,5 +1,6 @@
 import { shortId } from "@/lib/utils";
 import { getVariantSpec } from "@/lib/sections/registry";
+import { pageTitle } from "@/lib/blueprint/page-catalog";
 import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteBlueprint, WebsitePage, WebsiteSection } from "@/lib/blueprint/types";
 
@@ -17,21 +18,27 @@ function makeSection(variant: string, req: NormalizedRequirements): WebsiteSecti
 }
 
 /**
- * Deterministic content generator for the selected template. Fills the
- * template's locked slots with registry defaults — used as the mock provider and
- * as the fallback when the AI response can't be validated.
+ * Deterministic content generator for the selected template. Fills every page's
+ * locked slots with registry defaults — used as the mock provider and as the
+ * fallback when the AI response can't be validated. The deterministic path
+ * includes ALL of the design's pages (home + every optional page it supports).
  */
 export function buildMockBlueprint(req: NormalizedRequirements): WebsiteBlueprint {
-  const page: WebsitePage = {
-    slug: "home",
-    title: req.business.name || "Home",
-    sections: req.template.sections.map((v) => makeSection(v, req)),
-  };
-  const pages: WebsitePage[] = [page];
+  const pageDefs = req.template.pages.length
+    ? req.template.pages
+    : [{ slug: "home", title: pageTitle("home"), sections: req.template.sections }];
 
-  const sectionCount = page.sections.length;
+  const pages: WebsitePage[] = pageDefs.map((def) => ({
+    slug: def.slug,
+    title:
+      def.title ||
+      (def.slug === "home" ? req.business.name || pageTitle("home") : pageTitle(def.slug)),
+    sections: def.sections.map((v) => makeSection(v, req)),
+  }));
+
+  const sectionCount = pages.reduce((n, p) => n + p.sections.length, 0);
   const complexityLevel =
-    sectionCount >= 9 ? "complex" : sectionCount >= 7 ? "medium" : "simple";
+    sectionCount >= 14 ? "complex" : sectionCount >= 9 ? "medium" : "simple";
 
   return {
     business: {
@@ -60,6 +67,7 @@ export function buildMockBlueprint(req: NormalizedRequirements): WebsiteBlueprin
       level: complexityLevel,
       reasons: [
         `${req.template.name} template`,
+        `${pages.length} page(s)`,
         `${sectionCount} section(s)`,
         `${req.features.length} feature(s)`,
         req.services.length > 4 ? "many services" : "focused services",

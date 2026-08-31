@@ -20,13 +20,13 @@ const OUTPUT_SHAPE = `Output JSON must match this TypeScript shape:
   "design": { "tone": string, "colorPalette": string[], "typography": string, "visualStyle": string },
   "pages": [
     {
-      "slug": "home",           // exactly ONE page with slug "home"
+      "slug": string,           // one of the page slugs listed above (must include "home")
       "title": string,
       "sections": [
         {
           "id": string,          // short unique id, e.g. "hero_1"
-          "type": string,        // copied from the slot list above
-          "variant": string,     // copied from the slot list above
+          "type": string,        // copied from that page's slot list above
+          "variant": string,     // copied from that page's slot list above
           "content": { [field: string]: string | string[] },
           "imageKeywords"?: string[]
         }
@@ -38,9 +38,9 @@ const OUTPUT_SHAPE = `Output JSON must match this TypeScript shape:
   "complexity": { "level": "simple" | "medium" | "complex", "reasons"?: string[] }
 }`;
 
-/** The template's locked slots, spelled out so the model can only fill them in. */
-function templateSlots(req: NormalizedRequirements): string {
-  return req.template.sections
+/** One page's locked slots, spelled out so the model can only fill them in. */
+function pageSlots(sections: string[]): string {
+  return sections
     .map((variant, index) => {
       const spec = getVariantSpec(variant);
       if (!spec) return null;
@@ -48,10 +48,26 @@ function templateSlots(req: NormalizedRequirements): string {
         .map((f) => `${f.key}${f.type === "string[]" ? "[]" : ""}`)
         .join(", ");
       const image = spec.needsImage ? " (also return imageKeywords)" : "";
-      return `${index + 1}. type "${spec.type}", variant "${spec.variant}" — fields { ${fields} }${image}`;
+      return `   ${index + 1}. type "${spec.type}", variant "${spec.variant}" — fields { ${fields} }${image}`;
     })
     .filter(Boolean)
     .join("\n");
+}
+
+/**
+ * Describes every page the design supports. "home" is mandatory; the rest are
+ * optional and the model picks which to include based on the business — but it
+ * can only ever choose from THIS list and must keep each page's slots verbatim.
+ */
+function templatePages(req: NormalizedRequirements): string {
+  return req.template.pages
+    .map((page) => {
+      const optional = page.slug === "home" ? "(ALWAYS include)" : "(OPTIONAL — include only if it fits the business)";
+      return [`PAGE "${page.slug}" — ${page.title} ${optional}, sections in this EXACT order:`, pageSlots(page.sections)].join(
+        "\n"
+      );
+    })
+    .join("\n\n");
 }
 
 export function buildHeavyPrompt(req: NormalizedRequirements): string {
@@ -62,6 +78,16 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     contact: req.contact,
   };
 
+  const optionalSlugs = req.template.pages.filter((p) => p.slug !== "home").map((p) => `"${p.slug}"`);
+  const pageChoice = optionalSlugs.length
+    ? [
+        `This design supports these OPTIONAL pages: ${optionalSlugs.join(", ")}.`,
+        "YOU decide which of them to include based on the business — a simple business",
+        "may only need home; a richer one benefits from more. Always include \"home\".",
+        "Only emit pages from the list below, and never invent a page or a slot.",
+      ].join("\n")
+    : 'This design is a single page. Return exactly one page with slug "home".';
+
   return [
     GUARDRAILS,
     "",
@@ -70,18 +96,19 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     `CHOSEN DESIGN: "${req.template.name}" — a finished website design with a fixed`,
     `layout and a ${req.tone.toLowerCase()} tone. Your job is to write its content.`,
     "",
-    `THE ${req.template.sections.length} SECTIONS TO FILL, IN THIS EXACT ORDER:`,
-    templateSlots(req),
+    pageChoice,
     "",
-    "Populate every field listed for each section. Fields ending with [] are string",
-    "arrays; keep parallel arrays (e.g. itemTitles/itemBodies) the same length.",
-    "Photos are auto-sourced from stock providers and editable later — return",
-    "imageKeywords where asked and never invent image URLs.",
+    "THE PAGES AND THEIR LOCKED SECTIONS:",
+    templatePages(req),
+    "",
+    "For every page you include, populate every field of every section. Fields ending",
+    "with [] are string arrays; keep parallel arrays (e.g. itemTitles/itemBodies) the",
+    "same length. Photos are auto-sourced from stock providers and editable later —",
+    "return imageKeywords where asked and never invent image URLs.",
     "",
     "BUSINESS REQUIREMENTS (normalized questionnaire):",
     JSON.stringify(requirements, null, 2),
     "",
-    'Return exactly ONE page with slug "home" holding those sections in that order.',
     `Write original, on-brand copy in a ${req.tone} tone for ${req.audience || "this audience"}.`,
     "",
     OUTPUT_SHAPE,

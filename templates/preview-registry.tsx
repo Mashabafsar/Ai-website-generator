@@ -11,10 +11,12 @@ import { getTemplateModule } from "./registry";
 import { ForgeTechSite } from "./forgetech/site";
 import { TechvantageSite } from "./techvantage/site";
 import { CraftedSpacesSite } from "./craftedspaces/site";
+import { WhiterSite } from "./whiter/site";
 
 import { forgetechMotion } from "./forgetech/motion";
 import { techvantageMotion } from "./techvantage/motion";
 import { craftedspacesMotion } from "./craftedspaces/motion";
+import { whiterMotion } from "./whiter/motion";
 
 type PreviewEntry = { Component: TemplatePreview; motion: MotionProfile };
 
@@ -22,6 +24,7 @@ const PREVIEWS: Record<string, PreviewEntry> = {
   forgetech: { Component: ForgeTechSite, motion: forgetechMotion },
   techvantage: { Component: TechvantageSite, motion: techvantageMotion },
   craftedspaces: { Component: CraftedSpacesSite, motion: craftedspacesMotion },
+  whiter: { Component: WhiterSite, motion: whiterMotion },
 };
 
 /** True when a design has a dedicated bespoke React renderer. */
@@ -38,10 +41,12 @@ export function BespokePreview({
   site,
   blueprint,
   contact,
+  pageSlug,
 }: {
   site?: AssembledSite | null;
   blueprint?: WebsiteBlueprint | null;
   contact?: SiteContact | null;
+  pageSlug?: string;
 }) {
   const key =
     (site?.renderer && PREVIEWS[site.renderer] && site.renderer) ||
@@ -56,7 +61,7 @@ export function BespokePreview({
 
   return (
     <TemplateMotionRoot profile={motion}>
-      <Component site={site} blueprint={blueprint} contact={contact} />
+      <Component site={site} blueprint={blueprint} contact={contact} pageSlug={pageSlug} />
     </TemplateMotionRoot>
   );
 }

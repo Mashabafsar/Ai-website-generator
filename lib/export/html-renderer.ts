@@ -4,7 +4,7 @@ import type {
   AssembledPage,
   StockImageReference,
 } from "@/lib/blueprint/types";
-import { renderBespokeSite } from "@/templates/export-registry";
+import { renderBespokeSite, hasBespokeExport } from "@/templates/export-registry";
 
 // Renders an AssembledSite to a set of static, hostable HTML files. Tailwind is
 // loaded via the Play CDN and theme tokens are injected as CSS variables, so the
@@ -440,10 +440,19 @@ ${footer}
 /** Returns a map of relative file path -> file contents for the whole site. */
 export function renderSiteToFiles(site: AssembledSite): Record<string, string> {
   // Bespoke designs ship their own markup (with the shared motion runtime
-  // injected) so the exported site matches the design the customer chose.
-  const bespoke = renderBespokeSite(site);
-  if (bespoke) {
-    return { "index.html": bespoke };
+  // injected) so the exported site matches the design the customer chose. A
+  // multi-page bespoke design emits one file per page (home -> index.html,
+  // others -> <slug>/index.html) with inter-page nav that works between them.
+  if (hasBespokeExport(site)) {
+    const files: Record<string, string> = {};
+    const pages = site.pages.length ? site.pages : [{ slug: "home", title: "Home", sections: [] }];
+    for (const page of pages) {
+      const html = renderBespokeSite(site, page.slug);
+      if (!html) continue;
+      const path = page.slug === "home" ? "index.html" : `${page.slug}/index.html`;
+      files[path] = html;
+    }
+    if (Object.keys(files).length) return files;
   }
 
   const files: Record<string, string> = {};

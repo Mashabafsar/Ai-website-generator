@@ -25,8 +25,15 @@
     "craftedspaces/motion.ts",
     "craftedspaces/slots.ts",
     "craftedspaces/assets.ts",
+    "whiter/metadata.ts",
+    "whiter/demo.ts",
+    "whiter/motion.ts",
+    "whiter/slots.ts",
+    "whiter/assets.ts",
     "../lib/templates/registry.ts",
     "../lib/templates/types.ts",
+    "../lib/templates/pages.ts",
+    "../lib/blueprint/page-catalog.ts",
     "../lib/sections/registry.ts"
   ]
 }

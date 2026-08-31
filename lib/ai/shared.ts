@@ -39,8 +39,15 @@ function softNormalize(input: unknown): unknown {
   }
   const pages = obj.pages;
   if (Array.isArray(pages) && pages.length > 0) {
-    const first = pages[0] as Record<string, unknown>;
-    if (first && typeof first === "object") first.slug = "home";
+    // Guarantee a "home" page: if the model never labelled one, treat the first
+    // page as home. Otherwise leave the model's (possibly multi-page) set alone.
+    const hasHome = pages.some(
+      (p) => p && typeof p === "object" && (p as Record<string, unknown>).slug === "home"
+    );
+    if (!hasHome) {
+      const first = pages[0] as Record<string, unknown>;
+      if (first && typeof first === "object") first.slug = "home";
+    }
   }
   return obj;
 }
@@ -60,7 +67,8 @@ export async function generateBlueprintWithRunner(
       "Your previous JSON was invalid. Fix these issues and return ONLY corrected JSON:",
       ...parsed.errors.map((e) => `- ${e}`),
       "",
-      "Remember: exactly ONE page with slug \"home\". SEO title ≤ 70 chars, description ≤ 200.",
+      'Remember: always include a page with slug "home"; only use the page slugs and',
+      "section slots listed in the design. SEO title ≤ 70 chars, description ≤ 200.",
       "",
       "Previous output:",
       raw,

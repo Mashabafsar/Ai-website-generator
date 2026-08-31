@@ -57,23 +57,16 @@ export function sanitizeBlueprint(blueprint: WebsiteBlueprint): WebsiteBlueprint
   blueprint.seo.title = sanitizeText(blueprint.seo.title).slice(0, 70);
   blueprint.seo.description = sanitizeText(blueprint.seo.description).slice(0, 200);
 
-  // Enforce single-page sites: merge every page's sections onto the first page.
-  if (blueprint.pages.length > 1) {
-    const home = blueprint.pages[0];
-    home.slug = "home";
-    for (let i = 1; i < blueprint.pages.length; i++) {
-      for (const section of blueprint.pages[i].sections) {
-        if (section.type === "footer" || section.type === "hero") continue;
-        home.sections.push(section);
-      }
+  // Ensure a "home" page always leads the site. Multi-page designs keep every
+  // page; single-page designs are unaffected (their only page becomes home).
+  if (blueprint.pages.length) {
+    const homeIdx = blueprint.pages.findIndex((p) => p.slug === "home");
+    if (homeIdx > 0) {
+      const [home] = blueprint.pages.splice(homeIdx, 1);
+      blueprint.pages.unshift(home);
+    } else if (homeIdx === -1) {
+      blueprint.pages[0].slug = "home";
     }
-    // Keep a single footer at the end if one exists.
-    const footers = home.sections.filter((s) => s.type === "footer");
-    const body = home.sections.filter((s) => s.type !== "footer");
-    home.sections = footers.length ? [...body, footers[footers.length - 1]] : body;
-    blueprint.pages = [home];
-  } else if (blueprint.pages[0]) {
-    blueprint.pages[0].slug = "home";
   }
 
   return blueprint;

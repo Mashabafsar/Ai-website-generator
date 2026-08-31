@@ -147,7 +147,12 @@ export async function saveProjectContent(params: {
   await persistAndSync(params.projectId, result.blueprint, params.theme);
 }
 
-/** Rejects saves that add, remove, reorder, or swap any of the locked slots. */
+/**
+ * Rejects saves that add, remove, reorder, or swap any of the locked slots. For
+ * a multi-page design each incoming page must be one the design supports and
+ * must carry exactly that page's locked slot list, in order. A "home" page is
+ * always required; the other pages may be a subset (the ones the AI generated).
+ */
 async function assertMatchesTemplate(
   projectId: string,
   blueprint: WebsiteBlueprint
@@ -161,15 +166,27 @@ async function assertMatchesTemplate(
   const template = await getTemplateById(project.templateId);
   if (!template) return;
 
-  const incoming = blueprint.pages.flatMap((page) => page.sections.map((s) => s.variant));
-  const expected = template.sections;
-  const matches =
-    incoming.length === expected.length && incoming.every((v, i) => v === expected[i]);
-
-  if (!matches) {
-    throw new TemplateStructureError(
-      `The ${template.name} design has a fixed layout. Edit the content of its sections instead of changing their order or number.`
+  const structureError = () =>
+    new TemplateStructureError(
+      `The ${template.name} design has a fixed layout. Edit the content of its sections instead of changing their pages, order, or number.`
     );
+
+  const templateBySlug = new Map(template.pages.map((p) => [p.slug, p.sections]));
+
+  if (!blueprint.pages.some((p) => p.slug === "home")) throw structureError();
+
+  const seen = new Set<string>();
+  for (const page of blueprint.pages) {
+    if (seen.has(page.slug)) throw structureError();
+    seen.add(page.slug);
+
+    const expected = templateBySlug.get(page.slug);
+    if (!expected) throw structureError();
+
+    const incoming = page.sections.map((s) => s.variant);
+    const matches =
+      incoming.length === expected.length && incoming.every((v, i) => v === expected[i]);
+    if (!matches) throw structureError();
   }
 }
 

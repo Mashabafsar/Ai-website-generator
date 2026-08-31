@@ -9,12 +9,14 @@ import type { TemplateModuleMeta } from "./contracts";
 import { forgetechMeta } from "./forgetech/metadata";
 import { techvantageMeta } from "./techvantage/metadata";
 import { craftedspacesMeta } from "./craftedspaces/metadata";
+import { whiterMeta } from "./whiter/metadata";
 
 /** Every bespoke design. Add a new module's metadata here to register it. */
 export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
   forgetechMeta,
   techvantageMeta,
   craftedspacesMeta,
+  whiterMeta,
 ];
 
 const BY_RENDERER = new Map(TEMPLATE_MODULES.map((m) => [m.renderer, m]));

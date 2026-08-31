@@ -20,7 +20,7 @@ export function SitePreview({ site, pageSlug }: { site: AssembledSite; pageSlug?
   // Bespoke designs draw themselves; everything else goes through the approved
   // section component registry.
   if (hasBespokePreview(site.renderer) || hasBespokePreview(site.templateSlug)) {
-    return <BespokePreview site={site} />;
+    return <BespokePreview site={site} pageSlug={pageSlug} />;
   }
 
   const page = site.pages.find((p) => p.slug === pageSlug) ?? site.pages[0];

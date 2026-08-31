@@ -21,12 +21,26 @@ const url = (image: ImageLike): string | undefined => image?.url || undefined;
 /**
  * Renderers are used both by the live editor (blueprint) and by the persisted
  * preview/export (assembled site), so both shapes flatten into one slot list.
+ *
+ * `pageSlug` selects which page to read for multi-page designs (defaults to the
+ * "home" page, then the first page). Single-page designs pass nothing and get
+ * their only page.
  */
 export function toSlots(
   blueprint?: WebsiteBlueprint | null,
-  site?: AssembledSite | null
+  site?: AssembledSite | null,
+  pageSlug?: string
 ): TemplateSlot[] {
-  const fromBlueprint = blueprint?.pages[0]?.sections;
+  const pick = <T extends { slug: string }>(pages: T[] | undefined): T | undefined => {
+    if (!pages?.length) return undefined;
+    if (pageSlug) {
+      const match = pages.find((p) => p.slug === pageSlug);
+      if (match) return match;
+    }
+    return pages.find((p) => p.slug === "home") ?? pages[0];
+  };
+
+  const fromBlueprint = pick(blueprint?.pages)?.sections;
   if (fromBlueprint?.length) {
     return fromBlueprint.map((section) => ({
       type: section.type,
@@ -37,7 +51,7 @@ export function toSlots(
     }));
   }
 
-  const fromSite = site?.pages[0]?.sections;
+  const fromSite = pick(site?.pages)?.sections;
   if (fromSite?.length) {
     return fromSite.map((section) => {
       const props = section.props as SlotContent & {
@@ -56,6 +70,17 @@ export function toSlots(
   }
 
   return [];
+}
+
+/** The list of page slugs present in a blueprint or assembled site, home-first. */
+export function pageSlugsOf(
+  blueprint?: WebsiteBlueprint | null,
+  site?: AssembledSite | null
+): { slug: string; title: string }[] {
+  const pages = (blueprint?.pages ?? site?.pages ?? []).map((p) => ({ slug: p.slug, title: p.title }));
+  const home = pages.filter((p) => p.slug === "home");
+  const rest = pages.filter((p) => p.slug !== "home");
+  return [...home, ...rest];
 }
 
 const EMPTY: TemplateSlot = { type: "", variant: "", content: {}, itemImages: [] };

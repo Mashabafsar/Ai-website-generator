@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isAllowedVariant } from "@/lib/sections/registry";
+import { isCatalogPage } from "@/lib/blueprint/page-catalog";
 import type { WebsiteBlueprint } from "@/lib/blueprint/types";
 
 const contentValue = z.union([z.string(), z.array(z.string())]);
@@ -30,7 +31,12 @@ export const sectionSchema = z
   });
 
 export const pageSchema = z.object({
-  slug: z.string().min(1),
+  slug: z
+    .string()
+    .min(1)
+    .refine((slug) => isCatalogPage(slug), {
+      message: "Page slug is not in the allowed page catalog",
+    }),
   title: z.string().min(1),
   sections: z.array(sectionSchema).min(1),
 });
