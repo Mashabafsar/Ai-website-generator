@@ -11,12 +11,14 @@ import { renderForgeTechPage } from "./forgetech/export";
 import { renderTechvantagePage } from "./techvantage/export";
 import { renderCraftedSpacesPage } from "./craftedspaces/export";
 import { renderWhiterPage } from "./whiter/export";
+import { renderMainfilePage } from "./mainfile/export";
 
 const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   forgetech: renderForgeTechPage,
   techvantage: renderTechvantagePage,
   craftedspaces: renderCraftedSpacesPage,
   whiter: renderWhiterPage,
+  mainfile: renderMainfilePage,
 };
 
 function rendererKey(site: AssembledSite): string | null {

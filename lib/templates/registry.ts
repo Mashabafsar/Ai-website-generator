@@ -207,6 +207,97 @@ export const WHITER_SEED: TemplateSeed = {
 };
 
 /**
+ * Mraval — the bespoke, MULTI-PAGE creative/app-landing design (ported from the
+ * "Mraval" multipurpose Bootstrap set). Colorful blue-violet gradients, playful
+ * multicolor icon tiles, a lavender hero and pill buttons. It supports the full
+ * page catalog; the AI decides which optional pages to include.
+ */
+export const MAINFILE_SEED: TemplateSeed = {
+  slug: "mainfile",
+  name: "Mraval",
+  tagline: "Playful gradients and bold color for creative studios and app launches.",
+  bestFor: "Creative studios, app startups, agencies & product landing pages",
+  thumbnailUrl: "/templates/mainfile/preview.png",
+  previewImageUrl: "/templates/mainfile/preview.png",
+  accent: "#7DBCFF",
+  colorPreference: "Brand blue & violet",
+  visualStyle: "Playful",
+  tone: "Bold & energetic",
+  renderer: "mainfile",
+  published: true,
+  sortOrder: 4,
+  // The home page's locked slots (also mirrored as the first entry in `pages`).
+  sections: [
+    "hero-split-with-image",
+    "features-grid",
+    "about-with-image",
+    "features-grid",
+    "testimonials-grid",
+    "cta-banner",
+    "footer-simple",
+  ],
+  // Every page this multi-page design supports. "home" is mandatory; the AI
+  // chooses which of the optional pages to include for a given business.
+  pages: [
+    {
+      slug: "home",
+      title: "Home",
+      sections: [
+        "hero-split-with-image",
+        "features-grid",
+        "about-with-image",
+        "features-grid",
+        "testimonials-grid",
+        "cta-banner",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "about",
+      title: "About",
+      sections: [
+        "hero-centered",
+        "about-with-image",
+        "features-grid",
+        "testimonials-grid",
+        "cta-banner",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "services",
+      title: "Services",
+      sections: ["hero-centered", "services-cards", "process-steps", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "pricing",
+      title: "Pricing",
+      sections: ["hero-centered", "pricing-tiers", "faq-accordion", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "contact",
+      title: "Contact",
+      sections: ["hero-centered", "contact-split", "footer-simple"],
+    },
+    {
+      slug: "faq",
+      title: "FAQ",
+      sections: ["hero-centered", "faq-accordion", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "blog",
+      title: "Blog",
+      sections: ["hero-centered", "features-grid", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "portfolio",
+      title: "Portfolio",
+      sections: ["hero-centered", "portfolio-case-studies", "cta-banner", "footer-simple"],
+    },
+  ],
+};
+
+/**
  * Layout skeletons built from the approved section library. They are seeded but
  * left unpublished: the gallery only offers designs that have been fully art
  * directed and given their own renderer, so a shopper never picks something
@@ -404,6 +495,7 @@ export const ALL_SEEDS: TemplateSeed[] = [
   TECHVANTAGE_SEED,
   CRAFTEDSPACES_SEED,
   WHITER_SEED,
+  MAINFILE_SEED,
   ...STANDARD_SEEDS,
 ];
 
