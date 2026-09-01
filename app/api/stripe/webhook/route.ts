@@ -5,6 +5,7 @@ import { getStripe } from "@/lib/stripe/stripe";
 import { grantPurchase } from "@/lib/credits/credits";
 import { prisma } from "@/lib/prisma";
 import { PaymentType, PaymentStatus, ProjectStatus } from "@/lib/constants";
+import { syncPaidCustomerToHubSpot } from "@/lib/crm/hubspot";
 
 // Stripe requires the raw request body to verify the signature.
 export async function POST(req: Request) {
@@ -75,5 +76,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         data: { status: ProjectStatus.PAID },
       });
     }
+
+    await syncPaidCustomerToHubSpot(projectId);
   }
 }

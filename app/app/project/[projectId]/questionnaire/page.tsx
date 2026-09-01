@@ -5,7 +5,11 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { prisma } from "@/lib/prisma";
-import { questionnaireSchema, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
+import {
+  questionnaireSchema,
+  defaultQuestionnaire,
+  type QuestionnaireAnswers,
+} from "@/lib/questionnaire/schema";
 import { getTemplateById } from "@/lib/templates/store";
 import { QuestionnaireWizard } from "@/components/questionnaire/questionnaire-wizard";
 import { Button } from "@/components/ui/button";
@@ -34,10 +38,20 @@ export default async function QuestionnairePage({
   let initialAnswers: QuestionnaireAnswers | null = null;
   if (q) {
     const parsed = questionnaireSchema.safeParse({
+      ...defaultQuestionnaire,
       ...JSON.parse(q.answers),
       templateId: template.id,
     });
-    if (parsed.success) initialAnswers = parsed.data;
+    if (parsed.success) {
+      initialAnswers = parsed.data;
+    } else {
+      // Old records may lack new required fields — prefill what we have.
+      initialAnswers = {
+        ...defaultQuestionnaire,
+        ...(JSON.parse(q.answers) as Partial<QuestionnaireAnswers>),
+        templateId: template.id,
+      };
+    }
   }
 
   // FAILED projects may retry generation even if a partial blueprint exists.

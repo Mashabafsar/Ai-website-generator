@@ -6,6 +6,7 @@ import { filesToZip } from "@/lib/export/zip";
 import { slugify } from "@/lib/utils";
 import { ProjectStatus } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { notifyOwnerZipReady } from "@/lib/notify/owner";
 
 type Ctx = { params: Promise<{ projectId: string }> };
 
@@ -42,6 +43,7 @@ export async function GET(_req: Request, { params }: Ctx) {
       where: { id: projectId },
       data: { status: ProjectStatus.EXPORTED },
     });
+    await notifyOwnerZipReady({ projectId, businessName: raw.businessName });
   }
 
   const filename = `${slugify(raw.businessName)}-website.zip`;

@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import {
   questionnaireSchema,
   defaultQuestionnaire,
+  TONES,
+  COLOR_PREFERENCES,
+  VISUAL_STYLES,
   type QuestionnaireAnswers,
 } from "@/lib/questionnaire/schema";
 import { PackageType } from "@/lib/constants";
@@ -18,15 +21,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Business", "Offering", "Details"] as const;
+const STEPS = ["Business", "Audience", "Style", "Details"] as const;
 
 const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   0: ["businessName", "industry", "description", "location"],
-  1: ["targetAudience", "services"],
-  2: ["contactEmail", "contactPhone", "packageType"],
+  1: ["targetAudience", "demographics", "goals", "services"],
+  2: ["tone", "colorPreference", "visualStyle", "brandingNotes"],
+  3: ["contactEmail", "contactPhone", "packageType"],
 };
+
+const DESIGN_DEFAULT = "__design_default__";
 
 export function QuestionnaireWizard({
   projectId,
@@ -36,7 +49,7 @@ export function QuestionnaireWizard({
   generateCost,
 }: {
   projectId: string;
-  /** The locked design. Layout, palette, and tone are fixed by the template. */
+  /** The locked design. Layout stays fixed; optional style fields only tune voice and colors. */
   templateId: string;
   initialAnswers: QuestionnaireAnswers | null;
   alreadyGenerated: boolean;
@@ -49,7 +62,7 @@ export function QuestionnaireWizard({
 
   const form = useForm<QuestionnaireAnswers>({
     resolver: zodResolver(questionnaireSchema),
-    defaultValues: { ...(initialAnswers ?? defaultQuestionnaire), templateId },
+    defaultValues: { ...defaultQuestionnaire, ...(initialAnswers ?? {}), templateId },
     mode: "onTouched",
   });
 
@@ -177,6 +190,19 @@ export function QuestionnaireWizard({
                     {...register("targetAudience")}
                   />
                 </Field>
+                <Field label="Demographics" error={err.demographics?.message}>
+                  <Input
+                    placeholder="Families with kids, local homeowners, ages 30–55"
+                    {...register("demographics")}
+                  />
+                </Field>
+                <Field label="Website goals" error={err.goals?.message}>
+                  <Textarea
+                    rows={3}
+                    placeholder="Book more appointments and look trustworthy to first-time visitors."
+                    {...register("goals")}
+                  />
+                </Field>
                 <Field
                   label="Services or products"
                   error={err.services?.message as string | undefined}
@@ -226,6 +252,49 @@ export function QuestionnaireWizard({
             )}
 
             {step === 2 && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Optional. Your chosen design still owns the layout. These picks only
+                  tune the writing voice and colors.
+                </p>
+                <OptionalSelect
+                  label="Tone"
+                  error={err.tone?.message}
+                  value={watch("tone")}
+                  onChange={(v) => setValue("tone", v, { shouldValidate: true })}
+                  options={TONES}
+                />
+                <OptionalSelect
+                  label="Colors"
+                  error={err.colorPreference?.message}
+                  value={watch("colorPreference")}
+                  onChange={(v) =>
+                    setValue("colorPreference", v, { shouldValidate: true })
+                  }
+                  options={COLOR_PREFERENCES}
+                />
+                <OptionalSelect
+                  label="Visual style"
+                  error={err.visualStyle?.message}
+                  value={watch("visualStyle")}
+                  onChange={(v) => setValue("visualStyle", v, { shouldValidate: true })}
+                  options={VISUAL_STYLES}
+                />
+                <Field
+                  label="Branding notes (optional)"
+                  error={err.brandingNotes?.message}
+                  hint="Brand words, logo notes, or anything the copy should mention."
+                >
+                  <Textarea
+                    rows={3}
+                    placeholder="Warm, clinical, never salesy. Keep the word Bright Smile in headlines."
+                    {...register("brandingNotes")}
+                  />
+                </Field>
+              </>
+            )}
+
+            {step === 3 && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Contact email" error={err.contactEmail?.message}>
@@ -323,6 +392,41 @@ function Field({
       {children}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
+  );
+}
+
+function OptionalSelect<T extends string>({
+  label,
+  error,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  error?: string;
+  value?: string;
+  onChange: (value: T | "") => void;
+  options: readonly T[];
+}) {
+  return (
+    <Field label={`${label} (optional)`} error={error}>
+      <Select
+        value={value || DESIGN_DEFAULT}
+        onValueChange={(next) => onChange(next === DESIGN_DEFAULT ? "" : (next as T))}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Use this design’s look" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={DESIGN_DEFAULT}>Use this design’s look</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Field>
   );
 }
 

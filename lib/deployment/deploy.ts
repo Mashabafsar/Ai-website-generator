@@ -5,6 +5,7 @@ import { parseProject } from "@/lib/projects/projects";
 import { generateProjectFiles } from "@/lib/export/generate-project";
 import { deployToVercel, aliasDeployment } from "@/lib/deployment/vercel";
 import { slugify } from "@/lib/utils";
+import { notifyOwnerSiteLive } from "@/lib/notify/owner";
 
 export type DeploymentLog = { at: string; status: string; message: string };
 
@@ -80,6 +81,7 @@ export async function deployProject(projectId: string): Promise<{
     logs = log(logs, DeploymentStatus.DEPLOYED, `Site marked live at ${liveUrl}`);
     await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });
+    await notifyOwnerSiteLive({ projectId, businessName: project.businessName, liveUrl });
     return { status: DeploymentStatus.DEPLOYED, liveUrl, subdomain };
   }
 
@@ -98,6 +100,7 @@ export async function deployProject(projectId: string): Promise<{
 
     await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });
+    await notifyOwnerSiteLive({ projectId, businessName: project.businessName, liveUrl });
     return { status: DeploymentStatus.DEPLOYED, liveUrl, subdomain };
   } catch (err) {
     logs = log(logs, DeploymentStatus.FAILED, err instanceof Error ? err.message : "Deployment failed");

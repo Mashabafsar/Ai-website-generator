@@ -77,8 +77,8 @@ flowchart TD
 6. **Keep image selection provider-based.**  
    Images come from Shutterstock first, then Pexels, then Unsplash.
 
-7. **No HubSpot sync.**  
-   CRM sync is removed from this architecture.
+7. **HubSpot syncs the paying platform customer.**  
+   After website-package payment, upsert the account owner as a HubSpot contact (name, email, business, package, project URL). Do not sync form leads from generated websites.
 
 8. **No local AI.**  
    All AI tasks use API-based heavy or lightweight models.
@@ -653,6 +653,8 @@ Handle Stripe checkout and payment/subscription states.
 - Verify webhook signature
 - Update payment status in SQLite
 - Trigger next workflow step
+- Upsert the paying platform customer in HubSpot (best-effort)
+- Email the account owner when the ZIP is first ready or the site goes live
 
 ### Package Handling
 
@@ -904,11 +906,13 @@ Payment Agent
       ↓
 Stripe Webhook Success
       ↓
+HubSpot customer sync
+      ↓
 Package Decision
       ↓
-Self Hosting: Export Agent
+Self Hosting: Export Agent → notify owner
       ↓
-Managed Hosting: GitHub Repository Agent → Deployment Agent
+Managed Hosting: GitHub Repository Agent → Deployment Agent → notify owner
 ```
 
 ---

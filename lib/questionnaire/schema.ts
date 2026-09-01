@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { PackageType } from "@/lib/constants";
 
-// The design comes from the selected template, not the questionnaire — tone,
-// visual style, palette, and section order all ship with the template. These
-// vocabularies stay here as the allowed values a template may declare.
+// Tone, visual style, and palette vocabularies are shared: a template declares
+// its defaults, and the questionnaire may optionally override them.
 
 export const TONES = [
   "Modern & trustworthy",
@@ -32,6 +31,9 @@ export const COLOR_PREFERENCES = [
   "Rose & plum",
 ] as const;
 
+const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.enum(values).optional().or(z.literal(""));
+
 export const questionnaireSchema = z.object({
   // Selected website design (Template.id). Validated against the DB server-side.
   templateId: z.string().min(1, "Choose a design from the template library"),
@@ -44,10 +46,18 @@ export const questionnaireSchema = z.object({
 
   // Audience & offering
   targetAudience: z.string().min(3, "Describe your target audience").max(200),
+  demographics: z.string().min(3, "Describe who you serve").max(200),
+  goals: z.string().min(5, "Tell us what this website should achieve").max(400),
   services: z
     .array(z.string().min(1))
     .min(1, "Add at least one service or product")
     .max(12),
+
+  // Optional branding — empty means keep the template's look and voice
+  tone: optionalEnum(TONES),
+  colorPreference: optionalEnum(COLOR_PREFERENCES),
+  visualStyle: optionalEnum(VISUAL_STYLES),
+  brandingNotes: z.string().max(400).optional().or(z.literal("")),
 
   // Contact
   contactEmail: z.string().email("Enter a valid email").or(z.literal("")).optional(),
@@ -66,8 +76,27 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   description: "",
   location: "",
   targetAudience: "",
+  demographics: "",
+  goals: "",
   services: [],
+  tone: "",
+  colorPreference: "",
+  visualStyle: "",
+  brandingNotes: "",
   contactEmail: "",
   contactPhone: "",
   packageType: PackageType.SELF_HOSTING,
 };
+
+/** Merge stored JSON with defaults so records saved before new fields still parse. */
+export function parseQuestionnaireAnswers(raw: unknown): QuestionnaireAnswers {
+  const source = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const merged = { ...defaultQuestionnaire, ...(source as Partial<QuestionnaireAnswers>) };
+  const parsed = questionnaireSchema.safeParse(merged);
+  if (parsed.success) return parsed.data;
+  return questionnaireSchema.parse({
+    ...merged,
+    demographics: merged.demographics || merged.targetAudience || "General audience",
+    goals: merged.goals || "Present the business clearly and convert visitors.",
+  });
+}

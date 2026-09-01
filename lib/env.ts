@@ -83,4 +83,19 @@ export const env = {
       return Boolean(process.env.DEPLOYMENT_TOKEN);
     },
   },
+
+  hubspot: {
+    accessToken: process.env.HUBSPOT_ACCESS_TOKEN ?? "",
+    get enabled() {
+      return Boolean(process.env.HUBSPOT_ACCESS_TOKEN);
+    },
+  },
+
+  notify: {
+    resendApiKey: process.env.RESEND_API_KEY ?? "",
+    fromEmail: process.env.NOTIFY_FROM_EMAIL ?? "",
+    get enabled() {
+      return Boolean(process.env.RESEND_API_KEY && process.env.NOTIFY_FROM_EMAIL);
+    },
+  },
 };

@@ -6,6 +6,9 @@ import { featuresFromVariants } from "@/lib/quote/features";
 export type NormalizedRequirements = {
   business: { name: string; industry: string; description: string; location?: string };
   audience: string;
+  demographics: string;
+  goals: string;
+  brandingNotes: string;
   services: string[];
   tone: string;
   visualStyle: string;
@@ -30,8 +33,8 @@ export type NormalizedRequirements = {
 
 /**
  * Requirement Analyst Agent — turns raw questionnaire answers plus the selected
- * template into clean, structured requirements. Design decisions come from the
- * template; the questionnaire only supplies business facts. Rules-based.
+ * template into clean, structured requirements. Layout stays locked to the
+ * template; optional branding picks override tone and theme tokens.
  */
 export function analyzeRequirements(
   answers: QuestionnaireAnswers,
@@ -39,6 +42,12 @@ export function analyzeRequirements(
 ): NormalizedRequirements {
   const services = answers.services.map((s) => s.trim()).filter(Boolean);
   const location = answers.location?.trim() || undefined;
+  const tone = answers.tone?.trim() || template.tone;
+  const visualStyle = answers.visualStyle?.trim() || template.visualStyle;
+  const colorPreference = answers.colorPreference?.trim() || template.colorPreference;
+  const demographics = answers.demographics?.trim() || "";
+  const goals = answers.goals?.trim() || "";
+  const brandingNotes = answers.brandingNotes?.trim() || "";
   // Features come from every page's slots so a multi-page design's pricing /
   // contact / gallery pages are reflected in the deterministic quote.
   const allVariants = template.pages.flatMap((p) => p.sections);
@@ -58,7 +67,7 @@ export function analyzeRequirements(
     description: answers.description.trim(),
     audience: answers.targetAudience.trim(),
     services,
-    tone: template.tone,
+    tone,
     location,
     contactEmail: answers.contactEmail?.trim() || undefined,
     contactPhone: answers.contactPhone?.trim() || undefined,
@@ -72,10 +81,13 @@ export function analyzeRequirements(
       location,
     },
     audience: context.audience,
+    demographics,
+    goals,
+    brandingNotes,
     services,
-    tone: template.tone,
-    visualStyle: template.visualStyle,
-    colorPreference: template.colorPreference,
+    tone,
+    visualStyle,
+    colorPreference,
     features,
     contact: { email: context.contactEmail, phone: context.contactPhone, address: location },
     packageType: answers.packageType,

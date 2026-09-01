@@ -32,7 +32,7 @@ The quote engine is fully automated. There is no manual quote preparation. After
 | Images | Shutterstock → Pexels → Unsplash fallback chain |
 | Quote engine | Fully automated, no manual quote step |
 | Deployment | Automatic deployment to subdomain |
-| CRM sync | HubSpot sync removed |
+| CRM sync | HubSpot contact upsert for the paying platform customer after payment |
 | Payment gateway | Stripe |
 | Payment models | Self-hosting ZIP package OR managed hosting subscription |
 | Repository storage | GitHub repository per project or controlled repo structure |

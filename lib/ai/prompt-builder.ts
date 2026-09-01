@@ -74,6 +74,10 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
   const requirements = {
     business: req.business,
     audience: req.audience,
+    demographics: req.demographics,
+    goals: req.goals,
+    brandingNotes: req.brandingNotes,
+    tone: req.tone,
     services: req.services,
     contact: req.contact,
   };
@@ -110,6 +114,7 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     JSON.stringify(requirements, null, 2),
     "",
     `Write original, on-brand copy in a ${req.tone} tone for ${req.audience || "this audience"}.`,
+    req.goals ? `Website goals: ${req.goals}` : "",
     "",
     OUTPUT_SHAPE,
     "",

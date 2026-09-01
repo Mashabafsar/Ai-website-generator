@@ -11,6 +11,8 @@ import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { getTemplateById } from "@/lib/templates/store";
+import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
+import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
 import type {
   AssembledSite,
   SiteContact,
@@ -221,12 +223,14 @@ export async function editSectionWithAi(params: {
     idempotencyKey: key,
   });
 
+  const brandTone = await resolveBrandTone(projectId, blueprint.design.tone);
+
   const provider = getAiProvider();
   const { result: updated, events } = await withUsageCapture(() =>
     provider.reviseSection({
       section,
       instruction: cleanInstruction,
-      brandTone: blueprint.design.tone,
+      brandTone,
     })
   );
   await persistUsageEvents({ userId, projectId, operation: "light_edit", events });
@@ -235,4 +239,17 @@ export async function editSectionWithAi(params: {
   await persistAndSync(projectId, blueprint, theme);
 
   return { content: updated, balanceAfter };
+}
+
+/** Prefer the questionnaire override, then the template, then the stored blueprint tone. */
+async function resolveBrandTone(projectId: string, fallback: string): Promise<string> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { templateId: true, questionnaire: true },
+  });
+  if (!project?.questionnaire || !project.templateId) return fallback;
+  const template = await getTemplateById(project.templateId);
+  if (!template) return fallback;
+  const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
+  return analyzeRequirements(answers, template).tone || fallback;
 }

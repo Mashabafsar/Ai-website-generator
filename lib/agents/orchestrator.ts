@@ -7,7 +7,7 @@ import {
   DeploymentStatus,
 } from "@/lib/constants";
 import { assertAndSpend, refundSpend, InsufficientCreditsError } from "@/lib/credits/credits";
-import { questionnaireSchema, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
+import { parseQuestionnaireAnswers, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SiteTemplate } from "@/lib/templates/types";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
 import { createTheme } from "@/lib/agents/theme";
@@ -93,7 +93,7 @@ export async function generateWebsite(params: {
   if (!project.questionnaire) throw new NoQuestionnaireError();
   if (!project.templateId) throw new NoTemplateError();
 
-  const answers = questionnaireSchema.parse(JSON.parse(project.questionnaire.answers));
+  const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
   const template = await getTemplateById(project.templateId);
   if (!template) throw new NoTemplateError();
 
@@ -136,7 +136,7 @@ export async function switchProjectTemplate(params: {
   const template = await getTemplateById(templateId);
   if (!template) throw new NoTemplateError();
 
-  const answers = questionnaireSchema.parse(JSON.parse(project.questionnaire.answers));
+  const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
   const designVersion = project.designVersion + 1;
 
   return runGeneration({

@@ -45,6 +45,8 @@ See `.env.example` for the full list. Highlights:
 | `SIGNUP_CREDIT_BONUS`, `CREDIT_COST_HEAVY_GENERATE`, `CREDIT_COST_LIGHT_EDIT` | Credit economics |
 | `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers (fallback chain) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price IDs | Payments |
+| `HUBSPOT_ACCESS_TOKEN` | Optional. Upsert paying customers as HubSpot contacts |
+| `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Optional. Email the account owner when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG`, `GITHUB_REPO_VISIBILITY` | GitHub backup |
 | `DEPLOYMENT_TOKEN`, `PLATFORM_DOMAIN` | Managed subdomain deploys (Vercel) |
 
