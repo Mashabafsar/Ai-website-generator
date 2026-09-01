@@ -8,6 +8,7 @@ export const TEMPLATE_RENDERERS = [
   "craftedspaces",
   "whiter",
   "mainfile",
+  "saasldg",
 ] as const;
 export type TemplateRenderer = (typeof TEMPLATE_RENDERERS)[number];
 

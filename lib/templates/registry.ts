@@ -298,6 +298,40 @@ export const MAINFILE_SEED: TemplateSeed = {
 };
 
 /**
+ * Stratus — the bespoke, SINGLE-PAGE SaaS landing (ported from the "Core" UI8
+ * SaaS marketing set). Clean cloud-blue accent, soft rounded surface cards, a
+ * big product screenshot, colorful feature tiles, a pricing block and a "Wall
+ * of Love" review row. One home page with an ordered list of section slots.
+ */
+export const SAASLDG_SEED: TemplateSeed = {
+  slug: "saasldg",
+  name: "Stratus",
+  tagline: "Cloud-blue SaaS landing with a big product screenshot, pricing and reviews.",
+  bestFor: "SaaS platforms, cloud tools, startups & B2B software",
+  thumbnailUrl: "/templates/saasldg/preview.png",
+  previewImageUrl: "/templates/saasldg/preview.png",
+  accent: "#2A85FF",
+  colorPreference: "Brand blue",
+  visualStyle: "Modern",
+  tone: "Modern & trustworthy",
+  renderer: "saasldg",
+  published: true,
+  sortOrder: 5,
+  // Slot order maps 1:1 onto the Stratus renderer: hero + product shot,
+  // feature tiles, pricing tiers, FAQ, "Wall of Love" reviews, download CTA,
+  // then footer.
+  sections: [
+    "hero-split-with-image",
+    "features-grid",
+    "pricing-tiers",
+    "faq-accordion",
+    "testimonials-grid",
+    "cta-banner",
+    "footer-simple",
+  ],
+};
+
+/**
  * Layout skeletons built from the approved section library. They are seeded but
  * left unpublished: the gallery only offers designs that have been fully art
  * directed and given their own renderer, so a shopper never picks something
@@ -496,6 +530,7 @@ export const ALL_SEEDS: TemplateSeed[] = [
   CRAFTEDSPACES_SEED,
   WHITER_SEED,
   MAINFILE_SEED,
+  SAASLDG_SEED,
   ...STANDARD_SEEDS,
 ];
 
