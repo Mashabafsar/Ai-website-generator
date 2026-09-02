@@ -30,14 +30,28 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Business", "Audience", "Style", "Details"] as const;
+const STEPS = ["Website", "Business", "Audience", "Style", "Details"] as const;
 
 const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
-  0: ["businessName", "industry", "description", "location"],
-  1: ["targetAudience", "demographics", "goals", "services"],
-  2: ["tone", "colorPreference", "visualStyle", "brandingNotes"],
-  3: ["contactEmail", "contactPhone", "packageType"],
+  0: ["hasWebsite", "existingWebsiteUrl"],
+  1: ["businessName", "industry", "description", "location"],
+  2: ["targetAudience", "demographics", "goals", "services"],
+  3: ["tone", "colorPreference", "visualStyle", "brandingNotes"],
+  4: ["contactEmail", "contactPhone", "packageType"],
 };
+
+// Fields the website import can prefill — mapped onto the form one at a time.
+const IMPORTABLE_FIELDS = [
+  "businessName",
+  "industry",
+  "description",
+  "location",
+  "targetAudience",
+  "demographics",
+  "services",
+  "contactEmail",
+  "contactPhone",
+] as const;
 
 const DESIGN_DEFAULT = "__design_default__";
 
@@ -59,6 +73,7 @@ export function QuestionnaireWizard({
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [serviceInput, setServiceInput] = useState("");
+  const [importing, setImporting] = useState(false);
 
   const form = useForm<QuestionnaireAnswers>({
     resolver: zodResolver(questionnaireSchema),
@@ -72,6 +87,52 @@ export function QuestionnaireWizard({
   async function next() {
     const ok = await trigger(STEP_FIELDS[step]);
     if (ok) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  }
+
+  // Step 0 — pull business details from the customer's existing website and
+  // prefill the form. Never blocks: a failed import just means typing manually.
+  async function importFromWebsite() {
+    const url = (watch("existingWebsiteUrl") || "").trim();
+    if (!url) {
+      toast.error("Enter your website URL first.");
+      return;
+    }
+    setImporting(true);
+    try {
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "We couldn't read that website.");
+      }
+      const fields = (data.fields ?? {}) as Record<string, unknown>;
+      let applied = 0;
+      for (const key of IMPORTABLE_FIELDS) {
+        const value = fields[key];
+        if (typeof value === "string" && value.trim()) {
+          setValue(key, value.trim(), { shouldDirty: true });
+          applied++;
+        } else if (key === "services" && Array.isArray(value) && value.length) {
+          setValue("services", value.filter((v): v is string => typeof v === "string" && !!v), {
+            shouldValidate: true,
+          });
+          applied++;
+        }
+      }
+      if (applied === 0) {
+        toast.info("We read the site but couldn't pull out details — you can fill them in next.");
+      } else {
+        toast.success("Details imported — review the next steps.");
+      }
+      setStep(1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "We couldn't read that website.");
+    } finally {
+      setImporting(false);
+    }
   }
 
   function addService() {
@@ -163,6 +224,62 @@ export function QuestionnaireWizard({
 
             {step === 0 && (
               <>
+                <input type="hidden" {...register("hasWebsite")} />
+                <Field label="Do you have an existing website?">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <WebsiteChoice
+                      active={watch("hasWebsite") === "yes"}
+                      onClick={() => setValue("hasWebsite", "yes", { shouldDirty: true })}
+                      title="Yes, import it"
+                      desc="We'll pull your business details from your current site."
+                    />
+                    <WebsiteChoice
+                      active={watch("hasWebsite") === "no"}
+                      onClick={() => {
+                        setValue("hasWebsite", "no", { shouldDirty: true });
+                        setValue("existingWebsiteUrl", "");
+                        // No website means nothing to import — jump straight in.
+                        setStep(1);
+                      }}
+                      title="No, start fresh"
+                      desc="Answer a few questions and we'll write everything for you."
+                    />
+                  </div>
+                </Field>
+
+                {watch("hasWebsite") === "yes" && (
+                  <Field
+                    label="Your website URL"
+                    error={err.existingWebsiteUrl?.message}
+                    hint="We'll read the public pages and prefill this questionnaire — you can edit everything after."
+                  >
+                    <div className="flex gap-2">
+                      <Input
+                        type="url"
+                        placeholder="https://yourbusiness.com"
+                        {...register("existingWebsiteUrl")}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={importFromWebsite}
+                        disabled={importing}
+                      >
+                        {importing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                        Import
+                      </Button>
+                    </div>
+                  </Field>
+                )}
+              </>
+            )}
+
+            {step === 1 && (
+              <>
                 <Field label="Business name" error={err.businessName?.message}>
                   <Input placeholder="Bright Smile Dental" {...register("businessName")} />
                 </Field>
@@ -182,7 +299,7 @@ export function QuestionnaireWizard({
               </>
             )}
 
-            {step === 1 && (
+            {step === 2 && (
               <>
                 <Field label="Target audience" error={err.targetAudience?.message}>
                   <Input
@@ -251,7 +368,7 @@ export function QuestionnaireWizard({
               </>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <>
                 <p className="text-sm text-muted-foreground">
                   Optional. Your chosen design still owns the layout. These picks only
@@ -294,7 +411,7 @@ export function QuestionnaireWizard({
               </>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Contact email" error={err.contactEmail?.message}>
@@ -427,6 +544,32 @@ function OptionalSelect<T extends string>({
         </SelectContent>
       </Select>
     </Field>
+  );
+}
+
+function WebsiteChoice({
+  active,
+  onClick,
+  title,
+  desc,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-xl border p-4 text-left transition-colors",
+        active ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "hover:bg-secondary"
+      )}
+    >
+      <div className="font-semibold">{title}</div>
+      <div className="mt-1 text-sm text-muted-foreground">{desc}</div>
+    </button>
   );
 }
 

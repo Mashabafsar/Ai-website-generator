@@ -38,6 +38,10 @@ export const questionnaireSchema = z.object({
   // Selected website design (Template.id). Validated against the DB server-side.
   templateId: z.string().min(1, "Choose a design from the template library"),
 
+  // Existing website (step 0). When "yes", the URL is scraped to prefill answers.
+  hasWebsite: z.enum(["yes", "no"]).optional().or(z.literal("")),
+  existingWebsiteUrl: z.string().max(300).optional().or(z.literal("")),
+
   // Business
   businessName: z.string().min(2, "Business name is required").max(80),
   industry: z.string().min(2, "Industry is required").max(60),
@@ -71,6 +75,8 @@ export type QuestionnaireAnswers = z.infer<typeof questionnaireSchema>;
 
 export const defaultQuestionnaire: QuestionnaireAnswers = {
   templateId: "",
+  hasWebsite: "",
+  existingWebsiteUrl: "",
   businessName: "",
   industry: "",
   description: "",

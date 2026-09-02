@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Admin · AI usage" };
 const OPERATION_LABEL: Record<string, string> = {
   heavy_generate: "Website generation",
   light_edit: "AI section edit",
+  scrape_extract: "Website import",
 };
 
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString();
