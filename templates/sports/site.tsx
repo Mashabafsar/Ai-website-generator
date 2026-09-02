@@ -1,15 +1,12 @@
-import { Space_Grotesk, Bebas_Neue } from "next/font/google";
+import { Bebas_Neue } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { SP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle } from "../shared/brand";
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--sp-display",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+// The design's display/body face is Clash Grotesk (Fontshare — not on Google
+// Fonts), so we load it via a stylesheet and expose it through --sp-display.
+const DISPLAY_STACK = "'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif";
 
 const wordmark = Bebas_Neue({
   subsets: ["latin"],
@@ -135,6 +132,12 @@ export function SportsSite({
   const catBodies = list(categories.content, "itemBodies");
   const catImages = categories.itemImages;
   const cImg = (i: number) => catImages[i] || CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length];
+  // The design overlays a big "Starting from $X" price on each category card.
+  // Pull it out of the body copy ("Starting from $44 — …") when present.
+  const catPrice = (i: number): string | null => {
+    const m = (catBodies[i] || "").match(/\$\s?[\d.,]+/);
+    return m ? m[0].replace(/\s+/, "") : null;
+  };
 
   const planNames = list(pricing.content, "planNames", ["Starter Plan", "Active Balance", "Inner Mastery"]);
   const planPrices = list(pricing.content, "planPrices", ["$25", "$49", "$89"]);
@@ -144,6 +147,9 @@ export function SportsSite({
   const quotes = list(testimonials.content, "quotes");
   const authors = list(testimonials.content, "authors");
   const roles = list(testimonials.content, "roles");
+  // The design lays testimonials out as a 4-column masonry with faded edges.
+  const testimonialCols: number[][] = [[], [], [], []];
+  quotes.forEach((_, i) => testimonialCols[i % 4].push(i));
 
   const questions = list(faq.content, "questions");
   const answers = list(faq.content, "answers");
@@ -158,14 +164,21 @@ export function SportsSite({
   return (
     <div
       id="sp-top"
-      className={`${display.variable} ${wordmark.variable} scroll-smooth antialiased`}
+      className={`${wordmark.variable} scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme?.colors, "#ffc857"),
-        fontFamily: "var(--sp-display), ui-sans-serif, system-ui, sans-serif",
+        ["--sp-display" as string]: DISPLAY_STACK,
+        fontFamily: DISPLAY_STACK,
         color: SP.ink,
         backgroundColor: SP.white,
       }}
     >
+      {/* Clash Grotesk (the design's display face) via Fontshare */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link
+        rel="stylesheet"
+        href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=swap"
+      />
       {/* Hero — full-bleed action photo with the nav overlaid on top */}
       <section className="relative w-full min-h-[92vh] overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
@@ -292,7 +305,7 @@ export function SportsSite({
 
       {/* About */}
       <section id="sp-about" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
-        <SectionHeader label="About us" />
+        <SectionHeader label="About us" index={2} />
         <div className="mt-10 flex flex-col items-start gap-12 lg:flex-row">
           <div className="flex flex-1 flex-col gap-8">
             <h2
@@ -357,7 +370,7 @@ export function SportsSite({
       {/* Features */}
       <section id="sp-features" className="px-4 py-16 lg:px-[3.75rem] lg:py-24" style={{ backgroundColor: SP.surface }}>
         <div className="mx-auto max-w-[90rem]">
-          <SectionHeader label="Features" />
+          <SectionHeader label="Features" index={4} />
           <div className="mt-10 flex flex-col items-start justify-between gap-6 lg:flex-row">
             <h2
               className="flex-1 font-semibold uppercase leading-[0.95] tracking-[-0.6px] text-[clamp(1.75rem,4.5vw,3.75rem)]"
@@ -404,7 +417,7 @@ export function SportsSite({
 
       {/* Categories */}
       <section id="sp-categories" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
-        <SectionHeader label="Categories" />
+        <SectionHeader label="Categories" index={5} />
         <div className="mx-auto mt-10 max-w-3xl text-center">
           <h2
             className="font-semibold uppercase leading-none tracking-[-0.6px] text-[clamp(1.75rem,5vw,3.75rem)]"
@@ -422,17 +435,32 @@ export function SportsSite({
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {catTitles.map((title, i) => (
-            <div key={`${title}-${i}`} className="relative h-[31rem] overflow-hidden rounded-[22px]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cImg(i)} alt={title} className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-              <div className="absolute inset-x-0 bottom-7 px-6">
-                <div className="text-base font-medium text-white">{title}</div>
-                {catBodies[i] && <div className="mt-1 text-sm text-white/80">{catBodies[i]}</div>}
+          {catTitles.map((title, i) => {
+            const price = catPrice(i);
+            return (
+              <div key={`${title}-${i}`} className="relative h-[31rem] overflow-hidden rounded-[22px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cImg(i)} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-7 px-6">
+                  <div className="text-base font-medium text-white">{title}</div>
+                  {price ? (
+                    <div className="mt-2">
+                      <div
+                        className="font-semibold leading-none text-white text-[2.8rem]"
+                        style={{ fontFamily: "var(--sp-display)" }}
+                      >
+                        {price}
+                      </div>
+                      <div className="mt-1 text-base text-white/85">Starting from</div>
+                    </div>
+                  ) : (
+                    catBodies[i] && <div className="mt-1 text-sm text-white/80">{catBodies[i]}</div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -444,94 +472,124 @@ export function SportsSite({
           <div className="absolute inset-0" style={{ backgroundColor: "rgba(14,18,27,0.86)" }} />
         </div>
         <div className="relative z-10 mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
-          <SectionHeader label="Pricing" light />
-          <div className="mt-10 max-w-2xl">
-            <h2
-              className="font-semibold uppercase leading-[1.05] tracking-[-1px] text-white text-[clamp(2.25rem,6vw,4.5rem)]"
-              style={{ fontFamily: "var(--sp-display)" }}
-            >
-              {text(pricing.content, "heading", "Flexible pricing")}
-            </h2>
-            <p className="mt-4 text-lg leading-relaxed text-white/80 lg:text-xl">
-              {text(
-                pricing.content,
-                "subheading",
-                "Built to give every athlete access to expert coaching and structured training — without hidden fees or long-term lock-ins."
-              )}
-            </p>
-          </div>
+          <SectionHeader label="Pricing" index={6} light />
+          <div className="mt-12 flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
+            {/* Left — big headline + vertical plan list */}
+            <div className="flex-1">
+              <h2
+                className="font-semibold uppercase leading-[1.05] tracking-[-1px] text-white text-[clamp(2.5rem,6vw,5rem)]"
+                style={{ fontFamily: "var(--sp-display)" }}
+              >
+                {text(pricing.content, "heading", "Flexible pricing")}
+              </h2>
+              <p className="mt-5 max-w-[26rem] text-lg leading-relaxed text-white/85 lg:text-xl">
+                {text(
+                  pricing.content,
+                  "subheading",
+                  "Built to give every athlete access to expert coaching and structured training — without hidden fees or long-term lock-ins."
+                )}
+              </p>
 
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {planNames.map((name, i) => {
-              const popular = i === popularIndex;
+              <div className="mt-9 flex flex-col gap-3 rounded-[24px] bg-black/50 p-3 backdrop-blur-md">
+                {planNames.map((name, i) => {
+                  const active = i === popularIndex;
+                  return (
+                    <div
+                      key={`${name}-${i}`}
+                      className="flex items-center justify-between gap-4 rounded-xl p-5 transition-colors"
+                      style={{ backgroundColor: active ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.14)" }}
+                    >
+                      <div>
+                        <div
+                          className="text-xl font-semibold uppercase leading-none tracking-[-0.24px]"
+                          style={{ fontFamily: "var(--sp-display)", color: active ? SP.white : "#cacfd8" }}
+                        >
+                          {name}
+                        </div>
+                        <div className="mt-1 text-sm" style={{ color: active ? SP.line : "#cacfd8" }}>
+                          {(planFeatures[i] || "").split("\n")[0] || "Flexible membership"}
+                        </div>
+                      </div>
+                      <Arrow className="h-5 w-5 shrink-0" stroke={active ? SP.white : "#cacfd8"} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right — featured plan detail card */}
+            {(() => {
+              const i = popularIndex;
               const featureLines = (planFeatures[i] || "").split("\n").map((f) => f.trim()).filter(Boolean);
               return (
-                <div
-                  key={`${name}-${i}`}
-                  className="flex flex-col rounded-[24px] p-8"
-                  style={{
-                    backgroundColor: SP.white,
-                    boxShadow: popular ? `0 0 0 3px ${SP.brand}` : "0 0.5rem 1.5rem rgba(0,0,0,0.25)",
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div
-                      className="text-2xl font-semibold uppercase leading-none tracking-[-0.36px]"
-                      style={{ fontFamily: "var(--sp-display)", color: SP.ink }}
-                    >
-                      {name}
-                    </div>
-                    {popular && (
+                <div className="w-full shrink-0 lg:w-[34rem]">
+                  <div className="flex flex-col rounded-[32px] bg-white p-8 lg:p-9">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div
+                          className="text-3xl font-semibold uppercase leading-none tracking-[-0.36px]"
+                          style={{ fontFamily: "var(--sp-display)", color: SP.ink }}
+                        >
+                          {planNames[i]}
+                        </div>
+                        <div className="mt-2 text-base font-medium" style={{ color: SP.body }}>
+                          {(planFeatures[i] || "").split("\n")[0] || "Our most popular plan"}
+                        </div>
+                      </div>
                       <span
-                        className="rounded-full px-3 py-1 text-xs font-semibold uppercase"
-                        style={{ backgroundColor: SP.brand, color: SP.ink }}
+                        className="grid size-16 shrink-0 place-items-center rounded-[20px]"
+                        style={{ backgroundColor: SP.surface }}
                       >
-                        Popular
+                        <Arrow className="h-6 w-6" stroke={SP.ink} />
                       </span>
-                    )}
-                  </div>
-                  <div className="mt-5 flex items-end gap-1">
-                    <span
-                      className="text-[3.25rem] font-semibold leading-none tracking-[-0.6px]"
-                      style={{ fontFamily: "var(--sp-display)", color: SP.ink }}
+                    </div>
+
+                    <div className="mt-6 flex items-end gap-2">
+                      <span
+                        className="text-[3.75rem] font-semibold leading-none tracking-[-0.6px]"
+                        style={{ fontFamily: "var(--sp-display)", color: SP.ink }}
+                      >
+                        {planPrices[i] || "$0"}
+                      </span>
+                      <span className="pb-1.5 text-lg font-medium" style={{ color: SP.body }}>
+                        / month
+                      </span>
+                    </div>
+
+                    <div className="my-7 flex items-center gap-2">
+                      <span className="size-2 rounded-sm" style={{ backgroundColor: SP.ink }} />
+                      <span className="h-[2px] flex-1" style={{ backgroundColor: SP.line }} />
+                      <span className="size-2 rounded-sm" style={{ backgroundColor: SP.ink }} />
+                    </div>
+
+                    <ul className="flex flex-col gap-4">
+                      {featureLines.map((line, j) => (
+                        <li key={j} className="flex items-start gap-3">
+                          <Check className="mt-1 h-4 w-4 shrink-0" stroke={SP.ink} />
+                          <span className="leading-snug" style={{ color: SP.ink }}>{line}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <a
+                      href={contactHref}
+                      className="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium"
+                      style={{ backgroundColor: SP.brand, color: SP.ink }}
                     >
-                      {planPrices[i] || "$0"}
-                    </span>
-                    <span className="pb-1 text-lg font-medium" style={{ color: SP.body }}>
-                      / month
-                    </span>
+                      Get started
+                      <Arrow className="h-4 w-4" stroke={SP.ink} />
+                    </a>
                   </div>
-                  <div className="my-6 flex items-center gap-2">
-                    <span className="size-2 rounded-sm" style={{ backgroundColor: SP.ink }} />
-                    <span className="h-[2px] flex-1" style={{ backgroundColor: SP.line }} />
-                    <span className="size-2 rounded-sm" style={{ backgroundColor: SP.ink }} />
-                  </div>
-                  <ul className="flex flex-1 flex-col gap-4">
-                    {featureLines.map((line, j) => (
-                      <li key={j} className="flex items-start gap-3">
-                        <Check className="mt-1 h-4 w-4 shrink-0" stroke={SP.ink} />
-                        <span className="leading-snug" style={{ color: SP.ink }}>{line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={contactHref}
-                    className="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium"
-                    style={{ backgroundColor: SP.brand, color: SP.ink }}
-                  >
-                    Get started
-                    <Arrow className="h-4 w-4" stroke={SP.ink} />
-                  </a>
                 </div>
               );
-            })}
+            })()}
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
       <section id="sp-testimonials" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
-        <SectionHeader label="Testimonials" />
+        <SectionHeader label="Testimonials" index={7} />
         <div className="mt-10 flex flex-col items-center gap-5 text-center">
           <div className="flex items-center -space-x-3">
             {AVATARS.slice(0, 5).map((src) => (
@@ -550,32 +608,41 @@ export function SportsSite({
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {quotes.map((quote, i) => (
-            <figure
-              key={i}
-              className="flex h-full flex-col justify-between gap-6 rounded-xl p-6"
-              style={{ backgroundColor: SP.surface }}
-            >
-              <blockquote className="text-[0.95rem] leading-relaxed" style={{ color: SP.body }}>
-                “{quote}”
-              </blockquote>
-              <figcaption className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={AVATARS[i % AVATARS.length]} alt="" className="size-10 rounded-full object-cover" />
-                <div>
-                  <div className="text-sm font-medium" style={{ color: SP.ink }}>{authors[i] || "Athlo member"}</div>
-                  {roles[i] && <div className="text-[0.8rem]" style={{ color: SP.muted }}>{roles[i]}</div>}
-                </div>
-              </figcaption>
-            </figure>
-          ))}
+        <div className="relative mt-12">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {testimonialCols.map((col, c) => (
+              <div key={c} className={`flex flex-col gap-5 ${c % 2 === 1 ? "lg:-mt-10" : ""}`}>
+                {col.map((i) => (
+                  <figure
+                    key={i}
+                    className="flex flex-col justify-between gap-6 rounded-xl p-6"
+                    style={{ backgroundColor: SP.surface }}
+                  >
+                    <blockquote className="text-[0.95rem] leading-relaxed" style={{ color: SP.body }}>
+                      “{quotes[i]}”
+                    </blockquote>
+                    <figcaption className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={AVATARS[i % AVATARS.length]} alt="" className="size-10 rounded-full object-cover" />
+                      <div>
+                        <div className="text-sm font-medium" style={{ color: SP.ink }}>{authors[i] || "Athlo member"}</div>
+                        {roles[i] && <div className="text-[0.8rem]" style={{ color: SP.muted }}>{roles[i]}</div>}
+                      </div>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            ))}
+          </div>
+          {/* edge fades */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
         </div>
       </section>
 
       {/* FAQ */}
       <section id="sp-faq" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
-        <SectionHeader label="FAQ" />
+        <SectionHeader label="FAQ" index={8} />
         <div className="mt-10 flex flex-col items-start gap-12 lg:flex-row">
           <div className="flex flex-col gap-5 lg:w-[38rem]">
             <h2
@@ -795,7 +862,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
-function SectionHeader({ label, light = false }: { label: string; light?: boolean }) {
+function SectionHeader({ label, index, light = false }: { label: string; index?: number; light?: boolean }) {
   const border = light ? "rgba(255,255,255,0.9)" : SP.line;
   const ink = light ? SP.white : SP.ink;
   const line = light ? "rgba(255,255,255,0.4)" : SP.line;
@@ -805,7 +872,9 @@ function SectionHeader({ label, light = false }: { label: string; light?: boolea
         className="flex h-[3.5rem] shrink-0 items-center justify-center rounded-[28px] border-2 px-8"
         style={{ borderColor: border }}
       >
-        <span className="whitespace-nowrap text-[15px] font-medium" style={{ color: ink }}>{label}</span>
+        <span className="whitespace-nowrap text-[15px] font-medium" style={{ color: ink }}>
+          {index ? `#${index} ` : ""}{label}
+        </span>
       </div>
       <div className="flex flex-1 items-center">
         <span className="size-[6px] shrink-0" style={{ backgroundColor: ink }} />

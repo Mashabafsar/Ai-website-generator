@@ -83,13 +83,14 @@ function plus(cls: string, stroke: string): string {
 function check(cls: string, stroke: string): string {
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 6"></path></svg>`;
 }
-function sectionHeader(label: string, light = false): string {
+function sectionHeader(label: string, light = false, index?: number): string {
   const border = light ? "rgba(255,255,255,0.9)" : SP.line;
   const ink = light ? SP.white : SP.ink;
   const line = light ? "rgba(255,255,255,0.4)" : SP.line;
+  const text0 = index ? `#${index} ${label}` : label;
   return `<div class="flex w-full items-center gap-3">
     <div class="flex h-[3.5rem] shrink-0 items-center justify-center rounded-[28px] border-2 px-8" style="border-color:${border}">
-      <span class="whitespace-nowrap text-[15px] font-medium" style="color:${ink}">${esc(label)}</span>
+      <span class="whitespace-nowrap text-[15px] font-medium" style="color:${ink}">${esc(text0)}</span>
     </div>
     <div class="flex flex-1 items-center">
       <span class="size-[6px] shrink-0" style="background:${ink}"></span>
@@ -137,6 +138,10 @@ export function renderSportsPage(site: AssembledSite): string {
   const catBodies = list(categories.content, "itemBodies");
   const catImages = categories.itemImages;
   const cImg = (i: number) => catImages[i] || CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length];
+  const catPrice = (i: number): string | null => {
+    const m = (catBodies[i] || "").match(/\$\s?[\d.,]+/);
+    return m ? m[0].replace(/\s+/, "") : null;
+  };
 
   const planNames = list(pricing.content, "planNames", ["Starter Plan", "Active Balance", "Inner Mastery"]);
   const planPrices = list(pricing.content, "planPrices", ["$25", "$49", "$89"]);
@@ -146,6 +151,8 @@ export function renderSportsPage(site: AssembledSite): string {
   const quotes = list(testimonials.content, "quotes");
   const authors = list(testimonials.content, "authors");
   const roles = list(testimonials.content, "roles");
+  const testimonialCols: number[][] = [[], [], [], []];
+  quotes.forEach((_, i) => testimonialCols[i % 4].push(i));
 
   const questions = list(faq.content, "questions");
   const answers = list(faq.content, "answers");
@@ -208,7 +215,7 @@ export function renderSportsPage(site: AssembledSite): string {
 </section>
 
 <section id="sp-about" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
-  ${sectionHeader("About us")}
+  ${sectionHeader("About us", false, 2)}
   <div class="mt-10 flex flex-col items-start gap-12 lg:flex-row">
     <div class="flex flex-1 flex-col gap-8">
       <h2 class="font-semibold uppercase leading-[0.95] tracking-[-0.6px] text-[clamp(2rem,5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(about.content, "heading", "Personalized training for every athlete"))}</h2>
@@ -233,7 +240,7 @@ export function renderSportsPage(site: AssembledSite): string {
 
 <section id="sp-features" class="px-4 py-16 lg:px-[3.75rem] lg:py-24" style="background:${SP.surface}">
   <div class="mx-auto max-w-[90rem]">
-    ${sectionHeader("Features")}
+    ${sectionHeader("Features", false, 4)}
     <div class="mt-10 flex flex-col items-start justify-between gap-6 lg:flex-row">
       <h2 class="flex-1 font-semibold uppercase leading-[0.95] tracking-[-0.6px] text-[clamp(1.75rem,4.5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(features.content, "heading", "Smarter training, better results"))}</h2>
       <p class="max-w-[32rem] flex-1 text-lg leading-relaxed lg:text-xl" style="color:${SP.body}">${esc(text(features.content, "subheading", "Athlo combines expert coaching with clear structure and smart tools."))}</p>
@@ -253,17 +260,23 @@ export function renderSportsPage(site: AssembledSite): string {
 </section>
 
 <section id="sp-categories" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
-  ${sectionHeader("Categories")}
+  ${sectionHeader("Categories", false, 5)}
   <div class="mx-auto mt-10 max-w-3xl text-center">
     <h2 class="font-semibold uppercase leading-none tracking-[-0.6px] text-[clamp(1.75rem,5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(categories.content, "heading", "Everything you need, nothing you don't"))}</h2>
     <p class="mx-auto mt-4 max-w-[47rem] text-lg leading-relaxed lg:text-xl" style="color:${SP.muted}">${esc(text(categories.content, "subheading", "A supportive community where passion, movement, and discipline come together."))}</p>
   </div>
   <div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    ${catTitles.map((title, i) => `<div class="relative h-[31rem] overflow-hidden rounded-[22px]">
+    ${catTitles.map((title, i) => {
+      const price = catPrice(i);
+      const overlay = price
+        ? `<div class="mt-2"><div class="font-semibold leading-none text-white text-[2.8rem]" style="font-family:var(--sp-display)">${esc(price)}</div><div class="mt-1 text-base text-white/85">Starting from</div></div>`
+        : (catBodies[i] ? `<div class="mt-1 text-sm text-white/80">${esc(catBodies[i])}</div>` : "");
+      return `<div class="relative h-[31rem] overflow-hidden rounded-[22px]">
       <img src="${esc(cImg(i))}" alt="${esc(title)}" class="absolute inset-0 h-full w-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
-      <div class="absolute inset-x-0 bottom-7 px-6"><div class="text-base font-medium text-white">${esc(title)}</div>${catBodies[i] ? `<div class="mt-1 text-sm text-white/80">${esc(catBodies[i])}</div>` : ""}</div>
-    </div>`).join("\n    ")}
+      <div class="absolute inset-x-0 bottom-7 px-6"><div class="text-base font-medium text-white">${esc(title)}</div>${overlay}</div>
+    </div>`;
+    }).join("\n    ")}
   </div>
 </section>
 
@@ -273,47 +286,66 @@ export function renderSportsPage(site: AssembledSite): string {
     <div class="absolute inset-0" style="background:rgba(14,18,27,0.86)"></div>
   </div>
   <div class="relative z-10 mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
-    ${sectionHeader("Pricing", true)}
-    <div class="mt-10 max-w-2xl">
-      <h2 class="font-semibold uppercase leading-[1.05] tracking-[-1px] text-white text-[clamp(2.25rem,6vw,4.5rem)]" style="font-family:var(--sp-display)">${esc(text(pricing.content, "heading", "Flexible pricing"))}</h2>
-      <p class="mt-4 text-lg leading-relaxed text-white/80 lg:text-xl">${esc(text(pricing.content, "subheading", "Built to give every athlete access to expert coaching and structured training."))}</p>
-    </div>
-    <div class="mt-12 grid gap-5 lg:grid-cols-3">
-      ${planNames.map((name, i) => {
-        const popular = i === popularIndex;
+    ${sectionHeader("Pricing", true, 6)}
+    <div class="mt-12 flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
+      <div class="flex-1">
+        <h2 class="font-semibold uppercase leading-[1.05] tracking-[-1px] text-white text-[clamp(2.5rem,6vw,5rem)]" style="font-family:var(--sp-display)">${esc(text(pricing.content, "heading", "Flexible pricing"))}</h2>
+        <p class="mt-5 max-w-[26rem] text-lg leading-relaxed text-white/85 lg:text-xl">${esc(text(pricing.content, "subheading", "Built to give every athlete access to expert coaching and structured training."))}</p>
+        <div class="mt-9 flex flex-col gap-3 rounded-[24px] bg-black/50 p-3 backdrop-blur-md">
+          ${planNames.map((name, i) => {
+            const active = i === popularIndex;
+            const first = (planFeatures[i] || "").split("\n")[0] || "Flexible membership";
+            return `<div class="flex items-center justify-between gap-4 rounded-xl p-5" style="background:${active ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.14)"}">
+            <div><div class="text-xl font-semibold uppercase leading-none tracking-[-0.24px]" style="font-family:var(--sp-display);color:${active ? SP.white : "#cacfd8"}">${esc(name)}</div><div class="mt-1 text-sm" style="color:${active ? SP.line : "#cacfd8"}">${esc(first)}</div></div>
+            ${arrow("h-5 w-5 shrink-0", active ? SP.white : "#cacfd8")}
+          </div>`;
+          }).join("\n          ")}
+        </div>
+      </div>
+      ${(() => {
+        const i = popularIndex;
         const featureLines = (planFeatures[i] || "").split("\n").map((f) => f.trim()).filter(Boolean);
-        const shadow = popular ? `0 0 0 3px ${SP.brand}` : "0 0.5rem 1.5rem rgba(0,0,0,0.25)";
-        const badge = popular ? `<span class="rounded-full px-3 py-1 text-xs font-semibold uppercase" style="background:${SP.brand};color:${SP.ink}">Popular</span>` : "";
-        const items = featureLines.map((line) => `<li class="flex items-start gap-3">${check("mt-1 h-4 w-4 shrink-0", SP.ink)}<span class="leading-snug" style="color:${SP.ink}">${esc(line)}</span></li>`).join("\n          ");
-        return `<div class="flex flex-col rounded-[24px] p-8" style="background:${SP.white};box-shadow:${shadow}">
-        <div class="flex items-start justify-between gap-3"><div class="text-2xl font-semibold uppercase leading-none tracking-[-0.36px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(name)}</div>${badge}</div>
-        <div class="mt-5 flex items-end gap-1"><span class="text-[3.25rem] font-semibold leading-none tracking-[-0.6px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(planPrices[i] || "$0")}</span><span class="pb-1 text-lg font-medium" style="color:${SP.body}">/ month</span></div>
-        <div class="my-6 flex items-center gap-2"><span class="size-2 rounded-sm" style="background:${SP.ink}"></span><span class="h-[2px] flex-1" style="background:${SP.line}"></span><span class="size-2 rounded-sm" style="background:${SP.ink}"></span></div>
-        <ul class="flex flex-1 flex-col gap-4">${items}</ul>
-        <a href="${contactHref}" class="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium" style="background:${SP.brand};color:${SP.ink}">Get started ${arrow("h-4 w-4", SP.ink)}</a>
+        const items = featureLines.map((line) => `<li class="flex items-start gap-3">${check("mt-1 h-4 w-4 shrink-0", SP.ink)}<span class="leading-snug" style="color:${SP.ink}">${esc(line)}</span></li>`).join("\n            ");
+        return `<div class="w-full shrink-0 lg:w-[34rem]">
+        <div class="flex flex-col rounded-[32px] bg-white p-8 lg:p-9">
+          <div class="flex items-start justify-between gap-4">
+            <div><div class="text-3xl font-semibold uppercase leading-none tracking-[-0.36px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(planNames[i])}</div><div class="mt-2 text-base font-medium" style="color:${SP.body}">${esc((planFeatures[i] || "").split("\n")[0] || "Our most popular plan")}</div></div>
+            <span class="grid size-16 shrink-0 place-items-center rounded-[20px]" style="background:${SP.surface}">${arrow("h-6 w-6", SP.ink)}</span>
+          </div>
+          <div class="mt-6 flex items-end gap-2"><span class="text-[3.75rem] font-semibold leading-none tracking-[-0.6px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(planPrices[i] || "$0")}</span><span class="pb-1.5 text-lg font-medium" style="color:${SP.body}">/ month</span></div>
+          <div class="my-7 flex items-center gap-2"><span class="size-2 rounded-sm" style="background:${SP.ink}"></span><span class="h-[2px] flex-1" style="background:${SP.line}"></span><span class="size-2 rounded-sm" style="background:${SP.ink}"></span></div>
+          <ul class="flex flex-col gap-4">${items}</ul>
+          <a href="${contactHref}" class="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium" style="background:${SP.brand};color:${SP.ink}">Get started ${arrow("h-4 w-4", SP.ink)}</a>
+        </div>
       </div>`;
-      }).join("\n      ")}
+      })()}
     </div>
   </div>
 </section>
 
 <section id="sp-testimonials" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
-  ${sectionHeader("Testimonials")}
+  ${sectionHeader("Testimonials", false, 7)}
   <div class="mt-10 flex flex-col items-center gap-5 text-center">
     <div class="flex items-center -space-x-3">${AVATARS.slice(0, 5).map((src) => `<img src="${src}" alt="" class="size-12 rounded-full border-2 border-white object-cover" />`).join("")}</div>
     <h2 class="max-w-[42rem] font-semibold uppercase leading-none tracking-[-0.6px] text-[clamp(1.75rem,5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(testimonials.content, "heading", "Here's why athletes trust us"))}</h2>
     <p class="max-w-[47rem] text-lg leading-relaxed lg:text-xl" style="color:${SP.muted}">A supportive community where passion, movement, and discipline come together to inspire lasting change.</p>
   </div>
-  <div class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-    ${quotes.map((quote, i) => `<figure class="flex h-full flex-col justify-between gap-6 rounded-xl p-6" style="background:${SP.surface}">
-      <blockquote class="text-[0.95rem] leading-relaxed" style="color:${SP.body}">&ldquo;${esc(quote)}&rdquo;</blockquote>
-      <figcaption class="flex items-center gap-3"><img src="${AVATARS[i % AVATARS.length]}" alt="" class="size-10 rounded-full object-cover" /><div><div class="text-sm font-medium" style="color:${SP.ink}">${esc(authors[i] || "Athlo member")}</div>${roles[i] ? `<div class="text-[0.8rem]" style="color:${SP.muted}">${esc(roles[i])}</div>` : ""}</div></figcaption>
-    </figure>`).join("\n    ")}
+  <div class="relative mt-12">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      ${testimonialCols.map((col, c) => `<div class="flex flex-col gap-5 ${c % 2 === 1 ? "lg:-mt-10" : ""}">
+        ${col.map((i) => `<figure class="flex flex-col justify-between gap-6 rounded-xl p-6" style="background:${SP.surface}">
+          <blockquote class="text-[0.95rem] leading-relaxed" style="color:${SP.body}">&ldquo;${esc(quotes[i])}&rdquo;</blockquote>
+          <figcaption class="flex items-center gap-3"><img src="${AVATARS[i % AVATARS.length]}" alt="" class="size-10 rounded-full object-cover" /><div><div class="text-sm font-medium" style="color:${SP.ink}">${esc(authors[i] || "Athlo member")}</div>${roles[i] ? `<div class="text-[0.8rem]" style="color:${SP.muted}">${esc(roles[i])}</div>` : ""}</div></figcaption>
+        </figure>`).join("\n        ")}
+      </div>`).join("\n      ")}
+    </div>
+    <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent"></div>
   </div>
 </section>
 
 <section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
-  ${sectionHeader("FAQ")}
+  ${sectionHeader("FAQ", false, 8)}
   <div class="mt-10 flex flex-col items-start gap-12 lg:flex-row">
     <div class="flex flex-col gap-5 lg:w-[38rem]">
       <h2 class="font-semibold uppercase leading-none tracking-[-0.6px] text-[clamp(1.75rem,4.5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(faq.content, "heading", "Your questions, answered"))}</h2>
@@ -397,12 +429,13 @@ export function renderSportsPage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=swap" rel="stylesheet" />
   <style>
-    :root { --sp-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --sp-wordmark: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#ffc857")} }
+    :root { --sp-display: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --sp-wordmark: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#ffc857")} }
     html { scroll-behavior: smooth; }
     body {
-      font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+      font-family: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
       color: ${SP.ink};
       background: ${SP.white};
       -webkit-font-smoothing: antialiased;
