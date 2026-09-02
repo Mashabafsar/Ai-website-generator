@@ -14,6 +14,7 @@ import { CraftedSpacesSite } from "./craftedspaces/site";
 import { WhiterSite } from "./whiter/site";
 import { MainfileSite } from "./mainfile/site";
 import { SaasLandingSite } from "./saasldg/site";
+import { SportsSite } from "./sports/site";
 
 import { forgetechMotion } from "./forgetech/motion";
 import { techvantageMotion } from "./techvantage/motion";
@@ -21,6 +22,7 @@ import { craftedspacesMotion } from "./craftedspaces/motion";
 import { whiterMotion } from "./whiter/motion";
 import { mainfileMotion } from "./mainfile/motion";
 import { saasldgMotion } from "./saasldg/motion";
+import { sportsMotion } from "./sports/motion";
 
 type PreviewEntry = { Component: TemplatePreview; motion: MotionProfile };
 
@@ -31,6 +33,7 @@ const PREVIEWS: Record<string, PreviewEntry> = {
   whiter: { Component: WhiterSite, motion: whiterMotion },
   mainfile: { Component: MainfileSite, motion: mainfileMotion },
   saasldg: { Component: SaasLandingSite, motion: saasldgMotion },
+  sports: { Component: SportsSite, motion: sportsMotion },
 };
 
 /** True when a design has a dedicated bespoke React renderer. */

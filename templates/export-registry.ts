@@ -13,6 +13,7 @@ import { renderCraftedSpacesPage } from "./craftedspaces/export";
 import { renderWhiterPage } from "./whiter/export";
 import { renderMainfilePage } from "./mainfile/export";
 import { renderSaasLandingPage } from "./saasldg/export";
+import { renderSportsPage } from "./sports/export";
 
 const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   forgetech: renderForgeTechPage,
@@ -21,6 +22,7 @@ const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   whiter: renderWhiterPage,
   mainfile: renderMainfilePage,
   saasldg: renderSaasLandingPage,
+  sports: renderSportsPage,
 };
 
 function rendererKey(site: AssembledSite): string | null {

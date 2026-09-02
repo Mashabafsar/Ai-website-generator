@@ -332,6 +332,41 @@ export const SAASLDG_SEED: TemplateSeed = {
 };
 
 /**
+ * Athlo — the bespoke, SINGLE-PAGE sports-club design (ported from the "SPORTS"
+ * UI8 Figma Make export). Bold and energetic: full-bleed action photography, a
+ * warm amber accent, uppercase grotesque display type and a huge Bebas Neue
+ * wordmark. One home page with an ordered list of section slots.
+ */
+export const SPORTS_SEED: TemplateSeed = {
+  slug: "sports",
+  name: "Athlo",
+  tagline: "Bold, energetic sports-club design with full-bleed action photography and an amber accent.",
+  bestFor: "Sports clubs, teams, fitness studios & event organizers",
+  thumbnailUrl: "/templates/sports/preview.png",
+  previewImageUrl: "/templates/sports/preview.png",
+  accent: "#FFC857",
+  colorPreference: "Warm sunset",
+  visualStyle: "Bold",
+  tone: "Bold & energetic",
+  renderer: "sports",
+  published: true,
+  sortOrder: 6,
+  // Slot order maps 1:1 onto the Athlo renderer: hero, about, feature grid,
+  // category cards, pricing tiers, testimonial wall, FAQ, event CTA, footer.
+  sections: [
+    "hero-background-image",
+    "about-with-image",
+    "features-grid",
+    "services-cards",
+    "pricing-tiers",
+    "testimonials-grid",
+    "faq-accordion",
+    "cta-banner",
+    "footer-simple",
+  ],
+};
+
+/**
  * Layout skeletons built from the approved section library. They are seeded but
  * left unpublished: the gallery only offers designs that have been fully art
  * directed and given their own renderer, so a shopper never picks something
@@ -531,6 +566,7 @@ export const ALL_SEEDS: TemplateSeed[] = [
   WHITER_SEED,
   MAINFILE_SEED,
   SAASLDG_SEED,
+  SPORTS_SEED,
   ...STANDARD_SEEDS,
 ];
 

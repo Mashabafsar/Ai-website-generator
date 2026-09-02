@@ -12,6 +12,7 @@ import { craftedspacesMeta } from "./craftedspaces/metadata";
 import { whiterMeta } from "./whiter/metadata";
 import { mainfileMeta } from "./mainfile/metadata";
 import { saasldgMeta } from "./saasldg/metadata";
+import { sportsMeta } from "./sports/metadata";
 
 /** Every bespoke design. Add a new module's metadata here to register it. */
 export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
@@ -21,6 +22,7 @@ export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
   whiterMeta,
   mainfileMeta,
   saasldgMeta,
+  sportsMeta,
 ];
 
 const BY_RENDERER = new Map(TEMPLATE_MODULES.map((m) => [m.renderer, m]));
