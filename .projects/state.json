@@ -8,6 +8,10 @@
       "resources": [],
       "variables": [
         {
+          "variableName": "heavy-model-name",
+          "envKey": "HEAVY_MODEL_NAME"
+        },
+        {
           "variableName": "stripe-credit-pack-100",
           "envKey": "STRIPE_CREDIT_PACK_100_PRICE_ID"
         },
@@ -35,6 +39,10 @@
     }
   },
   "variables": {
+    "heavy-model-name": {
+      "name": "heavy-model-name",
+      "backendId": "fprjvar_61VKbBs84rQfIRDqF16VCykU11SQWeIHIylCNlJFAO6i"
+    },
     "stripe-credit-pack-100": {
       "name": "stripe-credit-pack-100",
       "backendId": "fprjvar_61VCzJIj68X7oYXZh16VCykU11SQWeIHIylCNlJFAIVM"

@@ -34,6 +34,28 @@ export function initTemplateMotion(scope?: Document | Element | null): () => voi
 
   const inChrome = (el: Element): boolean => !!el.closest("nav") || !!el.closest("[data-motion-skip]");
 
+  // ---- Broken-image safety net -------------------------------------------
+  // If a slot image URL (sourced from a provider or generated) fails to load,
+  // the browser shows a broken-image icon. Capture-phase error listener swaps
+  // the <img> for a neutral brand-tinted block so the layout never breaks. Runs
+  // on both the React preview and the exported static page (this function is
+  // serialized into the export), with no per-element React handlers needed.
+  const onImgError = (ev: Event) => {
+    const t = ev.target as HTMLImageElement | null;
+    if (!t || t.tagName !== "IMG") return;
+    if (t.getAttribute("data-fbk") === "1") return;
+    t.setAttribute("data-fbk", "1");
+    t.removeAttribute("srcset");
+    t.style.objectFit = "cover";
+    t.style.background =
+      "linear-gradient(135deg, var(--brand, #ffc857) 0%, rgba(14,18,27,0.9) 100%)";
+    // 1px transparent gif keeps the box sized by CSS while the gradient shows.
+    t.src =
+      "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
+  };
+  doc.addEventListener("error", onImgError, true);
+  cleanups.push(() => doc.removeEventListener("error", onImgError, true));
+
   // The motion root carries `data-motion-arm`, which hides reveal content from
   // the very first paint (no flash). Releasing it once we've taken per-element
   // control — or immediately under reduced motion — makes the page visible.

@@ -12,6 +12,7 @@
   "resources": {},
   "managedProjectVariableEnvKeys": {
     ".env": [
+      "HEAVY_MODEL_NAME",
       "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
       "STRIPE_CREDIT_PACK_100_PRICE_ID",
       "STRIPE_CREDIT_PACK_1000_PRICE_ID",

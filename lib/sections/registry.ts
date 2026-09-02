@@ -479,13 +479,16 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     label: "CTA — banner",
     description: "A bold call-to-action banner.",
     componentName: "CtaBanner",
-    needsImage: false,
+    // Some designs (e.g. Athlo) render the CTA over a large photo, so source an
+    // industry-relevant one instead of always falling back to the design asset.
+    needsImage: true,
+    imageOrientation: "landscape",
     fields: [
       { key: "headline", label: "Headline", type: "string", required: true },
       { key: "subheadline", label: "Subheadline", type: "text" },
       { key: "ctaPrimary", label: "Primary CTA", type: "string" },
     ],
-    keywords: () => [],
+    keywords: (ctx) => [`${ctx.industry} event`, ctx.industry, "people in action"],
     defaults: (ctx) => ({
       headline: `Ready to work with ${ctx.businessName}?`,
       subheadline: "Let's build something great together.",
