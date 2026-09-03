@@ -10,34 +10,34 @@
 --------------------------------------------------------------------------- */
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.25rem;
 
   --background: hsl(0 0% 100%);
-  --foreground: hsl(244 74% 7%);
+  --foreground: hsl(0 0% 6%); /* neutral-100 #101010 */
 
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(244 74% 7%);
+  --card-foreground: hsl(0 0% 6%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(244 74% 7%);
+  --popover-foreground: hsl(0 0% 6%);
 
-  --primary: hsl(248 99% 64%); /* #5D4AFE */
+  --primary: #4d71fb; /* Primary/Main */
   --primary-foreground: hsl(0 0% 100%);
 
-  --secondary: hsl(244 40% 96%);
-  --secondary-foreground: hsl(244 74% 12%);
+  --secondary: hsl(0, 0%, 96%); /* neutral #F5F5F5 */
+  --secondary-foreground: hsl(0 0% 14%);
 
-  --muted: hsl(244 30% 96%);
-  --muted-foreground: hsl(244 12% 42%);
+  --muted: hsl(0 0% 96%);
+  --muted-foreground: hsl(0 0% 53%); /* #878787 */
 
   --accent: hsl(190 92% 55%); /* cyan */
   --accent-foreground: hsl(244 74% 10%);
 
-  --destructive: hsl(0 72% 51%);
+  --destructive: #f14141; /* Error/Main */
   --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsl(244 24% 90%);
-  --input: hsl(244 24% 90%);
-  --ring: hsl(248 99% 64%);
+  --border: #ededed; /* neutral-30 */
+  --input: #d6d6d6; /* neutral-40 */
+  --ring: #4d71fb;
 
   --chart-1: hsl(262 90% 54%);
   --chart-2: hsl(210 96% 60%);
@@ -59,9 +59,46 @@
   --ink-muted: #878787;
   --line: #ededed;
   --line-strong: #d6d6d6;
-  --primary-surface: #f2f8fe;
-  --brand-purple: #7019ff;
   --shell-shadow: 6px 6px 32px 0 rgba(0, 0, 0, 0.06);
+
+  /* Style guide ramps (Figma "Style Guide" page — the source of truth). */
+  --primary-main: #4d71fb;
+  --primary-hover: #4463dd;
+  --primary-surface: #f2f8fe;
+  --primary-pressed: #000a23;
+  --primary-border: #dbe2ff;
+
+  --secondary-main: #ffb20c;
+  --secondary-hover: #d5b032;
+  --secondary-surface: #fff9e5;
+  --secondary-pressed: #806a1e;
+  --secondary-border: #fff0be;
+
+  --success-main: #39a168;
+  --success-hover: #389160;
+  --success-surface: #f5fffa;
+  --success-pressed: #28593f;
+  --success-border: #c5eed8;
+
+  --error-main: #f14141;
+  --error-hover: #d93a3a;
+  --error-surface: #fff5f5;
+  --error-pressed: #802a2a;
+  --error-border: #fac0c0;
+
+  --info-main: #5a12f0;
+  --info-hover: #6633d1;
+  --info-surface: #f6f2ff;
+  --info-pressed: #3f2478;
+  --info-border: #d0bdf8;
+
+  --neutral-5: #f5f5f5;
+  --neutral-50: #c2c2c2;
+  --neutral-70: #606060;
+  --neutral-80: #383838;
+
+  /* Purple accent (style guide Info/Main) — sales banner + premium CTAs. */
+  --brand-purple: #5a12f0;
   --brand-gradient: linear-gradient(
     100deg,
     #7313ff 0%,
@@ -74,32 +111,39 @@
 }
 
 .dark {
-  --background: hsl(244 60% 5%); /* near #05041E */
-  --foreground: hsl(240 30% 96%);
+  --background: #101010; /* neutral-100 */
+  --foreground: hsl(0 0% 96%);
 
-  --card: hsl(244 45% 8%);
-  --card-foreground: hsl(240 30% 96%);
-  --popover: hsl(244 45% 8%);
-  --popover-foreground: hsl(240 30% 96%);
+  --card: #242424; /* neutral-90 */
+  --card-foreground: hsl(0 0% 96%);
+  --popover: #242424;
+  --popover-foreground: hsl(0 0% 96%);
 
-  --primary: hsl(248 99% 68%);
-  --primary-foreground: hsl(244 74% 6%);
+  --primary: #4d71fb;
+  --primary-foreground: hsl(0 0% 100%);
 
-  --secondary: hsl(244 40% 14%);
-  --secondary-foreground: hsl(240 30% 96%);
+  --secondary: #383838; /* neutral-80 */
+  --secondary-foreground: hsl(0 0% 96%);
 
-  --muted: hsl(244 34% 14%);
-  --muted-foreground: hsl(240 16% 68%);
+  --muted: #383838;
+  --muted-foreground: #c2c2c2; /* neutral-50 */
 
   --accent: hsl(190 92% 55%);
   --accent-foreground: hsl(244 74% 8%);
 
-  --destructive: hsl(0 72% 55%);
+  --destructive: #f14141;
   --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsl(244 30% 18%);
-  --input: hsl(244 30% 20%);
-  --ring: hsl(248 99% 68%);
+  --border: #383838;
+  --input: #606060; /* neutral-70 */
+  --ring: #4d71fb;
+
+  --ink: #f5f5f5;
+  --ink-soft: #ededed;
+  --ink-muted: #c2c2c2;
+  --line: #383838;
+  --line-strong: #606060;
+  --primary-surface: #1c2a52;
 }
 
 @theme inline {
@@ -140,15 +184,45 @@
   --color-ink-muted: var(--ink-muted);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+
+  /* Style guide ramps */
+  --color-primary-main: var(--primary-main);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-surface: var(--primary-surface);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-border: var(--primary-border);
+  --color-secondary-main: var(--secondary-main);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-surface: var(--secondary-surface);
+  --color-secondary-pressed: var(--secondary-pressed);
+  --color-secondary-border: var(--secondary-border);
+  --color-success-main: var(--success-main);
+  --color-success-hover: var(--success-hover);
+  --color-success-surface: var(--success-surface);
+  --color-success-pressed: var(--success-pressed);
+  --color-success-border: var(--success-border);
+  --color-error-main: var(--error-main);
+  --color-error-hover: var(--error-hover);
+  --color-error-surface: var(--error-surface);
+  --color-error-pressed: var(--error-pressed);
+  --color-error-border: var(--error-border);
+  --color-info-main: var(--info-main);
+  --color-info-hover: var(--info-hover);
+  --color-info-surface: var(--info-surface);
+  --color-info-pressed: var(--info-pressed);
+  --color-info-border: var(--info-border);
+  --color-neutral-5: var(--neutral-5);
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-70: var(--neutral-70);
+  --color-neutral-80: var(--neutral-80);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-sora), var(--font-space-grotesk), sans-serif;
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-onest), sans-serif;
   --font-app: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
 }
 

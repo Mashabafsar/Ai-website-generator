@@ -66,7 +66,7 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
         <Link
           href="/app/templates"
           className={cn(
-            "flex h-10 items-center justify-center overflow-clip bg-brand-blue text-[15px] text-white transition-colors hover:bg-brand-indigo",
+            "flex h-10 items-center justify-center overflow-clip bg-primary text-primary-foreground text-[15px] transition-colors hover:bg-primary-hover active:bg-primary-pressed",
             collapsed && "px-0"
           )}
         >

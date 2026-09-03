@@ -139,7 +139,7 @@ export default async function DashboardPage() {
               </Link>
               <Link
                 href="/app/credits"
-                className="flex h-10 items-center justify-center bg-brand-purple px-[18px] text-[15px] leading-[22.5px] text-white transition-colors hover:bg-brand-violet"
+                className="flex h-10 items-center justify-center bg-brand-purple px-[18px] text-[15px] leading-[22.5px] text-white transition-colors hover:bg-info-hover"
               >
                 Explore Plans
               </Link>
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
       {/* Contact sales */}
       <section
         className="relative overflow-clip"
-        style={{ backgroundImage: "linear-gradient(-78deg, #24d5f6 39.5%, #7019ff 99.7%)" }}
+        style={{ backgroundImage: "linear-gradient(-78deg, #24d5f6 39.5%, #5a12f0 99.7%)" }}
       >
         <div className="flex flex-col gap-6 p-8 lg:p-10">
           <div className="flex max-w-3xl flex-col gap-1 text-white">
@@ -294,7 +294,7 @@ function ProjectPanel({
         <div className="flex flex-wrap gap-3">
           <Link
             href={href}
-            className="flex h-10 items-center gap-2 bg-brand-blue px-[18px] text-[15px] leading-[22.5px] text-white transition-colors hover:bg-brand-indigo"
+            className="flex h-10 items-center gap-2 bg-primary px-[18px] text-[15px] leading-[22.5px] text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"
           >
             {label}
             <ArrowRight className="size-4" />
