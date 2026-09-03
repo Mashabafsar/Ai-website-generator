@@ -2,72 +2,262 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   ArrowRight,
-  Github,
-  Globe,
+  FlaskConical,
+  Image as ImageIcon,
   LayoutTemplate,
-  Pencil,
-  Plus,
-  Sparkles,
+  MousePointerClick,
+  PenLine,
+  Rocket,
+  ScanSearch,
+  Search,
+  Target,
+  Users,
+  Video,
+  Wand2,
+  Wrench,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth/session";
 import { getUserProjectWithRelations } from "@/lib/projects/projects";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { listPublishedTemplates } from "@/lib/templates/store";
 import { StatusBadge } from "@/components/app/status-badge";
 import { ProjectStatus } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
+// Dashboard — follows the app design system: Onest type, ink neutrals, hairline
+// borders, blue→purple accent chips, and the cyan→purple sales banner.
+
+const STEPS = [
+  {
+    icon: Target,
+    title: "Define",
+    desc: "Define your objectives & business goals or analyze your current site using our agent.",
+  },
+  {
+    icon: LayoutTemplate,
+    title: "Template",
+    desc: "Select an existing template that matches your industry and design preference.",
+  },
+  {
+    icon: PenLine,
+    title: "Content",
+    desc: "Bring your own content, images & videos or generate it using AI Tokens.",
+  },
+  {
+    icon: Wrench,
+    title: "Tech Stack & Maintenance",
+    desc: "Select the right tech stack for your site and maintenance plan with experts.",
+  },
+  {
+    icon: Rocket,
+    title: "Deploy",
+    desc: "Host the website on Vercel or on our AWS Cloud server with 99.9% uptime.",
+  },
+];
+
+const AGENTS = [
+  {
+    icon: ScanSearch,
+    title: "Website Analyst",
+    desc: "Define your objectives & business goals or analyze your current site using our agent. The analyst will recommend you template and suggest changes.",
+  },
+  {
+    icon: PenLine,
+    title: "Copywriter",
+    desc: "Craft a storytelling copy for your website. That engages users and create conversions for your business.",
+  },
+  {
+    icon: ImageIcon,
+    title: "Images",
+    desc: "Explore our world class library of free and paid images or Generate AI Images using nano banana.",
+  },
+  {
+    icon: Video,
+    title: "Videos",
+    desc: "Explore our world class library of free and paid video or Generate AI Videos using omni Flash.",
+  },
+  {
+    icon: Rocket,
+    title: "Deployment",
+    desc: "Deploy your website using Agentic Infrastructure in one click. Ship websites that scale from zero to millions instantly",
+  },
+  {
+    icon: Users,
+    title: "Customer Success",
+    desc: "Get help finishing your website with our customer support. Talk to Designer, Developer, Digital Marketers, QA, DevOps Specialist",
+  },
+  {
+    icon: Search,
+    title: "Search Engine Optimization",
+    desc: "Write SEO friendly blogs to rank higher on Google, Bing. Attract more audience to the website",
+  },
+  {
+    icon: FlaskConical,
+    title: "A/B Testing",
+    desc: "Conduct A/B Testing on two different layout. Understand user behaviors, conversions.",
+  },
+  {
+    icon: MousePointerClick,
+    title: "Heatmaps",
+    desc: "Get the heat-maps data to help understand on which section or button user spent most of the time.",
+  },
+];
+
 export default async function DashboardPage() {
   const session = await getCurrentSession();
   if (!session?.user) redirect("/login");
 
-  const project = await getUserProjectWithRelations(session.user.id);
+  const [project, templates] = await Promise.all([
+    getUserProjectWithRelations(session.user.id),
+    listPublishedTemplates(),
+  ]);
+
+  const firstName = session.user.name.split(" ")[0];
+  const start = project ? nextStep(project) : { label: "Get Started", href: "/app/templates" };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="font-display text-3xl font-bold tracking-tight">
-          Hi {session.user.name.split(" ")[0]} 👋
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          {project ? "Here's your website project." : "Let's build your website."}
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      {/* Welcome banner + 5 steps */}
+      <section className="overflow-clip border border-line shell-gradient-border">
+        <div className="flex flex-col gap-6 p-6">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-1.5 text-ink">
+              <p className="text-2xl font-semibold leading-[1.2]">Hi, {firstName} !</p>
+              <p className="text-sm leading-[1.5]">
+                It’s easier than ever before to create a new website or revamp an existing website.
+                <br />
+                Go from existing website to a new website in 5 easy steps.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <Link
+                href={start.href}
+                className="flex h-10 items-center justify-center border-[0.75px] border-line bg-white px-[18px] text-[15px] leading-[22.5px] text-ink transition-colors hover:bg-secondary"
+              >
+                {start.label}
+              </Link>
+              <Link
+                href="/app/credits"
+                className="flex h-10 items-center justify-center bg-brand-purple px-[18px] text-[15px] leading-[22.5px] text-white transition-colors hover:bg-brand-violet"
+              >
+                Explore Plans
+              </Link>
+            </div>
+          </div>
 
-      {project ? <ProjectPanel project={project} /> : <EmptyState />}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <Card className="overflow-hidden">
-      <div className="hero-aurora relative p-10">
-        <div className="grid-texture absolute inset-0 opacity-40" />
-        <div className="relative max-w-lg">
-          <Badge variant="brand" className="mb-4">
-            <Sparkles className="mr-1 h-3 w-3" /> Free credits ready
-          </Badge>
-          <h2 className="font-display text-3xl font-bold text-white">
-            Pick a design to start
-          </h2>
-          <p className="mt-3 text-white/70">
-            Choose a complete website design from the library, tell us about your
-            business, and our AI writes the content for it — saved to GitHub
-            automatically.
-          </p>
-          <Button asChild size="lg" variant="brand" className="mt-6 group">
-            <Link href="/app/templates">
-              Browse templates
-              <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-6 bg-[rgba(214,221,255,0.2)] p-6">
+            {STEPS.map((step) => (
+              <div key={step.title} className="flex min-w-[180px] flex-1 flex-col gap-3">
+                <span className="shell-accent-chip grid size-[37px] place-items-center rounded">
+                  <step.icon className="size-5 text-brand-blue" />
+                </span>
+                <div>
+                  <p className="text-base font-semibold leading-[1.5] text-ink">{step.title}</p>
+                  <p className="text-sm leading-[1.5] text-ink-soft">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </Card>
+      </section>
+
+      {project && <ProjectPanel project={project} />}
+
+      {/* Templates */}
+      <section className="flex flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold leading-[1.2] text-ink">Templates</h2>
+          <Link href="/app/templates" className="text-lg font-medium text-brand-blue hover:underline">
+            View All&nbsp;&nbsp;→
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-[30px] md:grid-cols-3 xl:grid-cols-5">
+          {templates.slice(0, 5).map((t) => (
+            <article
+              key={t.id}
+              className="flex flex-col overflow-clip border border-line bg-white"
+            >
+              <div className="relative h-[222px] overflow-hidden bg-secondary">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.previewImageUrl || t.thumbnailUrl}
+                  alt={t.name}
+                  className="absolute inset-0 h-full w-full object-cover object-top"
+                />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex min-w-0 flex-col gap-0.5 leading-[1.5]">
+                  <p className="truncate text-sm font-medium text-ink">{t.name}</p>
+                  <p className="truncate text-xs text-ink-muted">{t.bestFor}</p>
+                </div>
+                <Link
+                  href={`/app/new-project?templateId=${t.slug}`}
+                  className="shell-accent-chip flex h-8 shrink-0 items-center gap-1 rounded-[240px] px-3 text-[13px] leading-[22.5px] text-ink transition-colors hover:bg-primary-surface"
+                >
+                  <Wand2 className="size-[17px] text-brand-blue" />
+                  Remix
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Agents */}
+      <section className="flex flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold leading-[1.2] text-ink">Agents</h2>
+          <Link href="/app/dashboard#agents" className="text-lg font-medium text-brand-blue hover:underline">
+            View All&nbsp;&nbsp;→
+          </Link>
+        </div>
+        <div id="agents" className="grid gap-[30px] md:grid-cols-2 xl:grid-cols-3">
+          {AGENTS.map((agent) => (
+            <article
+              key={agent.title}
+              className="flex items-start gap-4 overflow-clip border border-line bg-white p-4"
+            >
+              <span className="shell-accent-chip grid h-11 w-[45px] shrink-0 place-items-center rounded">
+                <agent.icon className="size-6 text-brand-blue" />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="text-lg font-medium leading-[1.2] text-black">{agent.title}</p>
+                <p className="text-xs leading-[1.5] text-ink-soft">{agent.desc}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Contact sales */}
+      <section
+        className="relative overflow-clip"
+        style={{ backgroundImage: "linear-gradient(-78deg, #24d5f6 39.5%, #7019ff 99.7%)" }}
+      >
+        <div className="flex flex-col gap-6 p-8 lg:p-10">
+          <div className="flex max-w-3xl flex-col gap-1 text-white">
+            <p className="text-[32px] font-semibold leading-[1.2]">Partner with us.</p>
+            <p className="text-sm leading-[1.5]">
+              For Business &amp; Enterprise Sites, Contact our Sales Team.
+              <br />
+              <br />
+              We’ve delivered websites and web applications to fortune 500 using our Digital Growth
+              Engine. Our partners has grown there revenue from 0 → $Millions using our design,
+              development, digital marketing and AI Services.
+            </p>
+          </div>
+          <div>
+            <a
+              href="mailto:sales@agencypartner.com"
+              className="inline-flex h-10 items-center justify-center border-[0.75px] border-line-strong bg-white px-[18px] text-[15px] leading-[22.5px] text-ink transition-colors hover:bg-secondary"
+            >
+              Schedule a Call
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -82,141 +272,53 @@ function ProjectPanel({
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <CardHeader className="flex-row items-start justify-between space-y-0">
-          <div>
-            <CardTitle className="text-xl">{project.businessName}</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">/{project.slug}</p>
+    <section className="flex flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold leading-[1.2] text-ink">Your Project</h2>
+      </div>
+      <article className="flex flex-wrap items-center justify-between gap-4 border border-line bg-white p-6">
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <p className="truncate text-lg font-medium leading-[1.2] text-black">
+              {project.businessName}
+            </p>
+            <StatusBadge status={project.status} />
           </div>
-          <StatusBadge status={project.status} />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm leading-[1.5] text-ink-muted">
+            /{project.slug} ·{" "}
             {hasGenerated
-              ? "Your site has been generated. Continue editing, get a quote, or ship it."
+              ? "Generated — continue editing, get a quote, or ship it."
               : "Continue where you left off to generate your website."}
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="brand" className="group">
-              <Link href={href}>
-                {label}
-                <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={href}
+            className="flex h-10 items-center gap-2 bg-brand-blue px-[18px] text-[15px] leading-[22.5px] text-white transition-colors hover:bg-brand-indigo"
+          >
+            {label}
+            <ArrowRight className="size-4" />
+          </Link>
+          {hasGenerated && (
+            <>
+              <Link
+                href={`/app/project/${project.id}/editor`}
+                className="flex h-10 items-center border-[0.75px] border-line bg-white px-[18px] text-[15px] leading-[22.5px] text-ink transition-colors hover:bg-secondary"
+              >
+                Editor
               </Link>
-            </Button>
-            {hasGenerated && (
-              <>
-                <Button asChild variant="outline">
-                  <Link href={`/app/project/${project.id}/editor`}>
-                    <Pencil className="h-4 w-4" /> Editor
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href={`/app/project/${project.id}/quote`}>Get a quote</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Delivery</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <StatusRow
-              icon={<Github className="h-4 w-4" />}
-              label="GitHub backup"
-              value={
-                project.githubRepoUrl ? (
-                  <a
-                    href={project.githubRepoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    View repo
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground">{githubStatusLabel(project.githubSyncStatus, hasGenerated)}</span>
-                )
-              }
-            />
-            <StatusRow
-              icon={<Globe className="h-4 w-4" />}
-              label="Live site"
-              value={
-                project.deployment?.liveUrl ? (
-                  <a
-                    href={project.deployment.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    Open
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground">Not deployed</span>
-                )
-              }
-            />
-            <StatusRow
-              icon={<LayoutTemplate className="h-4 w-4" />}
-              label="Preview"
-              value={
-                hasGenerated ? (
-                  <Link href={`/app/project/${project.id}/preview`} className="text-primary hover:underline">
-                    Open preview
-                  </Link>
-                ) : (
-                  <span className="text-muted-foreground">After generation</span>
-                )
-              }
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="border-dashed">
-          <CardContent className="flex items-start gap-3 pt-6 text-sm text-muted-foreground">
-            <Plus className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              One website per account. Editing and AI rewrites stay available on this
-              project.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              <Link
+                href={`/app/project/${project.id}/quote`}
+                className="flex h-10 items-center border-[0.75px] border-line bg-white px-[18px] text-[15px] leading-[22.5px] text-ink transition-colors hover:bg-secondary"
+              >
+                Get a quote
+              </Link>
+            </>
+          )}
+        </div>
+      </article>
+    </section>
   );
-}
-
-function StatusRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        {label}
-      </span>
-      <span className="font-medium">{value}</span>
-    </div>
-  );
-}
-
-function githubStatusLabel(status: string, hasGenerated: boolean): string {
-  if (!hasGenerated) return "After generation";
-  if (status === "PENDING") return "Syncing…";
-  if (status === "FAILED") return "Sync failed";
-  return "—";
 }
 
 function nextStep(project: {

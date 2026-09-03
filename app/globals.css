@@ -51,6 +51,17 @@
   --brand-blue: #4d71fb;
   --brand-cyan: #24d5f6;
   --brand-navy: #05041e;
+
+  /* App shell (dashboard design system) — Onest type, neutral ink scale,
+     hairline borders, and the blue→purple accent ramp from the design. */
+  --ink: #101010;
+  --ink-soft: #242424;
+  --ink-muted: #878787;
+  --line: #ededed;
+  --line-strong: #d6d6d6;
+  --primary-surface: #f2f8fe;
+  --brand-purple: #7019ff;
+  --shell-shadow: 6px 6px 32px 0 rgba(0, 0, 0, 0.06);
   --brand-gradient: linear-gradient(
     100deg,
     #7313ff 0%,
@@ -122,6 +133,14 @@
   --color-brand-blue: var(--brand-blue);
   --color-brand-cyan: var(--brand-cyan);
   --color-brand-navy: var(--brand-navy);
+  --color-brand-purple: var(--brand-purple);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-primary-surface: var(--primary-surface);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -130,6 +149,28 @@
 
   --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-sora), var(--font-space-grotesk), sans-serif;
+  --font-app: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* App-shell helpers (dashboard design system) */
+.font-app {
+  font-family: var(--font-app);
+}
+.shell-card-shadow {
+  box-shadow: var(--shell-shadow);
+}
+/* Gradient hairline border used on the welcome banner. */
+.shell-gradient-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(95deg, rgba(255, 255, 255, 0.1) 44%, rgba(77, 113, 251, 0.1) 55%, rgba(112, 25, 255, 0.1) 88%) padding-box,
+    linear-gradient(white, white) padding-box;
+  background-color: white;
+}
+/* Blue→purple accent ramp for icon chips and CTAs. */
+.shell-accent-chip {
+  border: 1px solid var(--brand-blue);
+  background-image: linear-gradient(to bottom, rgba(77, 113, 251, 0.1), rgba(112, 25, 255, 0.1));
 }
 
 * {

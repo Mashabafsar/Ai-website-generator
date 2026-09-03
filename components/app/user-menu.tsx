@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, User as UserIcon } from "lucide-react";
+import { ChevronDown, Loader2, LogOut, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "@/lib/auth/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -46,12 +46,16 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Open account menu"
       >
         <Avatar>
           <AvatarFallback className="brand-gradient text-white">{initials}</AvatarFallback>
         </Avatar>
+        <span className="max-w-[140px] truncate text-base leading-[1.5] text-ink">
+          {name || "Account"}
+        </span>
+        <ChevronDown className="size-4 text-ink" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="z-[100] w-56">
         <DropdownMenuLabel>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, Space_Grotesk } from "next/font/google";
+import { Sora, Space_Grotesk, Onest } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -12,6 +12,13 @@ const sora = Sora({
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+// App-shell typeface (dashboard design system).
+const onest = Onest({
+  subsets: ["latin"],
+  variable: "--font-onest",
   display: "swap",
 });
 
@@ -33,7 +40,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sora.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${sora.variable} ${spaceGrotesk.variable} ${onest.variable}`} suppressHydrationWarning>
       <body>
         {children}
         <Toaster />
