@@ -105,6 +105,7 @@ export default async function QuestionnairePage({
         initialAnswers={initialAnswers}
         alreadyGenerated={alreadyGenerated}
         generateCost={env.credits.costHeavyGenerate}
+        importCost={env.credits.costScrapeImport}
       />
     </div>
   );

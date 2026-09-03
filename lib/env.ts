@@ -31,9 +31,10 @@ export const env = {
   },
 
   credits: {
-    signupBonus: num(process.env.SIGNUP_CREDIT_BONUS, 50),
+    signupBonus: num(process.env.SIGNUP_CREDIT_BONUS, 70),
     costHeavyGenerate: num(process.env.CREDIT_COST_HEAVY_GENERATE, 50),
     costLightEdit: num(process.env.CREDIT_COST_LIGHT_EDIT, 5),
+    costScrapeImport: num(process.env.CREDIT_COST_SCRAPE_IMPORT, 10),
   },
 
   admin: {

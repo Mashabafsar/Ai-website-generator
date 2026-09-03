@@ -61,6 +61,7 @@ export function QuestionnaireWizard({
   initialAnswers,
   alreadyGenerated,
   generateCost,
+  importCost,
 }: {
   projectId: string;
   /** The locked design. Layout stays fixed; optional style fields only tune voice and colors. */
@@ -68,6 +69,7 @@ export function QuestionnaireWizard({
   initialAnswers: QuestionnaireAnswers | null;
   alreadyGenerated: boolean;
   generateCost: number;
+  importCost: number;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -105,6 +107,11 @@ export function QuestionnaireWizard({
         body: JSON.stringify({ url }),
       });
       const data = await res.json();
+      if (res.status === 402 || data?.code === "INSUFFICIENT_CREDITS") {
+        toast.error(`Importing a website costs ${importCost} credits — redirecting to top up.`);
+        router.push("/app/credits");
+        return;
+      }
       if (!res.ok || !data?.ok) {
         throw new Error(data?.error || "We couldn't read that website.");
       }
@@ -251,7 +258,7 @@ export function QuestionnaireWizard({
                   <Field
                     label="Your website URL"
                     error={err.existingWebsiteUrl?.message}
-                    hint="We'll read the public pages and prefill this questionnaire — you can edit everything after."
+                    hint={`We'll read the public pages and prefill this questionnaire — you can edit everything after. Importing costs ${importCost} credits (refunded if the site can't be read).`}
                   >
                     <div className="flex gap-2">
                       <Input
@@ -270,7 +277,7 @@ export function QuestionnaireWizard({
                         ) : (
                           <Sparkles className="h-4 w-4" />
                         )}
-                        Import
+                        Import ({importCost} credits)
                       </Button>
                     </div>
                   </Field>
