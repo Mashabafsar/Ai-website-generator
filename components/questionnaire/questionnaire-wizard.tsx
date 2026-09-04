@@ -15,6 +15,13 @@ import {
   type QuestionnaireAnswers,
 } from "@/lib/questionnaire/schema";
 import { PackageType } from "@/lib/constants";
+import {
+  hasImportedBrand,
+  hasImportedTheme,
+  importedBrandSchema,
+  type ImportedBrand,
+} from "@/lib/branding/imported-brand";
+import { BrandImportChoice } from "@/components/questionnaire/brand-import-choice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,6 +92,7 @@ export function QuestionnaireWizard({
 
   const { control, register, handleSubmit, trigger, watch, setValue, formState } = form;
   const services = watch("services");
+  const importedBrand = watch("importedBrand") as ImportedBrand | undefined;
 
   async function next() {
     const ok = await trigger(STEP_FIELDS[step]);
@@ -104,7 +112,7 @@ export function QuestionnaireWizard({
       const res = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, projectId }),
       });
       const data = await res.json();
       if (res.status === 402 || data?.code === "INSUFFICIENT_CREDITS") {
@@ -129,12 +137,23 @@ export function QuestionnaireWizard({
           applied++;
         }
       }
-      if (applied === 0) {
+      // Branding is best-effort and validated again here: a payload we can't
+      // trust is dropped, leaving the text prefill untouched.
+      const parsedBrand = importedBrandSchema.safeParse(data.brand);
+      const brand = parsedBrand.success && hasImportedBrand(parsedBrand.data) ? parsedBrand.data : null;
+      setValue("importedBrand", brand ?? undefined, { shouldDirty: true });
+      setValue("themeSource", brand && hasImportedTheme(brand) ? "imported" : "", {
+        shouldDirty: true,
+      });
+
+      if (applied === 0 && !brand) {
         toast.info("We read the site but couldn't pull out details — you can fill them in next.");
       } else {
         toast.success("Details imported — review the next steps.");
       }
-      setStep(1);
+      // A detected identity needs a decision before moving on; without one the
+      // import behaves exactly as it always has.
+      if (!brand) setStep(1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "We couldn't read that website.");
     } finally {
@@ -245,6 +264,8 @@ export function QuestionnaireWizard({
                       onClick={() => {
                         setValue("hasWebsite", "no", { shouldDirty: true });
                         setValue("existingWebsiteUrl", "");
+                        setValue("importedBrand", undefined);
+                        setValue("themeSource", "");
                         // No website means nothing to import — jump straight in.
                         setStep(1);
                       }}
@@ -281,6 +302,18 @@ export function QuestionnaireWizard({
                       </Button>
                     </div>
                   </Field>
+                )}
+
+                {importedBrand && (
+                  <BrandImportChoice
+                    brand={importedBrand}
+                    value={watch("themeSource") === "imported" ? "imported" : "ai"}
+                    onChange={(next) =>
+                      setValue("themeSource", next === "imported" ? "imported" : "ai", {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
                 )}
               </>
             )}

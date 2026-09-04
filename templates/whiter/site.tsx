@@ -3,6 +3,9 @@ import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/bluepri
 import { WH } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle } from "../shared/brand";
+import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { IconGlyph } from "@/lib/icons/glyph";
+import { isIconName } from "@/lib/icons/registry";
 
 const display = Rubik({
   subsets: ["latin"],
@@ -79,12 +82,16 @@ export function WhiterSite({
     <div
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
-        ...brandStyle(site?.theme?.colors, "#1787FC"),
+        ...brandStyle(site?.theme, "#1787FC"),
         fontFamily: "var(--wh-body), ui-sans-serif, system-ui, sans-serif",
         color: WH.ink,
         backgroundColor: WH.white,
+        ...themeFontStyle(site?.theme, ["--wh-display", "--wh-body"]),
       }}
     >
+      {themeFontHref(site?.theme) ? (
+        <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
+      ) : null}
       <Header
         pages={pages}
         active={active}
@@ -367,7 +374,11 @@ function FeatureCards({ slot }: { slot: TemplateSlot }) {
             style={{ borderColor: WH.line }}
           >
             <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl" style={{ background: WH.brandSoft }}>
-              <img src={slot.itemImages[i] || ICONS[i % ICONS.length]} alt="" className="h-11 w-11 object-contain" />
+              {isIconName(slot.icons[i]) ? (
+                <IconGlyph name={slot.icons[i]} size={44} color={WH.brand} strokeWidth={1.6} className="h-11 w-11" />
+              ) : (
+                <img src={slot.itemImages[i] || ICONS[i % ICONS.length]} alt="" className="h-11 w-11 object-contain" />
+              )}
             </div>
             <h3 className="mt-6 text-xl font-bold" style={{ fontFamily: "var(--wh-display)", color: WH.mirage }}>
               {title}

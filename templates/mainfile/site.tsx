@@ -3,6 +3,9 @@ import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/bluepri
 import { MR, MR_GRADIENTS, MR_BRAND_GRADIENT, MR_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle } from "../shared/brand";
+import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { IconGlyph } from "@/lib/icons/glyph";
+import { isIconName } from "@/lib/icons/registry";
 
 const display = Hind({
   subsets: ["latin"],
@@ -88,12 +91,16 @@ export function MainfileSite({
     <div
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
-        ...brandStyle(site?.theme?.colors, "#7DBCFF"),
+        ...brandStyle(site?.theme, "#7DBCFF"),
         fontFamily: "var(--mr-body), ui-sans-serif, system-ui, sans-serif",
         color: MR.body,
         backgroundColor: MR.white,
+        ...themeFontStyle(site?.theme, ["--mr-display", "--mr-body"]),
       }}
     >
+      {themeFontHref(site?.theme) ? (
+        <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
+      ) : null}
       <Header pages={pages} active={active} businessName={businessName} customLogo={customLogo} />
 
       <main>{renderPageBody(active, slots, { businessName, contactEmail, contactPhone })}</main>
@@ -301,15 +308,19 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function IconTile({ index }: { index: number }) {
+function IconTile({ index, icon }: { index: number; icon?: string }) {
   return (
     <span
       className="grid h-16 w-16 place-items-center rounded-2xl text-white shadow-lg"
       style={{ backgroundImage: MR_GRADIENTS[index % MR_GRADIENTS.length], boxShadow: "0 14px 30px -12px rgba(52,49,75,0.35)" }}
     >
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d={MR_ICON_PATHS[index % MR_ICON_PATHS.length]} />
-      </svg>
+      {isIconName(icon) ? (
+        <IconGlyph name={icon} className="h-8 w-8" strokeWidth={1.7} />
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d={MR_ICON_PATHS[index % MR_ICON_PATHS.length]} />
+        </svg>
+      )}
     </span>
   );
 }
@@ -384,7 +395,7 @@ function FeatureCards({ slot, startIndex = 0 }: { slot: TemplateSlot; startIndex
             style={{ borderColor: MR.line, boxShadow: "0 24px 60px -34px rgba(52,49,75,0.28)" }}
           >
             <div className="mx-auto w-16">
-              <IconTile index={startIndex + i} />
+              <IconTile index={startIndex + i} icon={slot.icons[i]} />
             </div>
             <h3 className="mt-6 text-xl font-bold" style={{ fontFamily: "var(--mr-display)", color: MR.ink }}>
               {title}

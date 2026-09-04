@@ -1,7 +1,10 @@
-import type { ThemeTokens } from "@/lib/blueprint/types";
+import { THEME_FONTS } from "@/templates/shared/fonts";
+import { IMPORTED_PALETTE_NAME } from "@/lib/branding/imported-brand";
+import type { ThemeTokens, WebsiteBlueprint } from "@/lib/blueprint/types";
 
 // Theme Agent — maps a color preference + visual style to concrete design
-// tokens. Deterministic (rules-based) so results are consistent.
+// tokens. Deterministic (rules-based) so results are consistent; the heavy
+// model only gets to pick *which* catalog entry applies, never a raw value.
 
 const PALETTES: Record<string, ThemeTokens["colors"]> = {
   "Brand blue & violet": {
@@ -57,13 +60,81 @@ const RADII: Record<string, string> = {
   Luxury: "0.5rem",
 };
 
-export function createTheme(colorPreference: string, visualStyle: string): ThemeTokens {
-  const colors = PALETTES[colorPreference] ?? PALETTES["Brand blue & violet"];
+/** The palette names the model may choose from, for the prompt and validation. */
+export const PALETTE_NAMES = Object.keys(PALETTES);
+
+/** The model's design direction, once checked against the catalogs. */
+export type ThemeChoice = {
+  palette?: string;
+  fontFamily?: string;
+};
+
+/**
+ * Keeps only values that exist in the catalogs. Never trust the model with a
+ * raw hex or font stack — an unrecognized pick simply drops out and the
+ * template default stands.
+ */
+export function validateThemeChoice(design: WebsiteBlueprint["design"] | undefined): ThemeChoice {
+  const palette = design?.palette?.trim();
+  const fontFamily = design?.fontFamily?.trim().toLowerCase();
+  return {
+    palette: palette && palette in PALETTES ? palette : undefined,
+    fontFamily: THEME_FONTS.some((f) => f.id === fontFamily) ? fontFamily : undefined,
+  };
+}
+
+/** The identity lifted off the customer's own website, once they've kept it. */
+export type ImportedThemeChoice = {
+  colors?: ThemeTokens["colors"];
+  fontFamily?: string;
+};
+
+/**
+ * Builds the design tokens for a site. Precedence, strongest first:
+ * an imported identity the customer chose to keep, then their explicit
+ * questionnaire answer, then the heavy model's pick, then the template's own.
+ */
+export function createTheme(
+  colorPreference: string,
+  visualStyle: string,
+  options: {
+    choice?: ThemeChoice;
+    colorPreferenceExplicit?: boolean;
+    imported?: ImportedThemeChoice;
+  } = {}
+): ThemeTokens {
+  const { choice, colorPreferenceExplicit, imported } = options;
+  const paletteName = colorPreferenceExplicit
+    ? colorPreference
+    : choice?.palette ?? colorPreference;
+
+  // Only a deliberate pick is recorded, so an untouched project keeps letting
+  // each bespoke design paint with its own accent.
+  const deliberate = paletteName in PALETTES && (colorPreferenceExplicit || Boolean(choice?.palette));
+  const colors = PALETTES[paletteName] ?? PALETTES["Brand blue & violet"];
   const radius = RADII[visualStyle] ?? "0.75rem";
+
+  if (imported?.colors || imported?.fontFamily) {
+    const importedColors = imported.colors ?? colors;
+    return {
+      colors: importedColors,
+      radius,
+      fontStyle: `${visualStyle.toLowerCase()} sans-serif`,
+      ...(imported.fontFamily ?? choice?.fontFamily
+        ? { fontFamily: imported.fontFamily ?? choice?.fontFamily }
+        : {}),
+      // Naming the imported palette is what tells the bespoke designs this
+      // primary was chosen on purpose and outranks their signature accent.
+      ...(imported.colors ? { palette: IMPORTED_PALETTE_NAME } : deliberate ? { palette: paletteName } : {}),
+    };
+  }
+
   return {
     colors,
     radius,
     fontStyle: `${visualStyle.toLowerCase()} sans-serif`,
+    ...(choice?.fontFamily ? { fontFamily: choice.fontFamily } : {}),
+    ...(deliberate ? { palette: paletteName } : {}),
   };
 }
 

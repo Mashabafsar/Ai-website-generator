@@ -1,6 +1,8 @@
 import { WH } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/whiter/site.tsx. Exported and deployed sites
@@ -191,7 +193,7 @@ function featureCards(slot: TemplateSlot): string {
     .map(
       (title, i) => `<article class="rounded-[28px] border bg-white p-8 text-center shadow-[0_20px_60px_-30px_rgba(23,135,252,0.35)]" style="border-color:${WH.line}">
       <div class="mx-auto grid h-20 w-20 place-items-center rounded-3xl" style="background:${WH.brandSoft}">
-        <img src="${esc(slot.itemImages[i] || ICONS[i % ICONS.length])}" alt="" class="h-11 w-11 object-contain" />
+        ${iconSvg(slot.icons[i], { size: 44, color: WH.brand, strokeWidth: 1.6, className: "h-11 w-11" }) || `<img src="${esc(slot.itemImages[i] || ICONS[i % ICONS.length])}" alt="" class="h-11 w-11 object-contain" />`}
       </div>
       <h3 class="mt-6 text-xl font-bold" style="font-family:var(--wh-display);color:${WH.mirage}">${esc(title)}</h3>
       <p class="mt-3 text-sm leading-relaxed" style="color:${WH.body}">${esc(bodies[i] || "With lots of unique blocks, you can easily build a page without coding.")}</p>
@@ -543,10 +545,12 @@ export function renderWhiterPage(site: AssembledSite, pageSlug?: string): string
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --wh-display: 'Rubik', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#1787FC")} }
+    :root { --wh-display: 'Rubik', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#1787FC")} ${themeFontCss(site.theme, ["--wh-display","--wh-body"])} }
     html { scroll-behavior: smooth; }
     body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; color: ${WH.ink}; background: ${WH.white}; -webkit-font-smoothing: antialiased; }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body>

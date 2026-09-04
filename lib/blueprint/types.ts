@@ -2,13 +2,20 @@
 // produces and the app renders. Keep in sync with lib/blueprint/schema.ts (Zod).
 
 export type StockImageReference = {
-  provider: "shutterstock" | "pexels" | "unsplash" | "placeholder" | "upload";
+  /**
+   * "client-site" is the customer's own photography, pulled from the website
+   * they imported. It is not stock and must never be labelled as a stock
+   * provider — the licence belongs to them, not to us.
+   */
+  provider: "shutterstock" | "pexels" | "unsplash" | "placeholder" | "upload" | "client-site";
   providerImageId?: string;
   url: string;
   photographer?: string;
   attributionRequired?: boolean;
   licenseInfo?: string;
   altText: string;
+  /** For imported assets: the page the image was taken from. */
+  sourcePageUrl?: string;
 };
 
 export type WebsiteSection = {
@@ -20,6 +27,12 @@ export type WebsiteSection = {
   selectedImage?: StockImageReference | null;
   /** Per-item images for services / products / portfolio rows (parallel to itemTitles). */
   itemImages?: (StockImageReference | null)[];
+  /**
+   * Per-item icon names from the allowlist (lib/icons/registry.ts), parallel to
+   * the variant's `iconField` array. A null entry, or an absent list on a
+   * project generated before icons existed, means the design's own glyph.
+   */
+  icons?: (string | null)[];
 };
 
 export type WebsitePage = {
@@ -52,6 +65,18 @@ export type ThemeTokens = {
   };
   radius: string;
   fontStyle: string;
+  /**
+   * User-picked typeface for the whole site — an id from the theme font
+   * catalog (templates/shared/fonts.ts). Unset means the template's own fonts.
+   */
+  fontFamily?: string;
+  /**
+   * Name of the catalog palette this site was deliberately art-directed to (by
+   * the heavy model, or by an explicit questionnaire answer). Unset means the
+   * colors are just the auto default, which bespoke designs override with their
+   * own signature accent.
+   */
+  palette?: string;
   logo?: CompanyLogo;
   /**
    * URL of a logo mark uploaded by the user. Unlike `logo`, which is always
@@ -74,6 +99,13 @@ export type WebsiteBlueprint = {
     colorPalette: string[];
     typography: string;
     visualStyle: string;
+    /**
+     * The heavy model's design direction for this business, chosen from the
+     * theme catalogs. Validated before it reaches the theme; unset (or unknown)
+     * leaves the questionnaire's preference and the template's own type in place.
+     */
+    palette?: string;
+    fontFamily?: string;
   };
   pages: WebsitePage[];
   seo: SiteSeo;

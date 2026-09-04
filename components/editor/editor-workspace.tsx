@@ -13,13 +13,16 @@ import type {
   StockImageReference,
 } from "@/lib/blueprint/types";
 import { assembleSite } from "@/lib/agents/section-assembly";
-import { getVariantSpec } from "@/lib/sections/registry";
+import { getVariantSpec, iconCount } from "@/lib/sections/registry";
 import { SitePreview } from "@/components/editor/site-preview";
 import { ImagePicker } from "@/components/editor/image-picker";
+import { IconPickerList } from "@/components/editor/icon-picker";
+import { FONT_CATALOG_HREF, THEME_FONTS, resolveThemeFont } from "@/templates/shared/fonts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -84,6 +87,14 @@ export function EditorWorkspace({
         next.length = value.length;
         section.itemImages = next;
       }
+      // Same for icons, whichever array this variant hangs them off.
+      const spec = getVariantSpec(section.variant);
+      if (spec?.iconField === key && Array.isArray(value) && section.icons) {
+        const next = [...section.icons];
+        while (next.length < value.length) next.push(null);
+        next.length = value.length;
+        section.icons = next;
+      }
     });
   }
 
@@ -106,6 +117,18 @@ export function EditorWorkspace({
     });
   }
 
+  function updateIcon(sectionId: string, index: number, name: string | null) {
+    mutate((bp) => {
+      const section = withSection(bp, sectionId);
+      if (!section) return;
+      const count = iconCount(section.variant, section.content);
+      const next = section.icons ? [...section.icons] : [];
+      while (next.length < Math.max(count, index + 1)) next.push(null);
+      next[index] = name;
+      section.icons = next;
+    });
+  }
+
   function applyAiEdit(sectionId: string, content: Record<string, string | string[]>) {
     mutate((bp) => {
       const section = withSection(bp, sectionId);
@@ -124,7 +147,7 @@ export function EditorWorkspace({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not save");
       setDirty(false);
-      toast.success("Saved & synced to GitHub");
+      toast.success(data.githubSynced ? "Saved & synced to GitHub" : "Saved");
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Save failed");
@@ -204,6 +227,7 @@ export function EditorWorkspace({
               onField={(k, v) => updateField(section.id, k, v)}
               onSectionImage={(img) => updateSectionImage(section.id, img)}
               onItemImage={(itemIndex, img) => updateItemImage(section.id, itemIndex, img)}
+              onIcon={(itemIndex, name) => updateIcon(section.id, itemIndex, name)}
               onAiEdit={(content) => applyAiEdit(section.id, content)}
             />
           ))}
@@ -261,12 +285,61 @@ function ThemeEditor({
         </div>
       </div>
 
+      <FontPicker
+        value={theme.fontFamily}
+        onChange={(id) => onChange({ ...theme, fontFamily: id || undefined })}
+      />
+
       <LogoUploader
         projectId={projectId}
         businessName={businessName}
         value={theme.logoUrl}
         onChange={(url) => onChange({ ...theme, logoUrl: url ?? undefined })}
       />
+    </div>
+  );
+}
+
+/** Sentinel for "use the template's own type" — Radix forbids an empty value. */
+const FONT_DEFAULT = "__default";
+
+function FontPicker({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange: (id: string) => void;
+}) {
+  const selected = resolveThemeFont(value ? ({ fontFamily: value } as ThemeTokens) : null);
+
+  return (
+    <div className="border-t pt-4">
+      {/* Loads every catalog family once so each option previews in its own typeface. */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="stylesheet" href={FONT_CATALOG_HREF} />
+      <div className="mb-1 text-sm font-semibold">Font</div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        One typeface for the whole website — headings, body, and buttons.
+      </p>
+      {/* Radix portals the list, so it is never clipped by the scrolling panel. */}
+      <Select
+        value={value || FONT_DEFAULT}
+        onValueChange={(v) => onChange(v === FONT_DEFAULT ? "" : v)}
+      >
+        <SelectTrigger className="h-10 rounded-none" aria-label="Website font">
+          <span style={selected ? { fontFamily: selected.stack } : undefined}>
+            {selected ? selected.name : "Template default"}
+          </span>
+        </SelectTrigger>
+        <SelectContent className="max-h-80 rounded-none">
+          <SelectItem value={FONT_DEFAULT}>Template default</SelectItem>
+          {THEME_FONTS.map((f) => (
+            <SelectItem key={f.id} value={f.id} className="text-[15px]">
+              <span style={{ fontFamily: f.stack }}>{f.name}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -378,6 +451,7 @@ function SectionEditor({
   onField,
   onSectionImage,
   onItemImage,
+  onIcon,
   onAiEdit,
 }: {
   projectId: string;
@@ -388,6 +462,7 @@ function SectionEditor({
   onField: (key: string, value: string | string[]) => void;
   onSectionImage: (image: StockImageReference | null) => void;
   onItemImage: (index: number, image: StockImageReference | null) => void;
+  onIcon: (index: number, name: string | null) => void;
   onAiEdit: (content: Record<string, string | string[]>) => void;
 }) {
   const spec = getVariantSpec(section.variant);
@@ -527,6 +602,18 @@ function SectionEditor({
               </div>
             );
           })}
+
+          {spec?.iconField && (
+            <IconPickerList
+              items={
+                Array.isArray(section.content[spec.iconField])
+                  ? (section.content[spec.iconField] as string[])
+                  : []
+              }
+              values={section.icons ?? []}
+              onChange={onIcon}
+            />
+          )}
 
           {spec?.needsItemImages && (
             <div className="space-y-2 border-t pt-3">

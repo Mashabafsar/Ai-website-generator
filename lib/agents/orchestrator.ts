@@ -10,7 +10,9 @@ import { assertAndSpend, refundSpend, InsufficientCreditsError } from "@/lib/cre
 import { parseQuestionnaireAnswers, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SiteTemplate } from "@/lib/templates/types";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
-import { createTheme } from "@/lib/agents/theme";
+import { createTheme, validateThemeChoice } from "@/lib/agents/theme";
+import { themeSchema } from "@/lib/blueprint/schema";
+import { selectIcons } from "@/lib/agents/icon-selection";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { assembleSite } from "@/lib/agents/section-assembly";
 import { sanitizeBlueprint } from "@/lib/agents/security";
@@ -63,7 +65,8 @@ export type GenerateResult = {
 /**
  * Orchestrator Agent — runs the initial generation pipeline:
  * requirements -> spend credits -> AI blueprint -> sanitize -> QA -> theme ->
- * images -> assemble -> persist -> GitHub (always). One generation per account.
+ * icons -> images -> assemble -> persist -> GitHub (always). One generation per
+ * account.
  */
 export async function generateWebsite(params: {
   userId: string;
@@ -103,7 +106,20 @@ export async function generateWebsite(params: {
     template,
     answers,
     spendKey: `heavy_generate:${projectId}`,
+    existingLogoUrl: readThemeLogoUrl(project.theme),
   });
+}
+
+/** The logo already saved on a project, if it still passes theme validation. */
+function readThemeLogoUrl(raw: string | null): string | undefined {
+  if (!raw) return undefined;
+  try {
+    const value = (JSON.parse(raw) as { logoUrl?: unknown }).logoUrl;
+    const parsed = themeSchema.shape.logoUrl.safeParse(value);
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -146,6 +162,7 @@ export async function switchProjectTemplate(params: {
     answers,
     spendKey: `heavy_generate:${projectId}:v${designVersion}`,
     designVersion,
+    existingLogoUrl: readThemeLogoUrl(project.theme),
     // Paying for the website is separate from choosing its look, so a redesign
     // never pushes the user back behind the paywall they already cleared.
     keepPaidStatus: PAID_STATUSES.has(project.status),
@@ -173,8 +190,19 @@ async function runGeneration(params: {
   spendKey: string;
   designVersion?: number;
   keepPaidStatus?: boolean;
+  /** A logo already on the project — an editor upload, or an earlier import. */
+  existingLogoUrl?: string;
 }): Promise<GenerateResult> {
-  const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus } = params;
+  const {
+    userId,
+    projectId,
+    template,
+    answers,
+    spendKey,
+    designVersion,
+    keepPaidStatus,
+    existingLogoUrl,
+  } = params;
 
   const requirements = analyzeRequirements(answers, template);
   const cost = env.credits.costHeavyGenerate;
@@ -211,8 +239,28 @@ async function runGeneration(params: {
     blueprint = sanitizeBlueprint(blueprint);
     const qa = runQa(blueprint, requirements.contact);
 
-    const theme = createTheme(requirements.colorPreference, requirements.visualStyle);
-    blueprint = await sourceImages(blueprint);
+    // Theme precedence: an imported identity the customer chose to keep beats
+    // the model's typeface and palette picks, which are themselves only used
+    // when the questionnaire left the colours alone.
+    const theme = createTheme(requirements.colorPreference, requirements.visualStyle, {
+      choice: validateThemeChoice(blueprint.design),
+      colorPreferenceExplicit: requirements.colorPreferenceExplicit,
+      imported: requirements.useImportedTheme
+        ? {
+            colors: requirements.importedBrand?.colors,
+            fontFamily: requirements.importedBrand?.fontFamily,
+          }
+        : undefined,
+    });
+
+    // A logo is the business's own property rather than a style choice, so an
+    // imported mark applies under either theme; a mark the user set in the
+    // editor outranks it and survives a redesign.
+    const logoUrl = existingLogoUrl ?? requirements.importedBrand?.logoUrl;
+    if (logoUrl) theme.logoUrl = logoUrl;
+
+    blueprint = selectIcons(blueprint);
+    blueprint = await sourceImages(blueprint, { clientImages: requirements.importedBrand });
     const site = {
       ...assembleSite(blueprint, theme),
       contact: requirements.contact,

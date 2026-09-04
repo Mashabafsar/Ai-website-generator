@@ -11,6 +11,7 @@ import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { getTemplateById } from "@/lib/templates/store";
+import { findTemplateLockViolation } from "@/lib/templates/lock";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
 import type {
@@ -45,33 +46,66 @@ export class TemplateStructureError extends Error {
   }
 }
 
-async function loadBlueprint(projectId: string): Promise<{ blueprint: WebsiteBlueprint; theme: ThemeTokens }> {
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
-  if (!project?.blueprint) throw new Error("Project not generated");
-  const blueprint = JSON.parse(project.blueprint) as WebsiteBlueprint;
-  const theme = project.theme ? (JSON.parse(project.theme) as ThemeTokens) : ({} as ThemeTokens);
+/** Everything a save needs from the row: the locked layout, the stored content
+ *  to diff against, the cached assembly, and the contact details. */
+type StoredProject = {
+  templateId: string | null;
+  blueprint: string | null;
+  assembledPages: string | null;
+  theme: string | null;
+  questionnaire: { answers: string } | null;
+};
+
+async function loadStoredProject(projectId: string): Promise<StoredProject> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      templateId: true,
+      blueprint: true,
+      assembledPages: true,
+      theme: true,
+      questionnaire: { select: { answers: true } },
+    },
+  });
+  if (!project) throw new Error("Project not found");
+  return project;
+}
+
+function parseStored(stored: StoredProject): { blueprint: WebsiteBlueprint; theme: ThemeTokens } {
+  if (!stored.blueprint) throw new Error("Project not generated");
+  const blueprint = JSON.parse(stored.blueprint) as WebsiteBlueprint;
+  const theme = stored.theme ? (JSON.parse(stored.theme) as ThemeTokens) : ({} as ThemeTokens);
   return { blueprint, theme };
 }
 
-async function persistAndSync(
+/** Reassembles and writes. `blueprint` must already be sanitized. */
+async function persist(
   projectId: string,
+  stored: StoredProject,
   blueprint: WebsiteBlueprint,
   theme: ThemeTokens
 ): Promise<void> {
-  const clean = sanitizeBlueprint(blueprint);
-  const withImages = await sourceImages(clean);
-  const metadata = await siteMetadata(projectId);
-  const site = { ...assembleSite(withImages, theme), ...metadata };
+  const site = { ...assembleSite(blueprint, theme), ...(await siteMetadata(stored)) };
   await prisma.project.update({
     where: { id: projectId },
     data: {
-      blueprint: JSON.stringify(withImages),
+      blueprint: JSON.stringify(blueprint),
       assembledPages: JSON.stringify(site),
       theme: JSON.stringify(theme),
     },
   });
-  // Keep the GitHub backup in sync on every save (best-effort).
-  await trySyncProjectToGitHub(projectId);
+}
+
+/** Full save: new copy needs new photos, and the GitHub backup follows it. */
+async function persistAndSync(
+  projectId: string,
+  stored: StoredProject,
+  blueprint: WebsiteBlueprint,
+  theme: ThemeTokens
+): Promise<boolean> {
+  const withImages = await sourceImages(blueprint);
+  await persist(projectId, stored, withImages, theme);
+  return trySyncProjectToGitHub(projectId);
 }
 
 /**
@@ -81,29 +115,23 @@ async function persistAndSync(
  * the contact details that designs without a contact block rely on.
  */
 async function siteMetadata(
-  projectId: string
+  stored: StoredProject
 ): Promise<{ renderer?: string; templateSlug?: string; contact?: SiteContact }> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { templateId: true, assembledPages: true, questionnaire: true },
-  });
-  if (!project) return {};
-
   let existing: AssembledSite | null = null;
   try {
-    existing = project.assembledPages
-      ? (JSON.parse(project.assembledPages) as AssembledSite)
+    existing = stored.assembledPages
+      ? (JSON.parse(stored.assembledPages) as AssembledSite)
       : null;
   } catch {
     // A corrupt cache is not worth failing a save over.
   }
 
-  const contact = project.questionnaire
-    ? contactFromQuestionnaire(project.questionnaire.answers)
+  const contact = stored.questionnaire
+    ? contactFromQuestionnaire(stored.questionnaire.answers)
     : existing?.contact;
 
-  if (project.templateId) {
-    const template = await getTemplateById(project.templateId);
+  if (stored.templateId) {
+    const template = await getTemplateById(stored.templateId);
     if (template) {
       return { renderer: template.renderer, templateSlug: template.slug, contact };
     }
@@ -134,61 +162,76 @@ function contactFromQuestionnaire(answers: string): SiteContact | undefined {
 
 /**
  * Manual editor save (no AI, free). Accepts a full edited blueprint + theme,
- * validates against the registry, reassembles, persists, and syncs GitHub. The
- * template's section list is enforced here so no client can restructure a
- * finished design.
+ * validates against the registry, reassembles and persists. The template's
+ * section list is enforced here so no client can restructure a finished design.
+ *
+ * `githubSyncPending` means the repo has not been brought up to date yet and the
+ * caller still owes it a commit.
  */
 export async function saveProjectContent(params: {
   projectId: string;
   blueprint: WebsiteBlueprint;
   theme: ThemeTokens;
-}): Promise<void> {
+}): Promise<{ githubSynced: boolean; githubSyncPending: boolean }> {
   const result = validateBlueprint(params.blueprint);
   if (!result.valid) throw new BlueprintInvalidError(result.errors);
-  await assertMatchesTemplate(params.projectId, result.blueprint);
-  await persistAndSync(params.projectId, result.blueprint, params.theme);
+
+  const stored = await loadStoredProject(params.projectId);
+  await assertMatchesTemplate(stored, result.blueprint);
+
+  const clean = sanitizeBlueprint(result.blueprint);
+
+  // Identical content means every stock-photo query and every word the repo
+  // would commit is unchanged, so only the theme can have moved. Decided from
+  // the stored row rather than a flag on the request, because a client that
+  // could assert "theme only" could also skip the image and commit work while
+  // smuggling new copy through.
+  if (matchesStoredContent(stored, clean)) {
+    await persist(params.projectId, stored, clean, params.theme);
+    return { githubSynced: false, githubSyncPending: true };
+  }
+
+  const githubSynced = await persistAndSync(params.projectId, stored, clean, params.theme);
+  return { githubSynced, githubSyncPending: false };
 }
 
-/**
- * Rejects saves that add, remove, reorder, or swap any of the locked slots. For
- * a multi-page design each incoming page must be one the design supports and
- * must carry exactly that page's locked slot list, in order. A "home" page is
- * always required; the other pages may be a subset (the ones the AI generated).
- */
+/** Key order carries no meaning in the stored JSON, so compare a sorted form. */
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, val) =>
+    val && typeof val === "object" && !Array.isArray(val)
+      ? Object.fromEntries(
+          Object.keys(val as Record<string, unknown>)
+            .sort()
+            .map((k) => [k, (val as Record<string, unknown>)[k]])
+        )
+      : val
+  );
+}
+
+function matchesStoredContent(stored: StoredProject, blueprint: WebsiteBlueprint): boolean {
+  if (!stored.blueprint) return false;
+  try {
+    return canonicalJson(JSON.parse(stored.blueprint)) === canonicalJson(blueprint);
+  } catch {
+    return false;
+  }
+}
+
+/** Rejects saves that add, remove, reorder, or swap any of the locked slots. */
 async function assertMatchesTemplate(
-  projectId: string,
+  stored: StoredProject,
   blueprint: WebsiteBlueprint
 ): Promise<void> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { templateId: true },
-  });
-  if (!project?.templateId) return;
+  if (!stored.templateId) return;
 
-  const template = await getTemplateById(project.templateId);
+  const template = await getTemplateById(stored.templateId);
   if (!template) return;
 
-  const structureError = () =>
-    new TemplateStructureError(
+  const violation = findTemplateLockViolation(template.pages, blueprint);
+  if (violation) {
+    throw new TemplateStructureError(
       `The ${template.name} design has a fixed layout. Edit the content of its sections instead of changing their pages, order, or number.`
     );
-
-  const templateBySlug = new Map(template.pages.map((p) => [p.slug, p.sections]));
-
-  if (!blueprint.pages.some((p) => p.slug === "home")) throw structureError();
-
-  const seen = new Set<string>();
-  for (const page of blueprint.pages) {
-    if (seen.has(page.slug)) throw structureError();
-    seen.add(page.slug);
-
-    const expected = templateBySlug.get(page.slug);
-    if (!expected) throw structureError();
-
-    const incoming = page.sections.map((s) => s.variant);
-    const matches =
-      incoming.length === expected.length && incoming.every((v, i) => v === expected[i]);
-    if (!matches) throw structureError();
   }
 }
 
@@ -205,7 +248,8 @@ export async function editSectionWithAi(params: {
 }): Promise<{ content: SectionContent; balanceAfter: number }> {
   const { userId, projectId, pageSlug, sectionId, instruction } = params;
 
-  const { blueprint, theme } = await loadBlueprint(projectId);
+  const stored = await loadStoredProject(projectId);
+  const { blueprint, theme } = parseStored(stored);
   const page = blueprint.pages.find((p) => p.slug === pageSlug);
   const section = page?.sections.find((s) => s.id === sectionId);
   if (!section) throw new SectionNotFoundError();
@@ -236,7 +280,7 @@ export async function editSectionWithAi(params: {
   await persistUsageEvents({ userId, projectId, operation: "light_edit", events });
 
   section.content = updated;
-  await persistAndSync(projectId, blueprint, theme);
+  await persistAndSync(projectId, stored, sanitizeBlueprint(blueprint), theme);
 
   return { content: updated, balanceAfter };
 }

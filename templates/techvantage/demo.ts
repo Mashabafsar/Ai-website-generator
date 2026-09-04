@@ -75,11 +75,11 @@ export function techvantageDemoBlueprint(): WebsiteBlueprint {
           {
             id: "feat_1",
             type: "features",
-            variant: "features-grid",
+            variant: "features-stats",
             content: {
               heading: "By the numbers",
-              itemTitles: ["500+", "15+", "300+", "98%"],
-              itemBodies: [
+              statValues: ["500+", "15+", "300+", "98%"],
+              statLabels: [
                 "Successful Projects Completed",
                 "Years of Industry Experience",
                 "Clients Served Globally",

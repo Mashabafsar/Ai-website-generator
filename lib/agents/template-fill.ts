@@ -97,6 +97,7 @@ function conformPage(
           : undefined,
         selectedImage: source?.selectedImage ?? null,
         itemImages: source?.itemImages,
+        icons: spec.iconField ? source?.icons : undefined,
       };
     })
     .filter((s): s is WebsiteSection => s !== null);

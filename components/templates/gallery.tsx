@@ -41,7 +41,7 @@ export function TemplateGallery({
 
   if (templates.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed bg-card px-6 py-20 text-center">
+      <div className="rounded-none border border-dashed border-line-strong bg-card px-6 py-20 text-center">
         <LayoutTemplate className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
         <p className="font-medium">The library is empty</p>
         <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
@@ -101,7 +101,7 @@ export function TemplateGallery({
         {templates.map((template) => (
           <article
             key={template.id}
-            className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
+            className="group flex flex-col overflow-hidden rounded-none border border-line bg-card transition-colors duration-200 ease-out hover:border-primary-border"
           >
             <button
               type="button"

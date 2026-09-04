@@ -2,12 +2,14 @@
 
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { a, itemImages, s, type SectionProps } from "../helpers";
+import { IconGlyph } from "@/lib/icons/glyph";
+import { a, icons, itemImages, s, type SectionProps } from "../helpers";
 
 export function ServicesCards(p: SectionProps) {
   const titles = a(p.itemTitles);
   const bodies = a(p.itemBodies);
   const images = itemImages(p);
+  const glyphs = icons(p);
   return (
     <section className="w-full px-4 py-16 sm:px-6 sm:py-20 lg:py-28">
       <div className="mx-auto max-w-6xl">
@@ -35,7 +37,15 @@ export function ServicesCards(p: SectionProps) {
                     />
                   ) : null}
                   <div className="flex w-full flex-row items-start gap-4">
-                    <Check className="mt-2 size-4 shrink-0" style={{ color: "var(--primary)" }} />
+                    {glyphs[i] ? (
+                      <IconGlyph
+                        name={glyphs[i]}
+                        className="mt-1 size-5 shrink-0"
+                        color="var(--primary)"
+                      />
+                    ) : (
+                      <Check className="mt-2 size-4 shrink-0" style={{ color: "var(--primary)" }} />
+                    )}
                     <div className="flex flex-col gap-1">
                       <p className="text-sm sm:text-base">{title}</p>
                       <p className="text-sm opacity-60">{bodies[i] ?? ""}</p>

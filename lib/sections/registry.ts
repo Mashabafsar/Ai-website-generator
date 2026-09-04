@@ -39,8 +39,21 @@ export type SectionVariantSpec = {
   /** When true, each itemTitles entry gets its own stock/upload image. */
   needsItemImages?: boolean;
   imageOrientation?: ImageOrientation;
+  /**
+   * The content array whose entries each carry an icon. Set wherever any design
+   * draws a symbol per item; like `needsImage`, a design that has no icon in
+   * that region simply ignores the value.
+   */
+  iconField?: string;
+  /** Business-level image terms — a floor under the content-derived query. */
   keywords: (ctx: SectionContext) => string[];
   defaults: (ctx: SectionContext) => SectionContent;
+  /**
+   * Variants of the same type that this one was introduced to correct. A slot
+   * locked to this variant keeps accepting them, so tightening a design's slot
+   * does not orphan the projects generated before the change.
+   */
+  supersedes?: string[];
 };
 
 const list = (ctx: SectionContext, n: number, fallback: string[]): string[] => {
@@ -65,7 +78,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "ctaPrimary", label: "Primary CTA", type: "string" },
       { key: "ctaSecondary", label: "Secondary CTA", type: "string" },
     ],
-    keywords: (ctx) => [ctx.industry, `${ctx.industry} business`, "professional"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
       eyebrow: ctx.industry,
       headline: `${ctx.businessName} — ${ctx.industry} you can trust`,
@@ -88,7 +101,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "ctaPrimary", label: "Primary CTA", type: "string" },
       { key: "ctaSecondary", label: "Secondary CTA", type: "string" },
     ],
-    keywords: (ctx) => [ctx.industry, "abstract", "gradient"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
       eyebrow: ctx.industry.slice(0, 28),
       headline: ctx.businessName,
@@ -111,7 +124,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "subheadline", label: "Subheadline", type: "text", required: true },
       { key: "ctaPrimary", label: "Primary CTA", type: "string" },
     ],
-    keywords: (ctx) => [`${ctx.industry} background`, ctx.industry, "modern interior"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
       eyebrow: ctx.industry,
       headline: `Welcome to ${ctx.businessName}`,
@@ -133,7 +146,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "body", label: "Body", type: "text", required: true },
     ],
-    keywords: (ctx) => [`${ctx.industry} team`, "team working", "office"],
+    keywords: (ctx) => [`${ctx.industry} team`],
     defaults: (ctx) => ({
       heading: `About ${ctx.businessName}`,
       body:
@@ -171,13 +184,14 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     needsImage: false,
     needsItemImages: true,
     imageOrientation: "square",
+    iconField: "itemTitles",
     fields: [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "subheading", label: "Subheading", type: "text" },
       { key: "itemTitles", label: "Service / product titles", type: "string[]", required: true },
       { key: "itemBodies", label: "Service / product descriptions", type: "string[]", required: true },
     ],
-    keywords: (ctx) => [ctx.industry, "product", "service"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => {
       const titles = list(ctx, 6, ["Consulting", "Strategy", "Support"]);
       return {
@@ -197,13 +211,14 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     needsImage: false,
     needsItemImages: true,
     imageOrientation: "landscape",
+    iconField: "itemTitles",
     fields: [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "subheading", label: "Subheading", type: "text" },
       { key: "itemTitles", label: "Service / product titles", type: "string[]", required: true },
       { key: "itemBodies", label: "Service / product descriptions", type: "string[]", required: true },
     ],
-    keywords: (ctx) => [ctx.industry, "service"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => {
       const titles = list(ctx, 4, ["Consulting", "Strategy", "Support", "Delivery"]);
       return {
@@ -231,7 +246,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "itemTitles", label: "Product names", type: "string[]", required: true },
       { key: "itemBodies", label: "Product descriptions", type: "string[]", required: true },
     ],
-    keywords: (ctx) => [ctx.industry, "product", "catalog"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => {
       const titles = list(ctx, 4, ctx.services.length ? ctx.services.slice(0, 4) : ["Starter", "Pro", "Premium", "Custom"]);
       return {
@@ -253,13 +268,14 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     needsImage: false,
     needsItemImages: true,
     imageOrientation: "landscape",
+    iconField: "itemTitles",
     fields: [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "subheading", label: "Subheading", type: "text" },
       { key: "itemTitles", label: "Feature titles", type: "string[]", required: true },
       { key: "itemBodies", label: "Feature descriptions", type: "string[]", required: true },
     ],
-    keywords: (ctx) => [ctx.industry, "product feature"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
       heading: "Why choose us",
       subheading: `The ${ctx.businessName} difference.`,
@@ -271,6 +287,33 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
         "We're here long after launch.",
       ],
     }),
+  },
+
+  {
+    type: "features",
+    variant: "features-stats",
+    label: "Features — statistics band",
+    description:
+      "A row of short numeric statistics — each a numeral like \"500+\", \"15\" or \"98%\" with a caption beneath it. Never prose.",
+    componentName: "FeaturesStats",
+    needsImage: false,
+    fields: [
+      { key: "heading", label: "Heading", type: "string" },
+      { key: "statValues", label: "Stat values (short numerals, e.g. 500+)", type: "string[]", required: true },
+      { key: "statLabels", label: "Stat labels", type: "string[]", required: true },
+    ],
+    keywords: () => [],
+    defaults: () => ({
+      heading: "By the numbers",
+      statValues: ["10+", "500+", "98%", "24/7"],
+      statLabels: [
+        "Years in business",
+        "Projects delivered",
+        "Client satisfaction",
+        "Support availability",
+      ],
+    }),
+    supersedes: ["features-grid"],
   },
 
   // ---- PORTFOLIO / CASE STUDIES ----
@@ -316,6 +359,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     description: "A step-by-step overview of how you work.",
     componentName: "ProcessSteps",
     needsImage: false,
+    iconField: "stepTitles",
     fields: [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "stepTitles", label: "Step titles", type: "string[]", required: true },
@@ -351,7 +395,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "authors", label: "Authors", type: "string[]", required: true },
       { key: "roles", label: "Roles", type: "string[]" },
     ],
-    keywords: (ctx) => [`${ctx.industry} lifestyle`, ctx.industry, "happy customers"],
+    keywords: (ctx) => [`${ctx.industry} customer`],
     defaults: (ctx) => ({
       heading: "What our clients say",
       quotes: [
@@ -488,7 +532,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "subheadline", label: "Subheadline", type: "text" },
       { key: "ctaPrimary", label: "Primary CTA", type: "string" },
     ],
-    keywords: (ctx) => [`${ctx.industry} event`, ctx.industry, "people in action"],
+    keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
       headline: `Ready to work with ${ctx.businessName}?`,
       subheadline: "Let's build something great together.",
@@ -533,6 +577,24 @@ export function isAllowedVariant(type: string, variant: string): boolean {
 
 export function variantsForType(type: string): SectionVariantSpec[] {
   return SECTION_REGISTRY.filter((s) => s.type === type);
+}
+
+/**
+ * Whether a slot locked to `expected` still accepts a stored `variant`, i.e.
+ * `expected` declares it supersedes it and both describe the same section type.
+ */
+export function acceptsSupersededVariant(expected: string, variant: string): boolean {
+  const spec = BY_VARIANT.get(expected);
+  if (!spec?.supersedes?.includes(variant)) return false;
+  return BY_VARIANT.get(variant)?.type === spec.type;
+}
+
+/** How many icons a section carries: the length of its `iconField` array. */
+export function iconCount(variant: string, content: SectionContent): number {
+  const field = BY_VARIANT.get(variant)?.iconField;
+  if (!field) return 0;
+  const value = content[field];
+  return Array.isArray(value) ? value.length : 0;
 }
 
 export const ALLOWED_SECTION_TYPES = Array.from(new Set(SECTION_REGISTRY.map((s) => s.type)));

@@ -5,6 +5,8 @@ import type {
   StockImageReference,
 } from "@/lib/blueprint/types";
 import { renderBespokeSite, hasBespokeExport } from "@/templates/export-registry";
+import { resolveThemeFont, themeFontHref } from "@/templates/shared/fonts";
+import { iconSvg } from "@/lib/icons/registry";
 
 // Renders an AssembledSite to a set of static, hostable HTML files. Tailwind is
 // loaded via the Play CDN and theme tokens are injected as CSS variables, so the
@@ -30,6 +32,12 @@ function arr(v: unknown): string[] {
 function img(p: Record<string, unknown>): StockImageReference | null {
   const image = p.image as StockImageReference | null | undefined;
   return image && typeof image.url === "string" ? image : null;
+}
+
+function iconNames(p: Record<string, unknown>): (string | null)[] {
+  const list = p.icons;
+  if (!Array.isArray(list)) return [];
+  return list.map((name) => (typeof name === "string" ? name : null));
 }
 
 function itemImgs(p: Record<string, unknown>): (StockImageReference | null)[] {
@@ -155,10 +163,32 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
   </div>
 </section>`;
     }
+    case "FeaturesStats": {
+      const values = arr(p.statValues);
+      const labels = arr(p.statLabels);
+      return `<section class="px-6 py-24">
+  <div class="mx-auto max-w-6xl">
+    ${p.heading ? `<h2 class="text-center text-3xl font-semibold tracking-tight md:text-4xl">${esc(p.heading)}</h2>` : ""}
+    <div class="mt-14 grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
+      ${values
+        .map(
+          (value, i) => `<div>
+        <div class="text-4xl font-semibold leading-tight tracking-tight md:text-5xl" style="color:var(--primary)">${esc(
+          value
+        )}</div>
+        <p class="mt-2 text-slate-600">${esc(labels[i] ?? "")}</p>
+      </div>`
+        )
+        .join("\n      ")}
+    </div>
+  </div>
+</section>`;
+    }
     case "ServicesCards": {
       const titles = arr(p.itemTitles);
       const bodies = arr(p.itemBodies);
       const images = itemImgs(p);
+      const glyphs = iconNames(p);
       return `<section class="px-6 py-24">
   <div class="mx-auto max-w-6xl">
     <h2 class="max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">${esc(p.heading)}</h2>
@@ -167,10 +197,11 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       ${titles
         .map((t, i) => {
           const image = images[i];
+          const glyph = iconSvg(glyphs[i], { size: 20, color: "var(--primary)", className: "mt-1 shrink-0" });
           return `<div class="flex flex-col gap-3">
         ${image ? `<img src="${esc(image.url)}" alt="${esc(image.altText || t)}" class="h-36 w-full rounded-xl object-cover" />` : ""}
         <div class="flex gap-4">
-          <span class="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white" style="background:var(--primary)">✓</span>
+          ${glyph || `<span class="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white" style="background:var(--primary)">✓</span>`}
           <div>
             <p class="font-medium">${esc(t)}</p>
             <p class="mt-1 text-sm text-slate-600">${esc(bodies[i] ?? "")}</p>
@@ -222,19 +253,22 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     case "ProcessSteps": {
       const titles = arr(p.stepTitles);
       const bodies = arr(p.stepBodies);
+      const glyphs = iconNames(p);
       return `<section class="mx-auto max-w-6xl px-6 py-24">
   <h2 class="mb-14 text-center text-4xl font-bold tracking-tight">${esc(p.heading)}</h2>
   <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
     ${titles
-      .map(
-        (t, i) => `<div class="rounded-[25px] border bg-white p-2 shadow-lg ${i % 2 === 0 ? "md:rotate-2" : "md:-rotate-2"}">
+      .map((t, i) => {
+        const glyph = iconSvg(glyphs[i], { size: 32, color: "var(--primary)", className: "mx-auto mb-4" });
+        return `<div class="rounded-[25px] border bg-white p-2 shadow-lg ${i % 2 === 0 ? "md:rotate-2" : "md:-rotate-2"}">
+      ${glyph}
       <div class="rounded-[15px] border p-5" style="background:color-mix(in oklab,var(--primary) 10%,white);border-color:color-mix(in oklab,var(--primary) 20%,white)">
         <span class="mb-4 block text-4xl font-semibold" style="color:var(--primary)">${String(i + 1).padStart(2, "0")}</span>
         <h3 class="text-xl font-semibold">${esc(t)}</h3>
         <p class="mt-2 text-sm text-slate-600">${esc(bodies[i] ?? "")}</p>
       </div>
-    </div>`
-      )
+    </div>`;
+      })
       .join("\n")}
   </div>
 </section>`;
@@ -412,13 +446,16 @@ function renderPage(page: AssembledPage, site: AssembledSite): string {
   <title>${esc(page.title)} — ${esc(site.seo.title)}</title>
   <meta name="description" content="${esc(site.seo.description)}" />
   <script src="https://cdn.tailwindcss.com"><\/script>
+  ${themeFontHref(t) ? `<link href="${themeFontHref(t)}" rel="stylesheet" />` : ""}
   <style>
     :root {
       --primary: ${t.colors.primary};
       --secondary: ${t.colors.secondary};
       --accent: ${t.colors.accent};
     }
-    body { background: ${t.colors.background}; color: ${t.colors.foreground}; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { background: ${t.colors.background}; color: ${t.colors.foreground}; font-family: ${
+      resolveThemeFont(t)?.stack ?? "ui-sans-serif, system-ui, sans-serif"
+    }; }
     html { scroll-behavior: smooth; }
     .site-section { padding: clamp(3rem, 6vw, 5.5rem) clamp(1rem, 4vw, 2rem); }
     .site-container { width: 100%; max-width: 72rem; margin-inline: auto; }

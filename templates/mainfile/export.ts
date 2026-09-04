@@ -1,6 +1,8 @@
 import { MR, MR_GRADIENTS, MR_BRAND_GRADIENT, MR_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/mainfile/site.tsx. Exported and deployed sites
@@ -62,9 +64,12 @@ function eyebrow(label: string): string {
   return `<span class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em]" style="background:${MR.brandSoft};color:${MR.brandStrong};font-family:var(--mr-display)">${esc(label)}</span>`;
 }
 
-function iconTile(index: number): string {
+function iconTile(index: number, icon?: string): string {
+  const glyph =
+    iconSvg(icon, { size: 32, strokeWidth: 1.7 }) ||
+    `<svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${MR_ICON_PATHS[index % MR_ICON_PATHS.length]}"></path></svg>`;
   return `<span class="grid h-16 w-16 place-items-center rounded-2xl text-white" style="background-image:${MR_GRADIENTS[index % MR_GRADIENTS.length]};box-shadow:0 14px 30px -12px rgba(52,49,75,0.35)">
-    <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${MR_ICON_PATHS[index % MR_ICON_PATHS.length]}"></path></svg>
+    ${glyph}
   </span>`;
 }
 
@@ -209,7 +214,7 @@ function featureCards(slot: TemplateSlot, startIndex = 0): string {
   const cards = titles
     .map(
       (title, i) => `<article class="rounded-[28px] border bg-white p-8 text-center" style="border-color:${MR.line};box-shadow:0 24px 60px -34px rgba(52,49,75,0.28)">
-      <div class="mx-auto w-16">${iconTile(startIndex + i)}</div>
+      <div class="mx-auto w-16">${iconTile(startIndex + i, slot.icons[i])}</div>
       <h3 class="mt-6 text-xl font-bold" style="font-family:var(--mr-display);color:${MR.ink}">${esc(title)}</h3>
       <p class="mt-3 text-sm leading-relaxed" style="color:${MR.body}">${esc(bodies[i] || "Beautifully crafted blocks you can restyle and reorder without touching code.")}</p>
     </article>`
@@ -565,10 +570,12 @@ export function renderMainfilePage(site: AssembledSite, pageSlug?: string): stri
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --mr-display: 'Hind', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#7DBCFF")} }
+    :root { --mr-display: 'Hind', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#7DBCFF")} ${themeFontCss(site.theme, ["--mr-display","--mr-body"])} }
     html { scroll-behavior: smooth; }
     body { font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif; color: ${MR.body}; background: ${MR.white}; -webkit-font-smoothing: antialiased; }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body>

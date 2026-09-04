@@ -6,13 +6,14 @@ import type { WebsiteBlueprint } from "@/lib/blueprint/types";
 const contentValue = z.union([z.string(), z.array(z.string())]);
 
 export const stockImageSchema = z.object({
-  provider: z.enum(["shutterstock", "pexels", "unsplash", "placeholder", "upload"]),
+  provider: z.enum(["shutterstock", "pexels", "unsplash", "placeholder", "upload", "client-site"]),
   providerImageId: z.string().optional(),
   url: z.string(),
   photographer: z.string().optional(),
   attributionRequired: z.boolean().optional(),
   licenseInfo: z.string().optional(),
   altText: z.string(),
+  sourcePageUrl: z.string().max(500).optional(),
 });
 
 export const sectionSchema = z
@@ -24,6 +25,9 @@ export const sectionSchema = z
     imageKeywords: z.array(z.string()).optional(),
     selectedImage: stockImageSchema.nullish(),
     itemImages: z.array(stockImageSchema.nullable()).optional(),
+    // Any string parses so a saved project keeps loading after the catalog
+    // changes; the icon selection agent drops names it no longer allows.
+    icons: z.array(z.string().max(60).nullable()).optional(),
   })
   .refine((s) => isAllowedVariant(s.type, s.variant), {
     message: "Section variant is not in the approved registry",
@@ -57,6 +61,8 @@ export const themeSchema = z.object({
   }),
   radius: z.string(),
   fontStyle: z.string(),
+  fontFamily: z.string().max(60).optional(),
+  palette: z.string().max(60).optional(),
   logo: z
     .object({
       initials: z.string(),
@@ -86,6 +92,8 @@ export const blueprintSchema = z.object({
     colorPalette: z.array(z.string()),
     typography: z.string(),
     visualStyle: z.string(),
+    palette: z.string().max(60).optional(),
+    fontFamily: z.string().max(60).optional(),
   }),
   pages: z.array(pageSchema).min(1),
   seo: seoSchema,

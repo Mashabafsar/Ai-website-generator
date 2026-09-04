@@ -42,7 +42,7 @@ export function CreditPacks() {
             className={cn("relative flex flex-col", highlight && "border-2 border-primary/40 shadow-lg")}
           >
             {highlight && (
-              <span className="absolute right-5 top-5 rounded-full brand-gradient px-2.5 py-0.5 text-xs font-semibold text-white">
+              <span className="absolute right-5 top-5 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
                 Popular
               </span>
             )}

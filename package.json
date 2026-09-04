@@ -12,6 +12,9 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "templates:validate": "ts-node --transpile-only --project templates/tsconfig.validate.json templates/validate.ts",
+    "icons:validate": "tsx scripts/validate-icons.ts",
+    "templates:locks": "tsx scripts/validate-template-locks.ts",
+    "validate": "npm run templates:validate && npm run icons:validate && npm run templates:locks",
     "admin:grant": "node scripts/set-admin.mjs"
   },
   "prisma": {

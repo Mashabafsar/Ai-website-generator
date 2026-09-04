@@ -10,22 +10,21 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Brand panel */}
-      <div className="hero-aurora relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
-        <div className="grid-texture absolute inset-0 opacity-40" />
+      <div className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-primary-surface p-12 lg:flex">
         <Link href="/" className="relative">
-          <Logo onDark />
+          <Logo />
         </Link>
         <div className="relative">
           <BrandMark className="h-14 w-auto" />
-          <h2 className="mt-6 max-w-md font-display text-4xl font-bold leading-tight text-white">
+          <h2 className="mt-6 max-w-md font-display text-4xl font-bold leading-tight text-ink">
             Your next website is a few questions away.
           </h2>
-          <p className="mt-4 max-w-sm text-white/60">
+          <p className="mt-4 max-w-sm text-ink-muted">
             Sign in to generate, edit, and ship a complete site — versioned on GitHub and
             ready to deploy.
           </p>
         </div>
-        <div className="relative text-sm text-white/40">
+        <div className="relative text-sm text-ink-muted">
           © {new Date().getFullYear()} Agency Partner Interactive
         </div>
       </div>

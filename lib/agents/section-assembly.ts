@@ -32,6 +32,7 @@ export function assembleSite(blueprint: WebsiteBlueprint, theme: ThemeTokens): A
             ...section.content,
             image: section.selectedImage ?? null,
             itemImages: section.itemImages ?? [],
+            icons: section.icons ?? [],
             ...(section.type === "footer" || section.type === "hero" ? brandProps : {}),
           },
         };

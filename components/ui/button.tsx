@@ -10,7 +10,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed",
         brand:
-          "text-white shadow-lg shadow-[color-mix(in_oklab,var(--brand-indigo)_35%,transparent)] brand-gradient hover:brightness-110",
+          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-error-hover active:bg-error-pressed",
         outline:

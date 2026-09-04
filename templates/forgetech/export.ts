@@ -1,6 +1,8 @@
 import { FT } from "./tokens";
+import { iconSvg } from "@/lib/icons/registry";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/forgetech/site.tsx. Exported
@@ -198,9 +200,14 @@ export function renderForgeTechPage(site: AssembledSite): string {
       ${capabilityTitles
         .map(
           (title, i) => `<div>
-        <span class="grid h-14 w-14 place-items-center border-2 text-lg font-bold" style="border-color:${FT.trinidad};color:${FT.trinidad};font-family:var(--ft-display)">${String(
-          i + 1
-        ).padStart(2, "0")}</span>
+        <span class="grid h-14 w-14 place-items-center border-2 text-lg font-bold" style="border-color:${FT.trinidad};color:${FT.trinidad};font-family:var(--ft-display)">${
+          iconSvg(capabilities.icons[i], {
+            size: 28,
+            color: FT.trinidad,
+            strokeWidth: 1.8,
+            className: "h-7 w-7",
+          }) || String(i + 1).padStart(2, "0")
+        }</span>
         <h3 class="mt-5 text-xl font-semibold" style="font-family:var(--ft-display)">${esc(title)}</h3>
         <p class="mt-3 leading-relaxed" style="color:${FT.body}">${esc(
           capabilityBodies[i] || "Purpose-built fabrication for demanding environments."
@@ -311,9 +318,14 @@ export function renderForgeTechPage(site: AssembledSite): string {
       ${valueTitles
         .map(
           (title, i) => `<div class="flex gap-5 border border-white/10 bg-white/[0.04] p-6">
-        <span class="grid h-12 w-12 shrink-0 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${String(
-          i + 1
-        ).padStart(2, "0")}</span>
+        <span class="grid h-12 w-12 shrink-0 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${
+          iconSvg(value.icons[i], {
+            size: 24,
+            color: "#ffffff",
+            strokeWidth: 1.8,
+            className: "h-6 w-6",
+          }) || String(i + 1).padStart(2, "0")
+        }</span>
         <div>
           <h3 class="text-lg font-semibold" style="font-family:var(--ft-display)">${esc(title)}</h3>
           <p class="mt-2 text-sm leading-relaxed text-white/70">${esc(
@@ -508,8 +520,9 @@ ${
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --ft-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#FF750B")} }
+    :root { --ft-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#FF750B")} ${themeFontCss(site.theme, ["--ft-display","--ft-body"])} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
@@ -519,6 +532,7 @@ ${
     }
     .ft-nav { transition: color .2s ease; }
     .ft-nav:hover { color: ${FT.trinidad}; }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body id="ft-top">

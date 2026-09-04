@@ -12,11 +12,20 @@ export type TemplateSlot = {
   content: SlotContent;
   image?: string;
   itemImages: (string | undefined)[];
+  /**
+   * Per-item icon names, positionally aligned with the variant's item array.
+   * Kept sparse — a gap must stay a gap or every following item would shift onto
+   * the wrong icon.
+   */
+  icons: (string | undefined)[];
 };
 
 type ImageLike = { url?: string } | null | undefined;
 
 const url = (image: ImageLike): string | undefined => image?.url || undefined;
+
+const names = (icons: unknown): (string | undefined)[] =>
+  Array.isArray(icons) ? icons.map((n) => (typeof n === "string" && n ? n : undefined)) : [];
 
 /**
  * Renderers are used both by the live editor (blueprint) and by the persisted
@@ -48,6 +57,7 @@ export function toSlots(
       content: section.content as SlotContent,
       image: url(section.selectedImage),
       itemImages: (section.itemImages ?? []).map(url),
+      icons: names(section.icons),
     }));
   }
 
@@ -58,6 +68,7 @@ export function toSlots(
         image?: ImageLike;
         selectedImage?: ImageLike;
         itemImages?: ImageLike[];
+        icons?: unknown;
       };
       return {
         type: section.type,
@@ -65,6 +76,7 @@ export function toSlots(
         content: props,
         image: url(props.image) || url(props.selectedImage),
         itemImages: (props.itemImages ?? []).map(url),
+        icons: names(props.icons),
       };
     });
   }
@@ -83,7 +95,7 @@ export function pageSlugsOf(
   return [...home, ...rest];
 }
 
-const EMPTY: TemplateSlot = { type: "", variant: "", content: {}, itemImages: [] };
+const EMPTY: TemplateSlot = { type: "", variant: "", content: {}, itemImages: [], icons: [] };
 
 /** Nth slot of a given type — designs reuse `features` for several bands. */
 export function slotAt(slots: TemplateSlot[], type: string, occurrence = 0): TemplateSlot {

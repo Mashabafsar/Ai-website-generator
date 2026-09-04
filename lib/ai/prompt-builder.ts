@@ -1,14 +1,20 @@
 import { getVariantSpec } from "@/lib/sections/registry";
 import { limitsForPrompt } from "@/lib/sections/text-limits";
+import { ICON_GROUPS } from "@/lib/icons/registry";
+import { PALETTE_NAMES } from "@/lib/agents/theme";
+import { THEME_FONTS } from "@/templates/shared/fonts";
 import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteSection } from "@/lib/blueprint/types";
 
-const GUARDRAILS = `You are a website COPYWRITER, not a designer. Follow these rules strictly:
+const GUARDRAILS = `You are a website COPYWRITER and art director. Follow these rules strictly:
 - Return ONLY valid JSON. No prose, no markdown fences, no comments.
-- The website design is already chosen and FIXED. Write content for it.
+- The website LAYOUT is already chosen and FIXED. Write its content and pick its
+  typeface, color palette, icons, and photo keywords from the lists given below.
 - Emit EXACTLY the sections listed below, in the SAME order, with the SAME
   "type" and "variant" values. Do NOT add, remove, reorder, or substitute any
   section, and do NOT invent new variants or content fields.
+- Only ever use ids that appear in the lists below — never invent a font id,
+  palette name, or icon name, and never return a raw hex color or font stack.
 - Do NOT generate any frontend code, HTML, CSS, or scripts.
 - Do NOT include API keys, secrets, or external tracking code.
 - Do NOT copy copyrighted text from other sources; write original copy.
@@ -17,7 +23,14 @@ const GUARDRAILS = `You are a website COPYWRITER, not a designer. Follow these r
 const OUTPUT_SHAPE = `Output JSON must match this TypeScript shape:
 {
   "business": { "name": string, "industry": string, "description": string, "location"?: string },
-  "design": { "tone": string, "colorPalette": string[], "typography": string, "visualStyle": string },
+  "design": {
+    "tone": string,
+    "colorPalette": string[],
+    "typography": string,
+    "visualStyle": string,
+    "palette": string,        // EXACTLY one palette name from the list above
+    "fontFamily": string      // EXACTLY one font id from the list above
+  },
   "pages": [
     {
       "slug": string,           // one of the page slugs listed above (must include "home")
@@ -28,7 +41,8 @@ const OUTPUT_SHAPE = `Output JSON must match this TypeScript shape:
           "type": string,        // copied from that page's slot list above
           "variant": string,     // copied from that page's slot list above
           "content": { [field: string]: string | string[] },
-          "imageKeywords"?: string[]
+          "imageKeywords"?: string[],
+          "icons"?: string[]     // icon names, only where the slot list asks for them
         }
       ]
     }
@@ -37,6 +51,25 @@ const OUTPUT_SHAPE = `Output JSON must match this TypeScript shape:
   "quoteSignals": string[],
   "complexity": { "level": "simple" | "medium" | "complex", "reasons"?: string[] }
 }`;
+
+/** The typefaces and palettes the model may assign to the site. */
+function designChoices(): string {
+  return [
+    "THE TYPEFACE — pick the one `fontFamily` id that best fits this business:",
+    THEME_FONTS.map((f) => `   "${f.id}" (${f.name})`).join("\n"),
+    "",
+    "THE COLOR PALETTE — pick the one `palette` name that best fits this business:",
+    PALETTE_NAMES.map((name) => `   "${name}"`).join("\n"),
+  ].join("\n");
+}
+
+/** The icon allowlist, grouped so the model can find the right family fast. */
+function iconChoices(): string {
+  return [
+    "ALLOWED ICON NAMES — use these exact strings and nothing else:",
+    ...ICON_GROUPS.map((g) => `   ${g.group}: ${g.entries.map((e) => e.name).join(", ")}`),
+  ].join("\n");
+}
 
 /** One page's locked slots, spelled out so the model can only fill them in. */
 function pageSlots(sections: string[]): string {
@@ -47,8 +80,15 @@ function pageSlots(sections: string[]): string {
       const fields = spec.fields
         .map((f) => `${f.key}${f.type === "string[]" ? "[]" : ""}`)
         .join(", ");
-      const image = spec.needsImage ? " (also return imageKeywords)" : "";
-      return `   ${index + 1}. type "${spec.type}", variant "${spec.variant}" — fields { ${fields} }${image}`;
+      const extras = [
+        spec.needsImage ? "imageKeywords" : "",
+        spec.iconField ? `icons (one per ${spec.iconField} entry)` : "",
+      ].filter(Boolean);
+      const also = extras.length ? ` (also return ${extras.join(" and ")})` : "";
+      return [
+        `   ${index + 1}. type "${spec.type}", variant "${spec.variant}" — fields { ${fields} }${also}`,
+        `      ${spec.description}`,
+      ].join("\n");
     })
     .filter(Boolean)
     .join("\n");
@@ -102,19 +142,37 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     "",
     pageChoice,
     "",
+    designChoices(),
+    "",
+    iconChoices(),
+    "",
     "THE PAGES AND THEIR LOCKED SECTIONS:",
     templatePages(req),
     "",
     "For every page you include, populate every field of every section. Fields ending",
     "with [] are string arrays; keep parallel arrays (e.g. itemTitles/itemBodies) the",
-    "same length. Photos are auto-sourced from stock providers and editable later —",
-    "return imageKeywords where asked and never invent image URLs.",
+    "same length.",
+    "",
+    "PHOTOS: sourced automatically from stock providers and editable later. Where a",
+    "slot asks for imageKeywords, return 1-3 SHORT concrete phrases describing what",
+    "should be IN the photo for that specific section (e.g. \"dental hygienist at work\"),",
+    "not the brand name and not abstract words. Never invent image URLs.",
+    "",
+    "ICONS: where a slot asks for icons, return one icon name per entry of the named",
+    "array, in the same order. Choose the icon that depicts THAT item — match the",
+    "service or step, not the industry in general — and avoid repeating an icon within",
+    "one section.",
     "",
     "BUSINESS REQUIREMENTS (normalized questionnaire):",
     JSON.stringify(requirements, null, 2),
     "",
     `Write original, on-brand copy in a ${req.tone} tone for ${req.audience || "this audience"}.`,
     req.goals ? `Website goals: ${req.goals}` : "",
+    `Choose the typeface and palette that suit a ${req.visualStyle.toLowerCase()},`,
+    `${req.tone.toLowerCase()} ${req.business.industry} brand${req.brandingNotes ? ` (${req.brandingNotes})` : ""}.`,
+    req.colorPreferenceExplicit
+      ? `The customer asked for ${req.colorPreference} colors, so return the closest palette to that.`
+      : "",
     "",
     OUTPUT_SHAPE,
     "",

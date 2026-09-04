@@ -1,6 +1,8 @@
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/techvantage/site.tsx.
@@ -161,8 +163,8 @@ export function renderTechvantagePage(site: AssembledSite): string {
   ]);
   const serviceBodies = list(services.content, "itemBodies");
 
-  const statValues = list(stats.content, "itemTitles", ["500+", "15+", "300+", "98%"]);
-  const statLabels = list(stats.content, "itemBodies", [
+  const statValues = list(stats.content, "statValues", ["500+", "15+", "300+", "98%"]);
+  const statLabels = list(stats.content, "statLabels", [
     "Successful Projects Completed",
     "Years of Industry Experience",
     "Clients Served Globally",
@@ -270,7 +272,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
         .slice(0, 3)
         .map(
           (title, i) => `<article class="rounded-[24px] border p-8 transition-transform hover:-translate-y-1" style="border-color:${TV.line}">
-        <img src="${A.serviceIcons[i % A.serviceIcons.length]}" alt="" width="64" height="64" class="size-16" />
+        ${iconSvg(services.icons[i], { size: 64, color: TV.blueDeep, strokeWidth: 1.5, className: "size-16" }) || `<img src="${A.serviceIcons[i % A.serviceIcons.length]}" alt="" width="64" height="64" class="size-16" />`}
         <h3 class="mt-7 text-[24px] font-medium leading-[30px]" style="font-family:var(--tv-display);color:${TV.ink}">${esc(
           title
         )}</h3>
@@ -339,7 +341,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
         .slice(0, 4)
         .map(
           (title, i) => `<div>
-        <img src="${A.valueIcons[i % A.valueIcons.length]}" alt="" width="70" height="70" class="size-[70px]" />
+        ${iconSvg(why.icons[i], { size: 70, color: TV.blueDeep, strokeWidth: 1.5, className: "size-[70px]" }) || `<img src="${A.valueIcons[i % A.valueIcons.length]}" alt="" width="70" height="70" class="size-[70px]" />`}
         <h3 class="mt-6 text-[24px] font-medium leading-[30px]" style="font-family:var(--tv-display);color:${TV.ink}">${esc(
             title
           )}</h3>
@@ -638,8 +640,9 @@ export function renderTechvantagePage(site: AssembledSite): string {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Urbanist:wght@500;600;700&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --tv-display: 'Urbanist', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#0C3DFF")} }
+    :root { --tv-display: 'Urbanist', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#0C3DFF")} ${themeFontCss(site.theme, ["--tv-display","--tv-body"])} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -649,6 +652,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
     }
     a { color: inherit; text-decoration: none; }
     summary::-webkit-details-marker { display: none; }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body id="tv-top">

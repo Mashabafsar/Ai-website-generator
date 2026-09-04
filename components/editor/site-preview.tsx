@@ -3,6 +3,7 @@ import type { AssembledSite } from "@/lib/blueprint/types";
 import { SECTION_COMPONENTS } from "@/components/website-sections/sections";
 import { SiteHeader } from "@/components/website-sections/ui";
 import { BespokePreview, hasBespokePreview } from "@/templates/preview-registry";
+import { themeFontHref, themeFontStyle } from "@/templates/shared/fonts";
 
 const NAV: Array<{ type: string; label: string }> = [
   { type: "about", label: "About" },
@@ -38,10 +39,13 @@ export function SitePreview({ site, pageSlug }: { site: AssembledSite; pageSlug?
     ["--accent" as string]: site.theme.colors.accent,
     background: site.theme.colors.background,
     color: site.theme.colors.foreground,
+    ...themeFontStyle(site.theme, []),
   };
+  const fontHref = themeFontHref(site.theme);
 
   return (
-    <div id="top" style={themeStyle} className="font-sans">
+    <div id="top" style={themeStyle} className={fontHref ? undefined : "font-sans"}>
+      {fontHref ? <link rel="stylesheet" href={fontHref} /> : null}
       <SiteHeader
         logo={site.logo ?? site.theme.logo}
         businessName={site.businessName ?? site.seo.title.split("|")[0]?.trim() ?? "Website"}

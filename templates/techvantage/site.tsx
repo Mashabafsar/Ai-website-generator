@@ -3,6 +3,9 @@ import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/bluepri
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle } from "../shared/brand";
+import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { IconGlyph } from "@/lib/icons/glyph";
+import { isIconName } from "@/lib/icons/registry";
 
 const display = Urbanist({
   subsets: ["latin"],
@@ -130,8 +133,8 @@ export function TechvantageSite({
   ]);
   const serviceBodies = list(services.content, "itemBodies");
 
-  const statValues = list(stats.content, "itemTitles", ["500+", "15+", "300+", "98%"]);
-  const statLabels = list(stats.content, "itemBodies", [
+  const statValues = list(stats.content, "statValues", ["500+", "15+", "300+", "98%"]);
+  const statLabels = list(stats.content, "statLabels", [
     "Successful Projects Completed",
     "Years of Industry Experience",
     "Clients Served Globally",
@@ -174,12 +177,16 @@ export function TechvantageSite({
       id="tv-top"
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
-        ...brandStyle(site?.theme?.colors, "#0C3DFF"),
+        ...brandStyle(site?.theme, "#0C3DFF"),
         fontFamily: "var(--tv-body), ui-sans-serif, system-ui, sans-serif",
         color: TV.ink,
         backgroundColor: "#ffffff",
+        ...themeFontStyle(site?.theme, ["--tv-display", "--tv-body"]),
       }}
     >
+      {themeFontHref(site?.theme) ? (
+        <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
+      ) : null}
       {/* Hero panel — the navigation sits inside the dark gradient */}
       <div style={{ background: PANEL }}>
         <Shell className="flex flex-wrap items-center gap-x-8 gap-y-4 py-6 lg:py-8">
@@ -277,13 +284,23 @@ export function TechvantageSite({
                 className="rounded-[24px] border p-8 transition-transform hover:-translate-y-1"
                 style={{ borderColor: TV.line }}
               >
-                <img
-                  src={ASSETS.serviceIcons[i % ASSETS.serviceIcons.length]}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="size-16"
-                />
+                {isIconName(services.icons[i]) ? (
+                  <IconGlyph
+                    name={services.icons[i]}
+                    size={64}
+                    color={TV.blueDeep}
+                    strokeWidth={1.5}
+                    className="size-16"
+                  />
+                ) : (
+                  <img
+                    src={ASSETS.serviceIcons[i % ASSETS.serviceIcons.length]}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="size-16"
+                  />
+                )}
                 <h3
                   className="mt-7 text-[24px] font-medium leading-[30px]"
                   style={{ fontFamily: "var(--tv-display)", color: TV.ink }}
@@ -373,13 +390,23 @@ export function TechvantageSite({
           <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             {whyTitles.slice(0, 4).map((title, i) => (
               <div key={`${title}-${i}`}>
-                <img
-                  src={ASSETS.valueIcons[i % ASSETS.valueIcons.length]}
-                  alt=""
-                  width={70}
-                  height={70}
-                  className="size-[70px]"
-                />
+                {isIconName(why.icons[i]) ? (
+                  <IconGlyph
+                    name={why.icons[i]}
+                    size={70}
+                    color={TV.blueDeep}
+                    strokeWidth={1.5}
+                    className="size-[70px]"
+                  />
+                ) : (
+                  <img
+                    src={ASSETS.valueIcons[i % ASSETS.valueIcons.length]}
+                    alt=""
+                    width={70}
+                    height={70}
+                    className="size-[70px]"
+                  />
+                )}
                 <h3
                   className="mt-6 text-[24px] font-medium leading-[30px]"
                   style={{ fontFamily: "var(--tv-display)", color: TV.ink }}

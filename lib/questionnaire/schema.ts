@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PackageType } from "@/lib/constants";
+import { importedBrandSchema } from "@/lib/branding/imported-brand";
 
 // Tone, visual style, and palette vocabularies are shared: a template declares
 // its defaults, and the questionnaire may optionally override them.
@@ -41,6 +42,11 @@ export const questionnaireSchema = z.object({
   // Existing website (step 0). When "yes", the URL is scraped to prefill answers.
   hasWebsite: z.enum(["yes", "no"]).optional().or(z.literal("")),
   existingWebsiteUrl: z.string().max(300).optional().or(z.literal("")),
+  // The logo, photos, colours, and typeface pulled off that site, if any.
+  importedBrand: importedBrandSchema.optional(),
+  // Which visual identity the generated site should wear. Empty means "ai",
+  // which is what every project created before the importer existed gets.
+  themeSource: z.enum(["ai", "imported"]).optional().or(z.literal("")),
 
   // Business
   businessName: z.string().min(2, "Business name is required").max(80),
@@ -77,6 +83,7 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   templateId: "",
   hasWebsite: "",
   existingWebsiteUrl: "",
+  themeSource: "",
   businessName: "",
   industry: "",
   description: "",
@@ -104,5 +111,10 @@ export function parseQuestionnaireAnswers(raw: unknown): QuestionnaireAnswers {
     ...merged,
     demographics: merged.demographics || merged.targetAudience || "General audience",
     goals: merged.goals || "Present the business clearly and convert visitors.",
+    // Branding is an optional extra: a record that no longer validates must
+    // never stop the project's answers from loading.
+    importedBrand: importedBrandSchema.safeParse(merged.importedBrand).success
+      ? merged.importedBrand
+      : undefined,
   });
 }

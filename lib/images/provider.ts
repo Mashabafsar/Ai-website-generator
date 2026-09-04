@@ -200,6 +200,35 @@ export async function findImage(query: ImageQuery): Promise<StockImageReference>
   return placeholder(query);
 }
 
+/**
+ * Sources one image from a list of candidate keyword sets, most specific first,
+ * and skips URLs already taken by a sibling so a grid of services doesn't show
+ * the same photo repeatedly. Falls back to a placeholder built from the most
+ * specific query.
+ */
+export async function findImageForQueries(params: {
+  queries: string[][];
+  orientation?: ImageQuery["orientation"];
+  altText?: string;
+  taken?: Set<string>;
+}): Promise<StockImageReference> {
+  const { queries, orientation, altText, taken } = params;
+  const unused = (results: StockImageReference[]) =>
+    results.find((r) => !taken?.has(r.url));
+
+  for (const keywords of queries) {
+    if (!keywords.length) continue;
+    const query: ImageQuery = { keywords, orientation, altText, perPage: 8 };
+
+    for (const search of [searchShutterstockMany, searchPexelsMany, searchUnsplashMany]) {
+      const hit = unused(await search(query));
+      if (hit) return hit;
+    }
+  }
+
+  return placeholder({ keywords: queries[0] ?? [], orientation, altText });
+}
+
 export function isAllowedImageUrl(url: string): boolean {
   if (/^https:\/\//i.test(url)) return true;
   if (/^\/uploads\//i.test(url)) return true;

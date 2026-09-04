@@ -1,6 +1,8 @@
 import { SL, SL_FEATURE_COLORS, SL_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/saasldg/site.tsx. Exported and deployed sites
@@ -44,12 +46,15 @@ function eyebrow(label: string): string {
   return `<span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]" style="background:${SL.brandSoft};color:${SL.brandDeep};font-family:var(--sl-display)">${esc(label)}</span>`;
 }
 
-function featureIcon(index: number): string {
+function featureIcon(index: number, icon?: string): string {
   const color = SL_FEATURE_COLORS[index % SL_FEATURE_COLORS.length];
   const path = SL_ICON_PATHS[index % SL_ICON_PATHS.length];
+  const glyph =
+    iconSvg(icon, { size: 28, color: SL.ink, strokeWidth: 1.7, className: "relative z-[1] h-7 w-7" }) ||
+    `<svg class="relative z-[1] h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="${SL.ink}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"></path></svg>`;
   return `<span class="relative grid h-16 w-16 place-items-center rounded-full border-4 border-white bg-white shadow-[0_0.25rem_0.5rem_0_rgba(0,0,0,0.08)]">
     <span class="absolute inset-0 rounded-full" style="background:${color};opacity:0.25"></span>
-    <svg class="relative z-[1] h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="${SL.ink}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"></path></svg>
+    ${glyph}
   </span>`;
 }
 
@@ -175,7 +180,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
     ${featureTitles
       .map(
         (title, i) => `<article class="rounded-3xl border p-8" style="background:${SL.surface};border-color:${SL.line}">
-      ${featureIcon(i)}
+      ${featureIcon(i, features.icons[i])}
       <h3 class="mt-8 text-xl font-bold" style="font-family:var(--sl-display)">${esc(title)}</h3>
       <p class="mt-3 leading-relaxed" style="color:${SL.body}">${esc(
         featureBodies[i] || "A powerful, thoughtfully designed capability built to help your team move faster."
@@ -354,8 +359,9 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --sl-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#2A85FF")} }
+    :root { --sl-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#2A85FF")} ${themeFontCss(site.theme, ["--sl-display","--sl-body"])} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -365,6 +371,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
     }
     .sl-nav { transition: color .2s ease; }
     .sl-nav:hover { color: ${SL.brand}; }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body id="sl-top">

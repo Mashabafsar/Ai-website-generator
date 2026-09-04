@@ -3,6 +3,9 @@ import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/bluepri
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
 import { brandStyle } from "../shared/brand";
+import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { IconGlyph } from "@/lib/icons/glyph";
+import { isIconName } from "@/lib/icons/registry";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -166,12 +169,16 @@ export function CraftedSpacesSite({
       id="cs-top"
       className={`${sora.variable} scroll-smooth`}
       style={{
-        ...brandStyle(site?.theme?.colors, "#FFF6D2"),
+        ...brandStyle(site?.theme, "#FFF6D2"),
         fontFamily: "var(--cs-font), ui-sans-serif, system-ui, sans-serif",
         color: CS.ink,
         backgroundColor: CS.canvas,
+        ...themeFontStyle(site?.theme, ["--cs-font"]),
       }}
     >
+      {themeFontHref(site?.theme) ? (
+        <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
+      ) : null}
       <header className="px-4 pb-6 pt-5 sm:px-6 lg:px-[30px] lg:pb-8 lg:pt-[30px]">
         <Shell className="flex flex-wrap items-center gap-5">
           <a href="#cs-top" className="flex items-center gap-3">
@@ -308,7 +315,17 @@ export function CraftedSpacesSite({
             <div className="grid gap-10 md:grid-cols-3">
               {capabilityTitles.slice(0, 3).map((title, i) => (
                 <div key={title}>
-                  <img src={A.icons[i % A.icons.length]} alt="" width={70} height={70} className="size-[70px]" />
+                  {isIconName(capabilities.icons[i]) ? (
+                    <IconGlyph
+                      name={capabilities.icons[i]}
+                      size={70}
+                      color="white"
+                      strokeWidth={1.5}
+                      className="size-[70px]"
+                    />
+                  ) : (
+                    <img src={A.icons[i % A.icons.length]} alt="" width={70} height={70} className="size-[70px]" />
+                  )}
                   <h3 className="mt-4 text-2xl">{title}</h3>
                   <p className="mt-3 text-sm leading-7 text-[#B0B0B0]">{capabilityBodies[i] || ""}</p>
                 </div>

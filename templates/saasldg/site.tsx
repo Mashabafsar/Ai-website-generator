@@ -3,6 +3,9 @@ import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/bluepri
 import { SL, SL_FEATURE_COLORS, SL_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle } from "../shared/brand";
+import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { IconGlyph } from "@/lib/icons/glyph";
+import { isIconName } from "@/lib/icons/registry";
 
 const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -104,12 +107,16 @@ export function SaasLandingSite({
       id="sl-top"
       className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
       style={{
-        ...brandStyle(site?.theme?.colors, "#2A85FF"),
+        ...brandStyle(site?.theme, "#2A85FF"),
         fontFamily: "var(--sl-body), ui-sans-serif, system-ui, sans-serif",
         color: SL.ink,
         backgroundColor: SL.white,
+        ...themeFontStyle(site?.theme, ["--sl-display", "--sl-body"]),
       }}
     >
+      {themeFontHref(site?.theme) ? (
+        <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
+      ) : null}
       {/* Announcement strip */}
       <div
         className="px-4 py-2.5 text-center text-[13px] font-medium leading-snug text-white sm:text-sm"
@@ -256,7 +263,7 @@ export function SaasLandingSite({
               className="rounded-3xl border p-8"
               style={{ backgroundColor: SL.surface, borderColor: SL.line }}
             >
-              <FeatureIcon index={i} />
+              <FeatureIcon index={i} icon={features.icons[i]} />
               <h3 className="mt-8 text-xl font-bold" style={{ fontFamily: "var(--sl-display)" }}>
                 {title}
               </h3>
@@ -562,24 +569,28 @@ export function SaasLandingSite({
   );
 }
 
-function FeatureIcon({ index }: { index: number }) {
+function FeatureIcon({ index, icon }: { index: number; icon?: string }) {
   const color = SL_FEATURE_COLORS[index % SL_FEATURE_COLORS.length];
   const path = SL_ICON_PATHS[index % SL_ICON_PATHS.length];
   return (
     <span className="relative grid h-16 w-16 place-items-center rounded-full border-4 border-white bg-white shadow-[0_0.25rem_0.5rem_0_rgba(0,0,0,0.08)]">
       <span className="absolute inset-0 rounded-full" style={{ backgroundColor: color, opacity: 0.25 }} aria-hidden />
-      <svg
-        className="relative z-[1] h-7 w-7"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke={SL.ink}
-        strokeWidth={1.7}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d={path} />
-      </svg>
+      {isIconName(icon) ? (
+        <IconGlyph name={icon} className="relative z-[1] h-7 w-7" color={SL.ink} strokeWidth={1.7} />
+      ) : (
+        <svg
+          className="relative z-[1] h-7 w-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={SL.ink}
+          strokeWidth={1.7}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d={path} />
+        </svg>
+      )}
     </span>
   );
 }

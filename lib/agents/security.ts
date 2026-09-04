@@ -1,4 +1,5 @@
 import { isAllowedImageUrl } from "@/lib/images/provider";
+import { normalizeIconName } from "@/lib/icons/registry";
 import { clampBlueprintText } from "@/lib/sections/text-limits";
 import type { StockImageReference, WebsiteBlueprint } from "@/lib/blueprint/types";
 
@@ -51,6 +52,11 @@ export function sanitizeBlueprint(blueprint: WebsiteBlueprint): WebsiteBlueprint
       section.selectedImage = sanitizeImage(section.selectedImage);
       if (section.itemImages) {
         section.itemImages = section.itemImages.map((img) => sanitizeImage(img));
+      }
+      // Only allowlisted icon names may reach a renderer; anything else becomes
+      // null and the design falls back to its own glyph.
+      if (section.icons) {
+        section.icons = section.icons.map((name) => normalizeIconName(name));
       }
     }
   }

@@ -1,6 +1,8 @@
 import { SP } from "./tokens";
+import { iconSvg } from "@/lib/icons/registry";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
 // Static HTML twin of templates/sports/site.tsx. Exported and deployed sites
@@ -61,6 +63,10 @@ const ABOUT_ICONS = [
   "/templates/sports/about-icon-2.svg",
   "/templates/sports/about-icon-3.svg",
 ];
+// The design draws no symbol on the feature cards themselves, so the feature
+// items' icons are what these About rows show. Stroke weight and box match the
+// baked SVGs above (1.94 on a 27.75 grid ≈ 1.7 on lucide's 24 grid).
+const ABOUT_ICON_STROKE = 1.7;
 const ABOUT_BENEFITS = [
   { title: "Goal-based program", desc: "Pick a clear objective — strength, endurance, weight loss — and we build a plan around it." },
   { title: "Adaptive progression", desc: "Your program evolves as you do. We adjust volume, intensity, and drills to your performance." },
@@ -222,7 +228,14 @@ export function renderSportsPage(site: AssembledSite): string {
       <p class="text-lg leading-relaxed lg:text-xl" style="color:${SP.body}">${esc(text(about.content, "body", "We're a team of coaches and sport enthusiasts focused on one thing: helping you train better."))}</p>
       <div class="flex flex-col gap-3">
         ${ABOUT_BENEFITS.map((b, i) => `<div class="flex items-center gap-4 rounded-xl p-3" style="background:${SP.surface}">
-          <span class="grid size-[4.8rem] shrink-0 place-items-center rounded-[18px] bg-white"><img src="${ABOUT_ICONS[i % ABOUT_ICONS.length]}" alt="" class="size-8 object-contain" /></span>
+          <span class="grid size-[4.8rem] shrink-0 place-items-center rounded-[18px] bg-white">${
+            iconSvg(features.icons[i], {
+              size: 32,
+              color: SP.ink,
+              strokeWidth: ABOUT_ICON_STROKE,
+              className: "size-8",
+            }) || `<img src="${ABOUT_ICONS[i % ABOUT_ICONS.length]}" alt="" class="size-8 object-contain" />`
+          }</span>
           <div><div class="font-semibold uppercase" style="color:${SP.ink}">${esc(b.title)}</div><div class="text-sm leading-relaxed" style="color:${SP.body}">${esc(b.desc)}</div></div>
         </div>`).join("\n        ")}
       </div>
@@ -431,8 +444,9 @@ export function renderSportsPage(site: AssembledSite): string {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
   <link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --sp-display: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --sp-wordmark: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme?.colors, "#ffc857")} }
+    :root { --sp-display: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --sp-wordmark: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#ffc857")} ${themeFontCss(site.theme, ["--sp-display","--sp-wordmark"])} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
@@ -440,6 +454,7 @@ export function renderSportsPage(site: AssembledSite): string {
       background: ${SP.white};
       -webkit-font-smoothing: antialiased;
     }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body id="sp-top">

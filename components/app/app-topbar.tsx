@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Coins, Moon, Sun } from "lucide-react";
+import { Coins } from "lucide-react";
 import { UserMenu } from "@/components/app/user-menu";
 
 // App shell top bar — 66px white bar with a hairline bottom border: page title
@@ -41,17 +40,6 @@ export function AppTopbar({
   balance: number;
 }) {
   const pathname = usePathname();
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
-
-  function toggleTheme() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-  }
 
   return (
     <header className="sticky top-0 z-30 flex h-[66px] items-center justify-between border-b border-line bg-white pl-[30px]">
@@ -67,15 +55,6 @@ export function AppTopbar({
           <Coins className="size-[26px] text-brand-blue" />
           <span className="text-lg leading-[1.2]">{balance.toLocaleString()} Tokens Remaining</span>
         </Link>
-        <Divider />
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-          className="text-black transition-opacity hover:opacity-70"
-        >
-          {dark ? <Moon className="size-[26px]" /> : <Sun className="size-[26px]" />}
-        </button>
         <Divider />
         <UserMenu name={user.name} email={user.email} />
       </div>

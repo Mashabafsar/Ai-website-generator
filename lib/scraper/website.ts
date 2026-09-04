@@ -1,17 +1,19 @@
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 import { load } from "cheerio";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { extractJson } from "@/lib/blueprint/schema";
 import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
 import { withTimeout } from "@/lib/ai/timeout";
+import { ScrapeError, fetchGuarded, readCappedText } from "@/lib/scraper/fetch-guard";
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 
 // Website Import — the scraper behind the questionnaire's "Do you have a
 // website?" step. Fetches the customer's existing site (hardened against SSRF),
 // parses it with cheerio, then maps the text to questionnaire fields with the
 // lightweight AI chain (Cursor light model -> Gemini), falling back to rules.
+
+export { ScrapeError };
+export type { ScrapeErrorCode } from "@/lib/scraper/fetch-guard";
 
 export type ScrapedSite = {
   url: string;
@@ -22,158 +24,37 @@ export type ScrapedSite = {
   emails: string[];
   phones: string[];
   footerText: string;
+  /**
+   * The raw markup, kept so the brand extractor can read the parts the text
+   * pass strips (inline SVG marks, JSON-LD, <style> blocks).
+   */
+  html: string;
 };
-
-export type ScrapeErrorCode =
-  | "INVALID_URL"
-  | "BLOCKED_HOST"
-  | "FETCH_FAILED"
-  | "NOT_HTML"
-  | "EMPTY_PAGE";
-
-export class ScrapeError extends Error {
-  constructor(public code: ScrapeErrorCode, message: string) {
-    super(message);
-    this.name = "ScrapeError";
-  }
-}
 
 const BODY_CAP_BYTES = 2 * 1024 * 1024;
 const TEXT_CAP_CHARS = 8000;
 const FETCH_TIMEOUT_MS = 10_000;
 const AI_TIMEOUT_MS = 20_000;
 
-// ---- URL hardening ---------------------------------------------------------
-
-function normalizeUrl(raw: string): URL {
-  const trimmed = (raw || "").trim();
-  if (!trimmed) throw new ScrapeError("INVALID_URL", "Enter a website URL.");
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  let url: URL;
-  try {
-    url = new URL(withScheme);
-  } catch {
-    throw new ScrapeError("INVALID_URL", "That doesn't look like a valid URL.");
-  }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new ScrapeError("INVALID_URL", "Only http/https websites can be imported.");
-  }
-  url.username = "";
-  url.password = "";
-  url.hash = "";
-  return url;
-}
-
-function isPrivateIp(ip: string): boolean {
-  const v = isIP(ip);
-  if (v === 4) {
-    const [a, b] = ip.split(".").map(Number);
-    return (
-      a === 0 ||
-      a === 10 ||
-      a === 127 ||
-      (a === 169 && b === 254) ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      a >= 224 // multicast / reserved
-    );
-  }
-  if (v === 6) {
-    const lower = ip.toLowerCase();
-    return (
-      lower === "::1" ||
-      lower === "::" ||
-      lower.startsWith("fe80:") || // link-local
-      lower.startsWith("fc") || // unique local fc00::/7
-      lower.startsWith("fd") ||
-      lower.startsWith("::ffff:0:") // v4-mapped handled above once unwrapped
-    );
-  }
-  return false;
-}
-
-async function assertPublicHost(url: URL): Promise<void> {
-  const host = url.hostname.toLowerCase();
-  if (
-    host === "localhost" ||
-    host.endsWith(".local") ||
-    host.endsWith(".internal") ||
-    host.endsWith(".localhost")
-  ) {
-    throw new ScrapeError("BLOCKED_HOST", "That address isn't allowed.");
-  }
-  if (isIP(host)) {
-    if (isPrivateIp(host)) throw new ScrapeError("BLOCKED_HOST", "That address isn't allowed.");
-    return;
-  }
-  // DNS-rebinding guard: resolve and re-check the concrete address.
-  try {
-    const { address } = await lookup(host);
-    if (isPrivateIp(address)) {
-      throw new ScrapeError("BLOCKED_HOST", "That address isn't allowed.");
-    }
-  } catch (err) {
-    if (err instanceof ScrapeError) throw err;
-    throw new ScrapeError("FETCH_FAILED", "Could not resolve that domain.");
-  }
-}
-
 // ---- Fetch + parse ----------------------------------------------------------
-
-async function readCappedBody(res: Response): Promise<string> {
-  if (!res.body) return "";
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let received = 0;
-  let out = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    received += value.byteLength;
-    if (received > BODY_CAP_BYTES) {
-      await reader.cancel().catch(() => {});
-      out += decoder.decode(value.subarray(0, value.byteLength - (received - BODY_CAP_BYTES)));
-      break;
-    }
-    out += decoder.decode(value, { stream: true });
-  }
-  return out;
-}
 
 function collapse(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
 export async function fetchAndParseWebsite(rawUrl: string): Promise<ScrapedSite> {
-  const url = normalizeUrl(rawUrl);
-  await assertPublicHost(url);
+  const { res, finalUrl } = await fetchGuarded(rawUrl, {
+    timeoutMs: FETCH_TIMEOUT_MS,
+    accept: "text/html,application/xhtml+xml",
+  });
 
-  let res: Response;
-  try {
-    res = await fetch(url.toString(), {
-      redirect: "follow",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-      },
-    });
-  } catch {
-    throw new ScrapeError("FETCH_FAILED", "We couldn't reach that website.");
-  }
-
-  if (!res.ok) {
-    throw new ScrapeError("FETCH_FAILED", `That website responded with ${res.status}.`);
-  }
   const contentType = res.headers.get("content-type") || "";
   if (!/text\/html|application\/xhtml/i.test(contentType)) {
+    await res.body?.cancel().catch(() => {});
     throw new ScrapeError("NOT_HTML", "That URL doesn't point to a web page.");
   }
-  // Redirects can land on a different host — re-validate the final destination.
-  if (res.url) await assertPublicHost(new URL(res.url));
 
-  const html = await readCappedBody(res);
+  const html = await readCappedText(res, BODY_CAP_BYTES);
   const $ = load(html);
 
   $("script, style, noscript, svg, iframe, form, select").remove();
@@ -220,7 +101,8 @@ export async function fetchAndParseWebsite(rawUrl: string): Promise<ScrapedSite>
   }
 
   return {
-    url: (res.url || url).toString(),
+    url: finalUrl.toString(),
+    html,
     title,
     metaDescription,
     headings,

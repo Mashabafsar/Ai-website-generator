@@ -222,7 +222,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-sora), var(--font-onest), sans-serif;
+  --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
   --font-app: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
 }
 

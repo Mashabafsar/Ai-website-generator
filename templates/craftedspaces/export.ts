@@ -2,6 +2,8 @@ import type { AssembledSite } from "@/lib/blueprint/types";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
 import { brandCss } from "../shared/brand";
+import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { iconSvg } from "@/lib/icons/registry";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -259,7 +261,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
           .slice(0, 3)
           .map(
             (title, i) => `<div>
-          <img src="${A.icons[i % A.icons.length]}" alt="" width="70" height="70" class="size-[70px]" />
+          ${iconSvg(capabilities.icons[i], { size: 70, color: "white", strokeWidth: 1.5, className: "size-[70px]" }) || `<img src="${A.icons[i % A.icons.length]}" alt="" width="70" height="70" class="size-[70px]" />`}
           <h3 class="mt-4 text-2xl">${esc(title)}</h3>
           <p class="mt-3 text-sm leading-7 text-[#B0B0B0]">${esc(capabilityBodies[i] || "")}</p>
         </div>`
@@ -475,8 +477,9 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+  ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { ${brandCss(site.theme?.colors, "#FFF6D2")} }
+    :root { ${brandCss(site.theme, "#FFF6D2")} ${themeFontCss(site.theme, ["--cs-font"])} }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
@@ -486,6 +489,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
     }
     a { color: inherit; text-decoration: none; }
     summary::-webkit-details-marker { display: none; }
+  ${themeFontBodyCss(site.theme)}
   </style>
 </head>
 <body id="cs-top">

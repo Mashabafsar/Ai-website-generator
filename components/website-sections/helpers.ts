@@ -15,6 +15,13 @@ export function image(props: SectionProps): StockImageReference | null {
   return img && typeof img.url === "string" ? img : null;
 }
 
+/** The section's per-item icon names, already allowlisted upstream. */
+export function icons(props: SectionProps): (string | null)[] {
+  const list = props.icons;
+  if (!Array.isArray(list)) return [];
+  return list.map((name) => (typeof name === "string" ? name : null));
+}
+
 export function itemImages(props: SectionProps): (StockImageReference | null)[] {
   const list = props.itemImages;
   if (!Array.isArray(list)) return [];

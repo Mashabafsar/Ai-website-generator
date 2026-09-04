@@ -32,7 +32,28 @@ remove, or reorder them. Locking is enforced in three places:
 
 - generation — `conformToTemplate` (`lib/agents/template-fill.ts`)
 - prompting — `templateSlots` (`lib/ai/prompt-builder.ts`)
-- editor saves — `assertMatchesTemplate` (`lib/agents/editor.ts`)
+- editor saves — `findTemplateLockViolation` (`lib/templates/lock.ts`)
+
+### Changing a slot on a design that already has projects
+
+Editor saves compare a stored blueprint against the design's **current** slot
+list, so changing a shipped slot locks every existing project out of saving —
+its owner can open the editor and then fail on every edit. When the new variant
+replaces one of the same section type, declare that on the variant:
+
+```ts
+{ type: "features", variant: "features-stats", /* ... */ supersedes: ["features-grid"] }
+```
+
+The slot then accepts either, so existing projects keep saving while new ones
+get the corrected variant. Bespoke renderers read a slot by position (see
+`slots.ts`), so a project left on the old variant simply falls back to the
+design's own copy for the fields the new variant added. Anything else — a
+different section type, a changed slot count or order — is still rejected.
+
+`npm run validate` runs `scripts/validate-template-locks.ts`, which sweeps the
+stored projects through the same predicate and fails if a slot change would lock
+any of them out.
 
 Metadata (name, tagline, thumbnail, locked sections, `published`) lives in the
 **database**, seeded from `lib/templates/registry.ts`. The running app always
@@ -79,7 +100,7 @@ three places as single-page locking, extended per page:
 
 - generation — `conformToTemplate` (page set + per-page slots)
 - prompting — `buildHeavyPrompt` lists each page and its slots
-- editor saves — `assertMatchesTemplate` validates each page's slot list
+- editor saves — `findTemplateLockViolation` validates each page's slot list
 
 **Rendering a specific page.** `toSlots(blueprint, site, pageSlug)` reads the
 requested page (default `home`). The bespoke React renderer (`site.tsx`) and its
@@ -394,7 +415,9 @@ the running demo (`/templates/<slug>`) once the design looks right.
 ## Validation & testing
 
 ```bash
+npm run validate             # templates:validate + icons:validate
 npm run templates:validate   # registry / seed / asset / slot integrity
+npm run icons:validate       # icon allowlist / catalog geometry / renderer parity
 npm run db:seed              # also runs assertSeedTemplatesValid
 npx tsc --noEmit             # types
 npx next build               # production build (routes + SSG demos)
@@ -403,6 +426,9 @@ node tmp/smoke-flow.mjs http://localhost:3000 <slug>   # end-to-end + motion che
 
 `templates:validate` checks that every published bespoke design has a module,
 `site.tsx`, `export.ts`, existing assets, a matching slot map, and demo content.
+`icons:validate` checks that every icon name the selection agent hard-codes is in
+the allowlist, and that the React preview and the static export resolve the same
+geometry. `npm run validate` runs both.
 The smoke flow additionally asserts the motion runtime is present in both the
 preview and the export, and that exports ship reduced-motion safety.
 

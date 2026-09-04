@@ -50,7 +50,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
         aria-label="Open account menu"
       >
         <Avatar>
-          <AvatarFallback className="brand-gradient text-white">{initials}</AvatarFallback>
+          <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
         </Avatar>
         <span className="max-w-[140px] truncate text-base leading-[1.5] text-ink">
           {name || "Account"}
