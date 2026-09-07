@@ -17,6 +17,7 @@ const REASON_LABEL: Record<string, string> = {
   PURCHASE: "Credit purchase",
   HEAVY_GENERATE: "Website generation",
   LIGHT_EDIT: "AI section edit",
+  SCRAPE_IMPORT: "Website import",
   REFUND: "Refund",
   ADJUSTMENT: "Adjustment",
 };

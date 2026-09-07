@@ -1,7 +1,13 @@
+import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { CreditLedgerReason } from "@/lib/constants";
-import { assertAndSpend } from "@/lib/credits/credits";
+import {
+  assertAndSpend,
+  getBalance,
+  nextLedgerAttemptKey,
+  refundSpend,
+} from "@/lib/credits/credits";
 import { validateBlueprint } from "@/lib/blueprint/schema";
 import { assembleSite } from "@/lib/agents/section-assembly";
 import { sanitizeBlueprint, sanitizeText } from "@/lib/agents/security";
@@ -204,7 +210,12 @@ export async function editSectionWithAi(params: {
   pageSlug: string;
   sectionId: string;
   instruction: string;
-}): Promise<{ content: SectionContent; balanceAfter: number }> {
+}): Promise<{
+  content: SectionContent;
+  balanceAfter: number;
+  fromTemplate: boolean;
+  refunded: number;
+}> {
   const { userId, projectId, pageSlug, sectionId, instruction } = params;
 
   const { blueprint, theme } = await loadBlueprint(projectId);
@@ -213,13 +224,18 @@ export async function editSectionWithAi(params: {
   if (!section) throw new SectionNotFoundError();
 
   const cleanInstruction = sanitizeText(instruction).slice(0, 300);
+  const cost = env.credits.costLightEdit;
 
-  // Spend credits per edit (idempotent per section+instruction hash to avoid
-  // accidental double-charge on quick double-clicks within the same request).
-  const key = `light_edit:${projectId}:${sectionId}:${Date.now()}`;
-  const { balanceAfter } = await assertAndSpend({
+  // Same instruction + section collapses in-flight double-clicks onto one key.
+  // A later attempt (including after a refund) gets `:aN` so it is billed again.
+  const instructionHash = createHash("sha256").update(cleanInstruction).digest("hex").slice(0, 16);
+  const key = await nextLedgerAttemptKey({
+    reason: CreditLedgerReason.LIGHT_EDIT,
+    base: `light_edit:${projectId}:${sectionId}:${instructionHash}`,
+  });
+  const { balanceAfter, spent } = await assertAndSpend({
     userId,
-    amount: env.credits.costLightEdit,
+    amount: cost,
     reason: CreditLedgerReason.LIGHT_EDIT,
     projectId,
     idempotencyKey: key,
@@ -227,30 +243,46 @@ export async function editSectionWithAi(params: {
 
   const brandTone = await resolveBrandTone(projectId, blueprint.design.tone);
 
-  const provider = getAiProvider();
-  const failureLog = newFailureLog();
-  const { result: updated, events } = await withUsageCapture(() =>
-    withAiDiagnostics(failureLog, () =>
-      provider.reviseSection({
-        section,
-        instruction: cleanInstruction,
-        brandTone,
-      })
-    )
-  );
-  await persistUsageEvents({ userId, projectId, operation: "light_edit", events });
-  await recordAiIncidents({
-    userId,
-    projectId,
-    operation: "light_edit",
-    failures: failureLog.failures,
-    templateFallback: events.some((e) => e.provider === "mock"),
-  });
+  try {
+    const provider = getAiProvider();
+    const failureLog = newFailureLog();
+    const { result: updated, events } = await withUsageCapture(() =>
+      withAiDiagnostics(failureLog, () =>
+        provider.reviseSection({
+          section,
+          instruction: cleanInstruction,
+          brandTone,
+        })
+      )
+    );
+    await persistUsageEvents({ userId, projectId, operation: "light_edit", events });
+    const fromTemplate = events.some((e) => e.provider === "mock");
+    await recordAiIncidents({
+      userId,
+      projectId,
+      operation: "light_edit",
+      failures: failureLog.failures,
+      templateFallback: fromTemplate,
+    });
 
-  section.content = updated;
-  await persistAndSync(projectId, blueprint, theme);
+    let refunded = 0;
+    let finalBalance = balanceAfter;
+    if (fromTemplate && spent) {
+      await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: key });
+      refunded = cost;
+      finalBalance = await getBalance(userId);
+    }
 
-  return { content: updated, balanceAfter };
+    section.content = updated;
+    await persistAndSync(projectId, blueprint, theme);
+
+    return { content: updated, balanceAfter: finalBalance, fromTemplate, refunded };
+  } catch (err) {
+    if (spent) {
+      await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: key });
+    }
+    throw err;
+  }
 }
 
 /** Prefer the questionnaire override, then the template, then the stored blueprint tone. */

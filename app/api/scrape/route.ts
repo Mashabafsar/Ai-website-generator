@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +7,7 @@ import { withUsageCapture } from "@/lib/ai/usage";
 import { persistUsageEvents } from "@/lib/ai/usage-record";
 import {
   assertAndSpend,
+  nextLedgerAttemptKey,
   refundSpend,
   InsufficientCreditsError,
 } from "@/lib/credits/credits";
@@ -48,15 +49,22 @@ export async function POST(req: Request) {
   if (!project) return jsonError("Project not found", 404, "NOT_FOUND");
 
   const cost = env.credits.costScrapeImport;
-  const spendKey = `scrape_import:${user.id}:${randomUUID()}`;
+  const urlHash = createHash("sha256").update(url.toLowerCase()).digest("hex").slice(0, 16);
+  const spendKey = await nextLedgerAttemptKey({
+    reason: CreditLedgerReason.SCRAPE_IMPORT,
+    base: `scrape_import:${projectId}:${urlHash}`,
+  });
 
+  let spent = false;
   try {
-    await assertAndSpend({
+    const result = await assertAndSpend({
       userId: user.id,
       amount: cost,
       reason: CreditLedgerReason.SCRAPE_IMPORT,
+      projectId,
       idempotencyKey: spendKey,
     });
+    spent = result.spent;
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return jsonError(
@@ -112,7 +120,14 @@ export async function POST(req: Request) {
       brand: hasImportedBrand(brand) ? brand : null,
     });
   } catch (err) {
-    await refundSpend({ userId: user.id, amount: cost, spendIdempotencyKey: spendKey });
+    if (spent) {
+      await refundSpend({
+        userId: user.id,
+        amount: cost,
+        projectId,
+        spendIdempotencyKey: spendKey,
+      });
+    }
     if (err instanceof ScrapeError) {
       const status = err.code === "INVALID_URL" || err.code === "BLOCKED_HOST" ? 400 : 422;
       return jsonError(err.message, status, err.code);

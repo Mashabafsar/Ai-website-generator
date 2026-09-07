@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { notifyCreditsChanged } from "@/lib/credits/notify";
 
 /**
  * Shown on a website whose copy came from its design's starter content because
@@ -35,6 +36,7 @@ export function GenerationNotice({
         body: JSON.stringify({ projectId }),
       });
       const data = await res.json();
+      notifyCreditsChanged();
       if (!res.ok) {
         if (data.code === "INSUFFICIENT_CREDITS") {
           toast.error("Not enough credits — redirecting to top up.");

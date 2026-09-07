@@ -216,6 +216,13 @@ const GENERIC_NAV = new Set([
   "donate",
   "careers",
   "jobs",
+  "main page",
+  "talk",
+  "contents",
+  "in the news",
+  "on this day",
+  "did you know",
+  "did you know ...",
 ]);
 
 function uniqueShort(values: string[], max: number): string[] {
@@ -436,8 +443,15 @@ function compactFields(data: ScrapedFields): ScrapedFields {
   return fields;
 }
 
+const CHROME_COPY = /view source|view history|move to sidebar|main page talk|hide actions|tools move/i;
+
 function mergeScrapedFields(base: ScrapedFields, overlay: ScrapedFields): ScrapedFields {
-  return compactFields({ ...base, ...overlay });
+  const merged: ScrapedFields = { ...base };
+  for (const [key, value] of Object.entries(overlay) as [keyof ScrapedFields, ScrapedFields[keyof ScrapedFields]][]) {
+    if (typeof value === "string" && CHROME_COPY.test(value) && merged[key]) continue;
+    (merged as Record<string, unknown>)[key as string] = value;
+  }
+  return compactFields(merged);
 }
 
 const INDUSTRY_HINTS: Array<[RegExp, string]> = [

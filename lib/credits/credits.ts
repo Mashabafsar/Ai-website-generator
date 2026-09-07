@@ -71,7 +71,7 @@ export async function assertAndSpend(params: {
   reason: string;
   projectId?: string;
   idempotencyKey: string;
-}): Promise<{ balanceAfter: number }> {
+}): Promise<{ balanceAfter: number; spent: boolean }> {
   const { userId, amount, reason, projectId, idempotencyKey } = params;
   await ensureWallet(userId);
 
@@ -79,19 +79,18 @@ export async function assertAndSpend(params: {
     const dup = await tx.creditLedger.findUnique({ where: { idempotencyKey } });
     if (dup) {
       const w = await tx.creditWallet.findUnique({ where: { userId } });
-      return { balanceAfter: w?.balance ?? 0 };
+      return { balanceAfter: w?.balance ?? 0, spent: false };
     }
 
-    const wallet = await tx.creditWallet.findUnique({ where: { userId } });
-    const balance = wallet?.balance ?? 0;
-    if (balance < amount) {
-      throw new InsufficientCreditsError(amount, balance);
-    }
-
+    // Decrement first so the wallet row is locked. A stale read-then-write
+    // check would let two concurrent spends both pass and overdraw.
     const updated = await tx.creditWallet.update({
       where: { userId },
       data: { balance: { decrement: amount } },
     });
+    if (updated.balance < 0) {
+      throw new InsufficientCreditsError(amount, updated.balance + amount);
+    }
 
     await tx.creditLedger.create({
       data: {
@@ -104,8 +103,25 @@ export async function assertAndSpend(params: {
       },
     });
 
-    return { balanceAfter: updated.balance };
+    return { balanceAfter: updated.balance, spent: true };
   });
+}
+
+/**
+ * First attempt uses `base`; later attempts append `:aN` so a refunded spend
+ * key is never reused (reusing it would make the retry free).
+ */
+export async function nextLedgerAttemptKey(params: {
+  reason: string;
+  base: string;
+}): Promise<string> {
+  const prior = await prisma.creditLedger.count({
+    where: {
+      reason: params.reason,
+      idempotencyKey: { startsWith: params.base },
+    },
+  });
+  return prior === 0 ? params.base : `${params.base}:a${prior}`;
 }
 
 /**

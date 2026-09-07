@@ -50,6 +50,6 @@ export async function POST(req: Request) {
       });
     }
     console.error("Edit section error:", err);
-    return jsonError("Could not edit section", 500);
+    return jsonError("Could not edit section. Your credits were refunded.", 500);
   }
 }

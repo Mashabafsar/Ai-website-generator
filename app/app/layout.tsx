@@ -5,6 +5,8 @@ import { getBalance } from "@/lib/credits/credits";
 import { AppSidebar } from "@/components/app/app-sidebar";
 import { AppTopbar } from "@/components/app/app-topbar";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentSession();
   if (!session?.user) redirect("/login");

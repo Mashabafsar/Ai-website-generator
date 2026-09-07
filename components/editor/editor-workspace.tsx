@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { notifyCreditsChanged } from "@/lib/credits/notify";
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
@@ -561,12 +562,18 @@ function SectionEditor({
           router.push("/app/credits");
           return;
         }
+        notifyCreditsChanged();
         throw new Error(data.error || "AI edit failed");
       }
       onAiEdit(data.content);
       setInstruction("");
       setAiOpen(false);
-      toast.success(`Section updated · ${data.balanceAfter} credits left`);
+      notifyCreditsChanged();
+      if (data.fromTemplate) {
+        toast.error("Our writing tools are unavailable. You were not charged.");
+      } else {
+        toast.success(`Section updated · ${data.balanceAfter} credits left`);
+      }
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI edit failed");

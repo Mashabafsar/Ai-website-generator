@@ -226,7 +226,9 @@ async function runGeneration(params: {
   const cost = env.credits.costHeavyGenerate;
 
   // Spend credits up-front (idempotent per attempt); refund on hard failure.
-  const { balanceAfter } = await assertAndSpend({
+  // A replay of the same key must not refund — that charge belongs to the
+  // in-flight request that actually spent.
+  const { balanceAfter, spent } = await assertAndSpend({
     userId,
     amount: cost,
     reason: CreditLedgerReason.HEAVY_GENERATE,
@@ -273,7 +275,7 @@ async function runGeneration(params: {
     // so the balance is already correct if a later step throws.
     let refunded = 0;
     let finalBalance = balanceAfter;
-    if (fromTemplate) {
+    if (fromTemplate && spent) {
       await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: spendKey });
       refunded = cost;
       finalBalance = await getBalance(userId);
@@ -360,7 +362,9 @@ async function runGeneration(params: {
       });
     }
     // Refund the spend and mark the project failed so the user can retry.
-    await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: spendKey });
+    if (spent) {
+      await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: spendKey });
+    }
     await prisma.project.update({
       where: { id: projectId },
       data: { status: ProjectStatus.FAILED, generationDegraded: false },

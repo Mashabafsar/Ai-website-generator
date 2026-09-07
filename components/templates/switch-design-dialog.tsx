@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Coins, Loader2, Repeat } from "lucide-react";
 import { toast } from "sonner";
+import { notifyCreditsChanged } from "@/lib/credits/notify";
 import type { SiteTemplate } from "@/lib/templates/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +50,7 @@ export function SwitchDesignDialog({
         body: JSON.stringify({ templateId: template.id }),
       });
       const data = await res.json();
+      notifyCreditsChanged();
       if (!res.ok) throw new Error(data.error || "Could not switch designs");
 
       toast.success(`Rebuilt on ${template.name} · ${data.balanceAfter} credits left`);

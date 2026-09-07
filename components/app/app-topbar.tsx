@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Coins } from "lucide-react";
 import { UserMenu } from "@/components/app/user-menu";
+import { CREDITS_CHANGED_EVENT } from "@/lib/credits/notify";
 
 // App shell top bar — 66px white bar with a hairline bottom border: page title
 // on the left; token balance, theme toggle, and the account menu on the right,
@@ -34,12 +36,44 @@ function Divider() {
 
 export function AppTopbar({
   user,
-  balance,
+  balance: initialBalance,
 }: {
   user: { name: string; email: string };
   balance: number;
 }) {
   const pathname = usePathname();
+  const [balance, setBalance] = useState(initialBalance);
+
+  useEffect(() => {
+    setBalance(initialBalance);
+  }, [initialBalance]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function refresh() {
+      try {
+        const res = await fetch("/api/credits/balance", { cache: "no-store" });
+        const data = (await res.json()) as { balance?: unknown };
+        if (!cancelled && typeof data.balance === "number") setBalance(data.balance);
+      } catch {
+        // Keep the last known server-rendered value.
+      }
+    }
+    void refresh();
+    const onChanged = () => {
+      void refresh();
+    };
+    const onVis = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    window.addEventListener(CREDITS_CHANGED_EVENT, onChanged);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(CREDITS_CHANGED_EVENT, onChanged);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-30 flex h-[66px] items-center justify-between border-b border-line bg-white pl-[30px]">

@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { BrandImportChoice } from "@/components/questionnaire/brand-import-choice";
 import { hasImportedBrand, hasImportedTheme, parseImportedBrand } from "@/lib/branding/imported-brand";
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
+import { notifyCreditsChanged } from "@/lib/credits/notify";
 
 const STEPS = ["Website", "Business", "Audience", "Style", "Details"] as const;
 
@@ -161,6 +162,8 @@ export function QuestionnaireWizard({
         body: JSON.stringify({ url, projectId }),
       });
       const data = await res.json();
+      notifyCreditsChanged();
+      router.refresh();
       if (res.status === 402 || data?.code === "INSUFFICIENT_CREDITS") {
         toast.error(`Importing a website costs ${importCost} credits — redirecting to top up.`);
         router.push("/app/credits");
@@ -276,6 +279,7 @@ export function QuestionnaireWizard({
       const data = await genRes.json();
       toast.dismiss("gen");
 
+      notifyCreditsChanged();
       if (!genRes.ok) {
         if (data.code === "INSUFFICIENT_CREDITS") {
           toast.error("Not enough credits — redirecting to top up.");
@@ -285,6 +289,7 @@ export function QuestionnaireWizard({
         throw new Error(data.error || "Generation failed");
       }
 
+      notifyCreditsChanged();
       if (data.fromTemplate) {
         toast.error(
           "This website is using starter content. We couldn't reach the tools that write your copy, so you were not charged. You can try writing it again from the preview."
