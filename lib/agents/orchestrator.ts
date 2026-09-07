@@ -243,6 +243,7 @@ async function runGeneration(params: {
   });
 
   const failureLog = newFailureLog();
+  let incidentsLogged = false;
 
   try {
     const provider = getAiProvider();
@@ -265,6 +266,7 @@ async function runGeneration(params: {
       templateFallback: fromTemplate,
       fallbackReason: fromTemplate && env.ai.useMock ? MOCK_MODE_REASON : undefined,
     });
+    incidentsLogged = true;
 
     // Template copy is not the product the customer asked for, so it is given
     // away rather than sold. The refund lands before the rest of the pipeline
@@ -345,14 +347,16 @@ async function runGeneration(params: {
       providerFailures: failureLog.failures.map(summarizeFailure),
     };
   } catch (err) {
-    // A pipeline that died still has to explain itself: whatever the chain
-    // learned before the throw is the only account of what went wrong.
-    await recordAiIncidents({
-      userId,
-      projectId,
-      operation: "heavy_generate",
-      failures: failureLog.failures,
-    });
+    // A chain that died before it could report still has to explain itself:
+    // what it learned on the way down is the only account of what went wrong.
+    if (!incidentsLogged) {
+      await recordAiIncidents({
+        userId,
+        projectId,
+        operation: "heavy_generate",
+        failures: failureLog.failures,
+      });
+    }
     // Refund the spend and mark the project failed so the user can retry.
     await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: spendKey });
     await prisma.project.update({
