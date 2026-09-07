@@ -45,6 +45,11 @@ export type SectionVariantSpec = {
    * that region simply ignores the value.
    */
   iconField?: string;
+  /**
+   * Older variant ids this slot still accepts after a same-type correction.
+   * Lets stored projects generated under the old id keep saving.
+   */
+  supersedes?: string[];
   /** Business-level image terms — a floor under the content-derived query. */
   keywords: (ctx: SectionContext) => string[];
   defaults: (ctx: SectionContext) => SectionContent;
@@ -535,6 +540,17 @@ const BY_VARIANT = new Map(SECTION_REGISTRY.map((s) => [s.variant, s]));
 
 export function getVariantSpec(variant: string): SectionVariantSpec | undefined {
   return BY_VARIANT.get(variant);
+}
+
+/**
+ * True when `locked` declares it supersedes `incoming` and both share a type.
+ * Used by the template lock so a slot correction does not lock out old saves.
+ */
+export function acceptsSupersededVariant(locked: string, incoming: string): boolean {
+  const spec = BY_VARIANT.get(locked);
+  if (!spec?.supersedes?.includes(incoming)) return false;
+  const incomingSpec = BY_VARIANT.get(incoming);
+  return Boolean(incomingSpec && incomingSpec.type === spec.type);
 }
 
 export function isAllowedVariant(type: string, variant: string): boolean {
