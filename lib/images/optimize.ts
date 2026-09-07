@@ -35,19 +35,38 @@ export type OptimizedImage = {
   originalLength: number;
 };
 
-type SharpModule = typeof import("sharp");
+type SharpPipeline = {
+  rotate: () => SharpPipeline;
+  resize: (options: {
+    width: number;
+    height: number;
+    fit: "inside";
+    withoutEnlargement: boolean;
+  }) => SharpPipeline;
+  webp: (options: { lossless?: boolean; quality?: number; effort: number }) => SharpPipeline;
+  toBuffer: (options: {
+    resolveWithObject: true;
+  }) => Promise<{
+    data: Buffer;
+    info: { width: number; height: number; pageHeight?: number };
+  }>;
+};
 
-let sharpModule: SharpModule | null | undefined;
+/** Callable factory only — `typeof import("sharp")` is a namespace under tsc. */
+type SharpFactory = (input: Buffer, options?: { animated?: boolean }) => SharpPipeline;
+
+let sharpModule: SharpFactory | null | undefined;
 
 /**
- * `sharp` ships with Next as an optional dependency, so it can be absent from a
- * pruned install. A missing encoder must cost a customer nothing more than an
- * unoptimized file.
+ * `sharp` is a declared dependency (and also ships with Next). A missing
+ * encoder must cost a customer nothing more than an unoptimized file.
  */
-async function loadSharp(): Promise<SharpModule | null> {
+async function loadSharp(): Promise<SharpFactory | null> {
   if (sharpModule !== undefined) return sharpModule;
   try {
-    sharpModule = (await import("sharp")).default as unknown as SharpModule;
+    const loaded = (await import("sharp")) as { default?: unknown; sharp?: unknown };
+    const candidate = loaded.default ?? loaded.sharp ?? loaded;
+    sharpModule = typeof candidate === "function" ? (candidate as SharpFactory) : null;
   } catch {
     sharpModule = null;
   }

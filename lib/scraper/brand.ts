@@ -627,7 +627,6 @@ export async function importBrandFromSite(params: {
   projectId: string;
   site: ScrapedSite;
 }): Promise<ImportedBrand> {
-  throw new Error("forced brand failure for fail-soft verification");
   try {
     return await importBrandFromSiteInner(params);
   } catch (err) {
