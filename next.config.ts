@@ -14,22 +14,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "download.shutterstock.com" },
     ],
   },
-  async headers() {
-    return [
-      {
-        // Uploaded and imported assets are third-party bytes served from our
-        // own origin. An SVG logo would otherwise be a same-origin script.
-        source: "/uploads/:path*",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          {
-            key: "Content-Security-Policy",
-            value: "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
-          },
-        ],
-      },
-    ];
-  },
   webpack: (config, { dev }) => {
     if (dev) {
       // The SQLite database, uploads and exports all live inside the project,

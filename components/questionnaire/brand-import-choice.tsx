@@ -1,27 +1,44 @@
 "use client";
 
-import { Check, Info, Sparkles } from "lucide-react";
+import { Check, Info, Loader2, Trash2 } from "lucide-react";
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
-import type { ImportedBrand } from "@/lib/branding/imported-brand";
+import {
+  ASSET_CONSENT_STATEMENT,
+  hasImportedAssets,
+  type ImportedBrand,
+} from "@/lib/branding/imported-brand";
 import { cn } from "@/lib/utils";
 
 /**
- * Shown straight after a website import: what we detected, and the one decision
- * only the customer can make — keep their existing look, or let the generator
- * art-direct a new one.
+ * Shown straight after a website import: what we detected, the one design
+ * decision only the customer can make — keep their existing look, or pick a
+ * different palette and typeface — and the licence confirmation their own logo
+ * and photographs need before we republish them.
  */
 export function BrandImportChoice({
   brand,
   value,
   onChange,
+  assetConsent,
+  onAssetConsentChange,
+  onRemoveAssets,
+  removingAssets,
 }: {
   brand: ImportedBrand;
-  value: "ai" | "imported";
-  onChange: (value: "ai" | "imported") => void;
+  value: "imported" | "custom";
+  onChange: (value: "imported" | "custom") => void;
+  assetConsent: boolean;
+  onAssetConsentChange: (value: boolean) => void;
+  onRemoveAssets: () => void;
+  removingAssets: boolean;
 }) {
   const font = THEME_FONTS.find((f) => f.id === brand.fontFamily) ?? null;
   const colors = brand.colors;
   const photoCount = brand.images.length;
+  const assets = hasImportedAssets(brand);
+  const swatches = colors
+    ? [colors.primary, colors.accent, colors.secondary, colors.background, colors.foreground]
+    : [];
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4">
@@ -51,25 +68,47 @@ export function BrandImportChoice({
         </div>
       </div>
 
+      {photoCount > 0 && (
+        <div className="flex gap-2 overflow-x-auto">
+          {brand.images.slice(0, 6).map((img) => (
+            <div
+              key={img.url}
+              className="h-16 w-20 shrink-0 overflow-hidden rounded-md border bg-secondary"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt={img.altText || ""} className="h-full w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <ChoiceCard
           active={value === "imported"}
           onClick={() => onChange("imported")}
-          title="Keep my current look"
-          desc="Use the colours and typeface from your existing site."
+          title="Use this look"
+          desc="Keep the colours and typeface from your existing site."
         >
           <div className="mt-3 space-y-2">
-            {colors ? (
+            {swatches.length ? (
               <div className="flex items-center gap-2">
-                <Swatch color={colors.primary} label="Primary" />
-                <Swatch color={colors.accent} label="Accent" />
-                <Swatch color={colors.background} label="Background" />
+                {swatches.map((color, index) => (
+                  <span
+                    key={`${color}-${index}`}
+                    title={color}
+                    aria-label={color}
+                    className="h-6 w-6 rounded-full border"
+                    style={{ background: color }}
+                  />
+                ))}
                 <span className="font-mono text-[11px] uppercase text-muted-foreground">
-                  {colors.primary}
+                  {colors?.primary}
                 </span>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">No colours detected — the design keeps its own.</p>
+              <p className="text-xs text-muted-foreground">
+                No colours detected — the design keeps its own.
+              </p>
             )}
             {font ? (
               <p className="text-lg leading-tight" style={{ fontFamily: font.stack }}>
@@ -81,32 +120,69 @@ export function BrandImportChoice({
                 )}
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground">No typeface detected — the design keeps its own.</p>
+              <p className="text-xs text-muted-foreground">
+                No typeface detected — the design keeps its own.
+              </p>
             )}
           </div>
         </ChoiceCard>
 
         <ChoiceCard
-          active={value === "ai"}
-          onClick={() => onChange("ai")}
-          title="Let our AI choose"
-          desc="A palette and typeface picked to suit your industry."
+          active={value === "custom"}
+          onClick={() => onChange("custom")}
+          title="Choose a different look"
+          desc="Pick a palette and typeface in the Style step, or leave it for the generator."
         >
           <div className="mt-3 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-            <span className="h-6 w-6 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400" />
-            <span className="h-6 w-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-300" />
-            <span className="h-6 w-6 rounded-full bg-gradient-to-br from-orange-500 to-rose-400" />
-            <span className="text-xs text-muted-foreground">Decided during generation</span>
+            <span className="h-6 w-6 rounded-full bg-indigo-500" />
+            <span className="h-6 w-6 rounded-full bg-emerald-500" />
+            <span className="h-6 w-6 rounded-full bg-orange-500" />
+            <span className="text-xs text-muted-foreground">You choose next — or we will</span>
           </div>
         </ChoiceCard>
       </div>
 
-      {(brand.logoUrl || photoCount > 0) && (
-        <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Your logo and photos are used either way — only the colours and typeface change.
-        </p>
+      {assets && (
+        <div className="rounded-xl border border-input bg-background p-4">
+          <div className="flex items-start gap-3">
+            <input
+              id="imported-asset-consent"
+              name="importedAssetConsent"
+              type="checkbox"
+              checked={assetConsent}
+              onChange={(event) => onAssetConsentChange(event.target.checked)}
+              aria-describedby="imported-asset-consent-note"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+            />
+            <div className="min-w-0 space-y-1.5">
+              <label
+                htmlFor="imported-asset-consent"
+                className="block cursor-pointer text-sm font-semibold"
+              >
+                {ASSET_CONSENT_STATEMENT}
+              </label>
+              <p id="imported-asset-consent-note" className="text-xs text-muted-foreground">
+                {assetConsent
+                  ? `We'll reuse ${assetList(brand.logoUrl, photoCount)} on your new site under either option above — your theme choice only changes the colours and typeface.`
+                  : `Until you confirm this, we'll leave ${assetList(brand.logoUrl, photoCount)} out and use stock photography instead. Everything else the import filled in stays either way.`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onRemoveAssets}
+            disabled={removingAssets}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground disabled:opacity-50"
+          >
+            {removingAssets ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+            Delete the files we downloaded
+          </button>
+        </div>
       )}
 
       {brand.notes.length > 0 && (
@@ -121,6 +197,14 @@ export function BrandImportChoice({
       )}
     </div>
   );
+}
+
+function assetList(logoUrl: string | undefined, photoCount: number): string {
+  const parts = [
+    logoUrl ? "your logo" : null,
+    photoCount ? `${photoCount} photo${photoCount === 1 ? "" : "s"}` : null,
+  ].filter(Boolean);
+  return parts.join(" and ") || "your images";
 }
 
 function ChoiceCard({
@@ -160,16 +244,5 @@ function ChoiceCard({
       <div className="mt-1 text-sm text-muted-foreground">{desc}</div>
       {children}
     </button>
-  );
-}
-
-function Swatch({ color, label }: { color: string; label: string }) {
-  return (
-    <span
-      title={`${label} ${color}`}
-      aria-label={`${label} ${color}`}
-      className="h-6 w-6 rounded-full border shadow-sm"
-      style={{ background: color }}
-    />
   );
 }

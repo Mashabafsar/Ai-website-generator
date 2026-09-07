@@ -343,7 +343,7 @@ type LogoCandidate = { score: number; url?: URL; inline?: string };
 
 const LOGO_HINT = /logo|wordmark|brandmark|site-?brand|site-?title/i;
 
-function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
+export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
   const found: LogoCandidate[] = [];
   const seen = new Set<string>();
 
@@ -481,7 +481,13 @@ async function importLogo(
     if (size && (size.width < 16 || size.height < 16)) continue;
 
     try {
-      const stored = await saveProjectImage({ projectId, bytes, contentType: type, subdir: "imported" });
+      const stored = await saveProjectImage({
+        projectId,
+        bytes,
+        contentType: type,
+        subdir: "imported",
+        optimize: "logo",
+      });
       return { url: stored.url };
     } catch {
       return null;
@@ -497,7 +503,7 @@ const IMAGE_REJECT =
 
 type ImageCandidate = { url: URL; alt: string; score: number };
 
-function imageCandidates($: CheerioAPI, base: URL): ImageCandidate[] {
+export function imageCandidates($: CheerioAPI, base: URL): ImageCandidate[] {
   const found = new Map<string, ImageCandidate>();
 
   const consider = (el: Element, href: string | undefined, alt: string) => {
@@ -587,7 +593,10 @@ async function importImages(
         bytes: asset.bytes,
         contentType: type,
         subdir: "imported",
+        optimize: "photo",
       });
+      // The budget tracks bytes pulled off the customer's server, not bytes
+      // kept, so re-encoding cannot be a licence to download more.
       budget -= asset.bytes.length;
       stored.push({
         // An empty alt is kept empty on purpose: the assembly step then writes
@@ -595,7 +604,9 @@ async function importImages(
         url: saved.url,
         altText: candidate.alt,
         sourcePageUrl,
-        orientation: orientationOf(size),
+        orientation: orientationOf(
+          saved.width && saved.height ? { width: saved.width, height: saved.height } : size
+        ),
       });
     } catch {
       break;
@@ -613,6 +624,30 @@ async function importImages(
  * costs that one piece of branding.
  */
 export async function importBrandFromSite(params: {
+  projectId: string;
+  site: ScrapedSite;
+}): Promise<ImportedBrand> {
+  throw new Error("forced brand failure for fail-soft verification");
+  try {
+    return await importBrandFromSiteInner(params);
+  } catch (err) {
+    console.error("[scrape] branding import failed:", err);
+    let sourceUrl = params.site.url;
+    try {
+      sourceUrl = new URL(params.site.url).toString();
+    } catch {
+      sourceUrl = "https://invalid.invalid";
+    }
+    return {
+      sourceUrl,
+      importedAt: new Date().toISOString(),
+      images: [],
+      notes: ["We couldn't import branding from this site."],
+    };
+  }
+}
+
+async function importBrandFromSiteInner(params: {
   projectId: string;
   site: ScrapedSite;
 }): Promise<ImportedBrand> {

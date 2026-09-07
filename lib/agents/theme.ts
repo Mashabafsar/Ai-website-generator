@@ -1,6 +1,9 @@
 import { THEME_FONTS } from "@/templates/shared/fonts";
-import { IMPORTED_PALETTE_NAME } from "@/lib/branding/imported-brand";
 import type { ThemeTokens, WebsiteBlueprint } from "@/lib/blueprint/types";
+import {
+  IMPORTED_PALETTE_NAME,
+  type ImportedBrandColors,
+} from "@/lib/branding/imported-brand";
 
 // Theme Agent — maps a color preference + visual style to concrete design
 // tokens. Deterministic (rules-based) so results are consistent; the heavy
@@ -83,16 +86,11 @@ export function validateThemeChoice(design: WebsiteBlueprint["design"] | undefin
   };
 }
 
-/** The identity lifted off the customer's own website, once they've kept it. */
-export type ImportedThemeChoice = {
-  colors?: ThemeTokens["colors"];
-  fontFamily?: string;
-};
-
 /**
- * Builds the design tokens for a site. Precedence, strongest first:
- * an imported identity the customer chose to keep, then their explicit
- * questionnaire answer, then the heavy model's pick, then the template's own.
+ * Builds the design tokens for a site. `colorPreference` is the questionnaire's
+ * answer (falling back to the template's own), so an explicit customer choice
+ * always outranks the model's; `choice.palette` only applies when the customer
+ * left it alone.
  */
 export function createTheme(
   colorPreference: string,
@@ -100,10 +98,30 @@ export function createTheme(
   options: {
     choice?: ThemeChoice;
     colorPreferenceExplicit?: boolean;
-    imported?: ImportedThemeChoice;
+    /** Hexes + typeface lifted from the customer's site when they kept that look. */
+    importedColors?: ImportedBrandColors;
+    importedFontFamily?: string;
+    logoUrl?: string;
   } = {}
 ): ThemeTokens {
-  const { choice, colorPreferenceExplicit, imported } = options;
+  const { choice, colorPreferenceExplicit, importedColors, importedFontFamily, logoUrl } = options;
+  const radius = RADII[visualStyle] ?? "0.75rem";
+  const catalogFont =
+    importedFontFamily && THEME_FONTS.some((f) => f.id === importedFontFamily)
+      ? importedFontFamily
+      : choice?.fontFamily;
+
+  if (importedColors) {
+    return {
+      colors: importedColors,
+      radius,
+      fontStyle: `${visualStyle.toLowerCase()} sans-serif`,
+      ...(catalogFont ? { fontFamily: catalogFont } : {}),
+      palette: IMPORTED_PALETTE_NAME,
+      ...(logoUrl ? { logoUrl } : {}),
+    };
+  }
+
   const paletteName = colorPreferenceExplicit
     ? colorPreference
     : choice?.palette ?? colorPreference;
@@ -112,29 +130,13 @@ export function createTheme(
   // each bespoke design paint with its own accent.
   const deliberate = paletteName in PALETTES && (colorPreferenceExplicit || Boolean(choice?.palette));
   const colors = PALETTES[paletteName] ?? PALETTES["Brand blue & violet"];
-  const radius = RADII[visualStyle] ?? "0.75rem";
-
-  if (imported?.colors || imported?.fontFamily) {
-    const importedColors = imported.colors ?? colors;
-    return {
-      colors: importedColors,
-      radius,
-      fontStyle: `${visualStyle.toLowerCase()} sans-serif`,
-      ...(imported.fontFamily ?? choice?.fontFamily
-        ? { fontFamily: imported.fontFamily ?? choice?.fontFamily }
-        : {}),
-      // Naming the imported palette is what tells the bespoke designs this
-      // primary was chosen on purpose and outranks their signature accent.
-      ...(imported.colors ? { palette: IMPORTED_PALETTE_NAME } : deliberate ? { palette: paletteName } : {}),
-    };
-  }
-
   return {
     colors,
     radius,
     fontStyle: `${visualStyle.toLowerCase()} sans-serif`,
-    ...(choice?.fontFamily ? { fontFamily: choice.fontFamily } : {}),
+    ...(catalogFont ? { fontFamily: catalogFont } : {}),
     ...(deliberate ? { palette: paletteName } : {}),
+    ...(logoUrl ? { logoUrl } : {}),
   };
 }
 

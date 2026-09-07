@@ -14,6 +14,14 @@ export const ProjectStatus = {
 } as const;
 export type ProjectStatus = (typeof ProjectStatus)[keyof typeof ProjectStatus];
 
+/** Statuses that mean the website itself has already been bought. */
+export const PAID_PROJECT_STATUSES = new Set<string>([
+  ProjectStatus.PAID,
+  ProjectStatus.EXPORTED,
+  ProjectStatus.DEPLOYING,
+  ProjectStatus.LIVE,
+]);
+
 export const PackageType = {
   SELF_HOSTING: "SELF_HOSTING",
   MANAGED_HOSTING: "MANAGED_HOSTING",

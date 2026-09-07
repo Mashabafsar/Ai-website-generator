@@ -189,16 +189,15 @@ const NAME_PHRASES: [RegExp, string][] = [...ICON_NAMES]
   .map((name) => [new RegExp(`\\b${name.replace(/-/g, "[ -]")}\\b`), name]);
 
 /**
- * Keywords are prefixes ("plumb" has to reach "plumbing"), but a prefix that
- * short is mostly noise — "pr" inside "precision", "eat" inside "treatment" —
- * so anything this brief has to be a whole word.
+ * Keywords are prefixes ("plumb" has to reach "plumbing"), so they only count
+ * from the start of a word — otherwise "plan" fires inside "implants" and
+ * "power" inside "empowering". A prefix this short is noise even at a word
+ * start, so it has to be the whole word.
  */
 const SHORT_KEYWORD = 3;
 
 const hasKeyword = (haystack: string, keyword: string): boolean =>
-  keyword.length > SHORT_KEYWORD
-    ? haystack.includes(keyword)
-    : new RegExp(`\\b${keyword}\\b`).test(haystack);
+  new RegExp(`\\b${keyword}${keyword.length > SHORT_KEYWORD ? "" : "\\b"}`).test(haystack);
 
 /** First keyword match against the item's own copy, else null. */
 function matchIcon(text: string): string | null {

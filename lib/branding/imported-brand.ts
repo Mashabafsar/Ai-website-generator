@@ -12,7 +12,7 @@ import { z } from "zod";
  */
 export const IMPORTED_PALETTE_NAME = "Imported from your website";
 
-export const MAX_IMPORTED_IMAGES = 8;
+export const MAX_IMPORTED_IMAGES = 12;
 
 /** Assets always land in this project's own upload folder — never hot-linked. */
 const uploadPath = z
@@ -61,6 +61,49 @@ export const importedBrandSchema = z.object({
 export type ImportedBrandColors = z.infer<typeof importedBrandColorsSchema>;
 export type ImportedBrandImage = z.infer<typeof importedBrandImageSchema>;
 export type ImportedBrand = z.infer<typeof importedBrandSchema>;
+
+/**
+ * The sentence a customer confirms before their own logo and photographs are
+ * republished on the site we generate for them. Stored verbatim on the record,
+ * because a consent record that cannot say what was agreed to proves nothing.
+ */
+export const ASSET_CONSENT_STATEMENT =
+  "I own or have the right to use the images and logo on this website.";
+
+/**
+ * A customer's confirmation that the imported assets are theirs to reuse.
+ * Every field except `granted` is written by the server; the wizard sends only
+ * the yes, so a timestamp, a statement or a digest arriving from a client is
+ * discarded rather than trusted.
+ */
+export const importedAssetConsentSchema = z.object({
+  granted: z.literal(true),
+  confirmedAt: z.string().max(40).optional(),
+  sourceUrl: httpUrl.optional(),
+  statement: z.string().max(300).optional(),
+  /** Ties the confirmation to the exact set of files it was given for. */
+  assetDigest: z.string().max(64).optional(),
+});
+
+export type ImportedAssetConsent = z.infer<typeof importedAssetConsentSchema>;
+
+/** Every file a consent has to cover: the logo plus each imported photo. */
+export function importedAssetPaths(brand: ImportedBrand | null | undefined): string[] {
+  if (!brand) return [];
+  return [...(brand.logoUrl ? [brand.logoUrl] : []), ...brand.images.map((img) => img.url)];
+}
+
+/** True when the import produced files that need a licence confirmation. */
+export function hasImportedAssets(brand: ImportedBrand | null | undefined): boolean {
+  return importedAssetPaths(brand).length > 0;
+}
+
+/** Parses a consent stored in questionnaire answers, dropping anything malformed. */
+export function parseAssetConsent(raw: unknown): ImportedAssetConsent | null {
+  if (!raw) return null;
+  const parsed = importedAssetConsentSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
 
 /** True when there is a visual identity worth offering the customer. */
 export function hasImportedTheme(brand: ImportedBrand | null | undefined): boolean {

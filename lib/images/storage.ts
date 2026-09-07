@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import { optimizeImage, type ImageProfile } from "@/lib/images/optimize";
 
 // Every image the platform stores for a project — editor uploads and assets
 // pulled from a customer's existing website — lands here, so there is one place
@@ -88,11 +89,22 @@ export function sanitizeSvg(source: string): string | null {
   return svg;
 }
 
-export type StoredImage = { url: string; filename: string; contentType: StoredImageType };
+export type StoredImage = {
+  url: string;
+  filename: string;
+  contentType: StoredImageType;
+  /** Pixel size of the bytes actually written, when the encoder reported it. */
+  width?: number;
+  height?: number;
+  bytesWritten: number;
+  bytesReceived: number;
+};
 
 /**
  * Writes an image into the project's public upload folder and returns the
- * path the renderer and the static export both use.
+ * path the renderer and the static export both use. Callers that hand over
+ * third-party bytes pass a profile so the file is downscaled and re-encoded
+ * before it is stored, rather than after it has already shipped.
  */
 export async function saveProjectImage(params: {
   projectId: string;
@@ -100,8 +112,15 @@ export async function saveProjectImage(params: {
   contentType: StoredImageType;
   /** Optional sub-folder, e.g. "imported", to keep provenance obvious on disk. */
   subdir?: string;
+  optimize?: ImageProfile;
 }): Promise<StoredImage> {
-  const { projectId, bytes, contentType, subdir } = params;
+  const { projectId, subdir, optimize } = params;
+  const optimized = optimize
+    ? await optimizeImage(params.bytes, params.contentType, optimize)
+    : null;
+  const bytes = optimized?.bytes ?? params.bytes;
+  const contentType = optimized?.contentType ?? params.contentType;
+
   const safeSubdir = subdir?.replace(/[^a-z0-9-]/gi, "") || "";
   const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${EXTENSIONS[contentType]}`;
 
@@ -111,5 +130,13 @@ export async function saveProjectImage(params: {
   await writeFile(path.join(dir, filename), bytes);
 
   const url = `/uploads/${projectId}/${safeSubdir ? `${safeSubdir}/` : ""}${filename}`;
-  return { url, filename, contentType };
+  return {
+    url,
+    filename,
+    contentType,
+    width: optimized?.width,
+    height: optimized?.height,
+    bytesWritten: bytes.length,
+    bytesReceived: params.bytes.length,
+  };
 }

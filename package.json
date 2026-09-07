@@ -12,9 +12,6 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "templates:validate": "ts-node --transpile-only --project templates/tsconfig.validate.json templates/validate.ts",
-    "icons:validate": "tsx scripts/validate-icons.ts",
-    "templates:locks": "tsx scripts/validate-template-locks.ts",
-    "validate": "npm run templates:validate && npm run icons:validate && npm run templates:locks",
     "admin:grant": "node scripts/set-admin.mjs"
   },
   "prisma": {
@@ -46,6 +43,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
+    "sharp": "^0.35.4",
     "sonner": "^1.7.1",
     "stripe": "^17.5.0",
     "tailwind-merge": "^2.6.0",

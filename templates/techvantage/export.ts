@@ -163,8 +163,8 @@ export function renderTechvantagePage(site: AssembledSite): string {
   ]);
   const serviceBodies = list(services.content, "itemBodies");
 
-  const statValues = list(stats.content, "statValues", ["500+", "15+", "300+", "98%"]);
-  const statLabels = list(stats.content, "statLabels", [
+  const statValues = list(stats.content, "itemTitles", ["500+", "15+", "300+", "98%"]);
+  const statLabels = list(stats.content, "itemBodies", [
     "Successful Projects Completed",
     "Years of Industry Experience",
     "Clients Served Globally",

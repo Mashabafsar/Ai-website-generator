@@ -2,18 +2,26 @@ import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import {
   ProjectStatus,
+  PAID_PROJECT_STATUSES,
   GithubSyncStatus,
   CreditLedgerReason,
   DeploymentStatus,
 } from "@/lib/constants";
-import { assertAndSpend, refundSpend, InsufficientCreditsError } from "@/lib/credits/credits";
+import {
+  assertAndSpend,
+  refundSpend,
+  getBalance,
+  InsufficientCreditsError,
+} from "@/lib/credits/credits";
 import { parseQuestionnaireAnswers, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SiteTemplate } from "@/lib/templates/types";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
 import { createTheme, validateThemeChoice } from "@/lib/agents/theme";
-import { themeSchema } from "@/lib/blueprint/schema";
 import { selectIcons } from "@/lib/agents/icon-selection";
 import { sourceImages } from "@/lib/agents/image-sourcing";
+import { parseImportedBrand, parseAssetConsent, hasImportedTheme } from "@/lib/branding/imported-brand";
+import { resolveConsentedAssets } from "@/lib/branding/asset-consent";
+import { THEME_FONTS } from "@/templates/shared/fonts";
 import { assembleSite } from "@/lib/agents/section-assembly";
 import { sanitizeBlueprint } from "@/lib/agents/security";
 import { conformToTemplate } from "@/lib/agents/template-fill";
@@ -22,6 +30,9 @@ import { runQa, type QaReport } from "@/lib/agents/qa";
 import { getAiProvider } from "@/lib/ai/provider";
 import { withUsageCapture } from "@/lib/ai/usage";
 import { persistUsageEvents } from "@/lib/ai/usage-record";
+import { newFailureLog, withAiDiagnostics } from "@/lib/ai/diagnostics";
+import { recordAiIncidents } from "@/lib/ai/incidents";
+import type { AiFailure } from "@/lib/ai/failure";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { slugify } from "@/lib/utils";
 
@@ -60,6 +71,12 @@ export type GenerateResult = {
   status: "GENERATED";
   qa: QaReport;
   balanceAfter: number;
+  /** True when no model answered and the deterministic template wrote the copy. */
+  fromTemplate: boolean;
+  /** Credits returned because the build was not model-written. */
+  refunded: number;
+  /** Why each real provider dropped out, for the operator and the API caller. */
+  providerFailures: { provider: string; model: string; kind: string }[];
 };
 
 /**
@@ -90,7 +107,16 @@ export async function generateWebsite(params: {
     });
   }
 
-  if (project.blueprint && project.status !== ProjectStatus.DRAFT && project.status !== ProjectStatus.FAILED) {
+  // A template-built site was refunded rather than sold, so the customer is
+  // still owed the generation they paid for and may run it again.
+  const owedAnotherAttempt = project.generationDegraded && !PAID_STATUSES.has(project.status);
+
+  if (
+    project.blueprint &&
+    !owedAnotherAttempt &&
+    project.status !== ProjectStatus.DRAFT &&
+    project.status !== ProjectStatus.FAILED
+  ) {
     throw new AlreadyGeneratedError();
   }
   if (!project.questionnaire) throw new NoQuestionnaireError();
@@ -105,21 +131,24 @@ export async function generateWebsite(params: {
     projectId,
     template,
     answers,
-    spendKey: `heavy_generate:${projectId}`,
-    existingLogoUrl: readThemeLogoUrl(project.theme),
+    spendKey: await nextGenerationSpendKey(projectId),
   });
 }
 
-/** The logo already saved on a project, if it still passes theme validation. */
-function readThemeLogoUrl(raw: string | null): string | undefined {
-  if (!raw) return undefined;
-  try {
-    const value = (JSON.parse(raw) as { logoUrl?: unknown }).logoUrl;
-    const parsed = themeSchema.shape.logoUrl.safeParse(value);
-    return parsed.success ? parsed.data : undefined;
-  } catch {
-    return undefined;
-  }
+/**
+ * Reusing one key across attempts makes every retry free: the original spend row
+ * still satisfies the idempotency check even after it has been refunded.
+ * Counting the spends already booked against the project gives each attempt its
+ * own key while still collapsing concurrent duplicates of one attempt into a
+ * single charge.
+ */
+async function nextGenerationSpendKey(projectId: string): Promise<string> {
+  const attempts = await prisma.creditLedger.count({
+    where: { projectId, reason: CreditLedgerReason.HEAVY_GENERATE },
+  });
+  return attempts === 0
+    ? `heavy_generate:${projectId}`
+    : `heavy_generate:${projectId}:a${attempts}`;
 }
 
 /**
@@ -162,20 +191,20 @@ export async function switchProjectTemplate(params: {
     answers,
     spendKey: `heavy_generate:${projectId}:v${designVersion}`,
     designVersion,
-    existingLogoUrl: readThemeLogoUrl(project.theme),
     // Paying for the website is separate from choosing its look, so a redesign
     // never pushes the user back behind the paywall they already cleared.
     keepPaidStatus: PAID_STATUSES.has(project.status),
   });
 }
 
-/** Statuses that mean the website itself has already been bought. */
-const PAID_STATUSES = new Set<string>([
-  ProjectStatus.PAID,
-  ProjectStatus.EXPORTED,
-  ProjectStatus.DEPLOYING,
-  ProjectStatus.LIVE,
-]);
+const MOCK_MODE_REASON =
+  "AI_USE_MOCK is enabled, so the deterministic template built this site without calling a model.";
+
+function summarizeFailure(failure: AiFailure) {
+  return { provider: failure.provider, model: failure.model, kind: failure.kind };
+}
+
+const PAID_STATUSES = PAID_PROJECT_STATUSES;
 
 /**
  * The shared pipeline: spend credits, ask the model for copy, snap it onto the
@@ -190,19 +219,8 @@ async function runGeneration(params: {
   spendKey: string;
   designVersion?: number;
   keepPaidStatus?: boolean;
-  /** A logo already on the project — an editor upload, or an earlier import. */
-  existingLogoUrl?: string;
 }): Promise<GenerateResult> {
-  const {
-    userId,
-    projectId,
-    template,
-    answers,
-    spendKey,
-    designVersion,
-    keepPaidStatus,
-    existingLogoUrl,
-  } = params;
+  const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus } = params;
 
   const requirements = analyzeRequirements(answers, template);
   const cost = env.credits.costHeavyGenerate;
@@ -224,14 +242,41 @@ async function runGeneration(params: {
     },
   });
 
+  const failureLog = newFailureLog();
+
   try {
     const provider = getAiProvider();
     const { result: generated, events } = await withUsageCapture(() =>
-      provider.generateBlueprint(requirements)
+      withAiDiagnostics(failureLog, () => provider.generateBlueprint(requirements))
     );
     // Meter tokens right after the model call so usage is recorded even if a
     // later step fails (and credits get refunded).
     await persistUsageEvents({ userId, projectId, operation: "heavy_generate", events });
+
+    // The deterministic template is the one provider that cannot fail, so its
+    // appearance in the meter is the authoritative record that no model wrote
+    // this site — whatever the chain reported on the way there.
+    const fromTemplate = events.some((e) => e.provider === "mock");
+    await recordAiIncidents({
+      userId,
+      projectId,
+      operation: "heavy_generate",
+      failures: failureLog.failures,
+      templateFallback: fromTemplate,
+      fallbackReason: fromTemplate && env.ai.useMock ? MOCK_MODE_REASON : undefined,
+    });
+
+    // Template copy is not the product the customer asked for, so it is given
+    // away rather than sold. The refund lands before the rest of the pipeline
+    // so the balance is already correct if a later step throws.
+    let refunded = 0;
+    let finalBalance = balanceAfter;
+    if (fromTemplate) {
+      await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: spendKey });
+      refunded = cost;
+      finalBalance = await getBalance(userId);
+    }
+
     let blueprint = generated;
 
     // The model only writes copy — snap its output back onto the locked layout.
@@ -239,28 +284,31 @@ async function runGeneration(params: {
     blueprint = sanitizeBlueprint(blueprint);
     const qa = runQa(blueprint, requirements.contact);
 
-    // Theme precedence: an imported identity the customer chose to keep beats
-    // the model's typeface and palette picks, which are themselves only used
-    // when the questionnaire left the colours alone.
-    const theme = createTheme(requirements.colorPreference, requirements.visualStyle, {
-      choice: validateThemeChoice(blueprint.design),
-      colorPreferenceExplicit: requirements.colorPreferenceExplicit,
-      imported: requirements.useImportedTheme
-        ? {
-            colors: requirements.importedBrand?.colors,
-            fontFamily: requirements.importedBrand?.fontFamily,
-          }
-        : undefined,
+    const brand = answers.hasWebsite === "yes" ? parseImportedBrand(answers.importedBrand) : null;
+    const assets = resolveConsentedAssets({
+      brand,
+      consent: parseAssetConsent(answers.importedAssetConsent),
+      projectId,
     });
+    const useImportedLook =
+      answers.importedThemeChoice === "imported" && hasImportedTheme(brand);
+    const modelChoice = validateThemeChoice(blueprint.design);
+    const pickedFont = THEME_FONTS.some((f) => f.id === answers.fontFamily)
+      ? answers.fontFamily
+      : undefined;
 
-    // A logo is the business's own property rather than a style choice, so an
-    // imported mark applies under either theme; a mark the user set in the
-    // editor outranks it and survives a redesign.
-    const logoUrl = existingLogoUrl ?? requirements.importedBrand?.logoUrl;
-    if (logoUrl) theme.logoUrl = logoUrl;
-
+    const theme = createTheme(requirements.colorPreference, requirements.visualStyle, {
+      choice: {
+        palette: useImportedLook ? undefined : modelChoice.palette,
+        fontFamily: useImportedLook ? undefined : pickedFont || modelChoice.fontFamily,
+      },
+      colorPreferenceExplicit: useImportedLook ? false : requirements.colorPreferenceExplicit,
+      importedColors: useImportedLook ? brand?.colors : undefined,
+      importedFontFamily: useImportedLook ? brand?.fontFamily : pickedFont,
+      logoUrl: assets.logoUrl,
+    });
     blueprint = selectIcons(blueprint);
-    blueprint = await sourceImages(blueprint, { clientImages: requirements.importedBrand });
+    blueprint = await sourceImages(blueprint, assets.images);
     const site = {
       ...assembleSite(blueprint, theme),
       contact: requirements.contact,
@@ -279,6 +327,7 @@ async function runGeneration(params: {
         theme: JSON.stringify(theme),
         status: keepPaidStatus ? ProjectStatus.PAID : ProjectStatus.GENERATED,
         githubSyncStatus: GithubSyncStatus.PENDING,
+        generationDegraded: fromTemplate,
       },
     });
 
@@ -287,13 +336,28 @@ async function runGeneration(params: {
     // Always back up to GitHub (payment-independent). Best-effort; won't throw.
     await trySyncProjectToGitHub(projectId);
 
-    return { status: "GENERATED", qa, balanceAfter };
+    return {
+      status: "GENERATED",
+      qa,
+      balanceAfter: finalBalance,
+      fromTemplate,
+      refunded,
+      providerFailures: failureLog.failures.map(summarizeFailure),
+    };
   } catch (err) {
+    // A pipeline that died still has to explain itself: whatever the chain
+    // learned before the throw is the only account of what went wrong.
+    await recordAiIncidents({
+      userId,
+      projectId,
+      operation: "heavy_generate",
+      failures: failureLog.failures,
+    });
     // Refund the spend and mark the project failed so the user can retry.
     await refundSpend({ userId, amount: cost, projectId, spendIdempotencyKey: spendKey });
     await prisma.project.update({
       where: { id: projectId },
-      data: { status: ProjectStatus.FAILED },
+      data: { status: ProjectStatus.FAILED, generationDegraded: false },
     });
     throw err;
   }

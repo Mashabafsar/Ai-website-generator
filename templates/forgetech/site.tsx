@@ -1,7 +1,5 @@
 import { Nunito_Sans, Space_Grotesk } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
-import { IconGlyph } from "@/lib/icons/glyph";
-import { isIconName } from "@/lib/icons/registry";
 import { FT } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle } from "../shared/brand";
@@ -267,17 +265,7 @@ export function ForgeTechSite({
                 className="grid h-14 w-14 place-items-center border-2 text-lg font-bold"
                 style={{ borderColor: FT.trinidad, color: FT.trinidad, fontFamily: "var(--ft-display)" }}
               >
-                {isIconName(capabilities.icons[i]) ? (
-                  <IconGlyph
-                    name={capabilities.icons[i]}
-                    size={28}
-                    color={FT.trinidad}
-                    strokeWidth={1.8}
-                    className="h-7 w-7"
-                  />
-                ) : (
-                  String(i + 1).padStart(2, "0")
-                )}
+                {String(i + 1).padStart(2, "0")}
               </span>
               <h3
                 className="mt-5 text-xl font-semibold"
@@ -456,17 +444,7 @@ export function ForgeTechSite({
                   className="grid h-12 w-12 shrink-0 place-items-center text-sm font-bold text-white"
                   style={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
                 >
-                  {isIconName(value.icons[i]) ? (
-                    <IconGlyph
-                      name={value.icons[i]}
-                      size={24}
-                      color="#ffffff"
-                      strokeWidth={1.8}
-                      className="h-6 w-6"
-                    />
-                  ) : (
-                    String(i + 1).padStart(2, "0")
-                  )}
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <div>
                   <h3 className="text-lg font-semibold" style={{ fontFamily: "var(--ft-display)" }}>

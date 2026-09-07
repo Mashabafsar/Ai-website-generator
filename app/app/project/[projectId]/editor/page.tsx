@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
-import { ProjectStatus } from "@/lib/constants";
+import { ProjectStatus, PAID_PROJECT_STATUSES } from "@/lib/constants";
 import { ProjectTabs } from "@/components/app/project-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
+import { GenerationNotice } from "@/components/app/generation-notice";
 import { EditorWorkspace } from "@/components/editor/editor-workspace";
 import { getTemplateById } from "@/lib/templates/store";
 import { env } from "@/lib/env";
@@ -58,6 +59,15 @@ export default async function EditorPage({
       </div>
 
       <ProjectTabs projectId={projectId} />
+
+      {project.generationDegraded && (
+        <GenerationNotice
+          projectId={projectId}
+          refundedCredits={env.credits.costHeavyGenerate}
+          generateCost={env.credits.costHeavyGenerate}
+          canRetry={!PAID_PROJECT_STATUSES.has(project.status)}
+        />
+      )}
 
       <EditorWorkspace
         projectId={projectId}

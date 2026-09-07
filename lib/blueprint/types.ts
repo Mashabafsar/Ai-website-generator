@@ -2,20 +2,13 @@
 // produces and the app renders. Keep in sync with lib/blueprint/schema.ts (Zod).
 
 export type StockImageReference = {
-  /**
-   * "client-site" is the customer's own photography, pulled from the website
-   * they imported. It is not stock and must never be labelled as a stock
-   * provider — the licence belongs to them, not to us.
-   */
-  provider: "shutterstock" | "pexels" | "unsplash" | "placeholder" | "upload" | "client-site";
+  provider: "shutterstock" | "pexels" | "unsplash" | "placeholder" | "upload";
   providerImageId?: string;
   url: string;
   photographer?: string;
   attributionRequired?: boolean;
   licenseInfo?: string;
   altText: string;
-  /** For imported assets: the page the image was taken from. */
-  sourcePageUrl?: string;
 };
 
 export type WebsiteSection = {

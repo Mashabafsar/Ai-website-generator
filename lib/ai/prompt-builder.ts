@@ -85,10 +85,7 @@ function pageSlots(sections: string[]): string {
         spec.iconField ? `icons (one per ${spec.iconField} entry)` : "",
       ].filter(Boolean);
       const also = extras.length ? ` (also return ${extras.join(" and ")})` : "";
-      return [
-        `   ${index + 1}. type "${spec.type}", variant "${spec.variant}" — fields { ${fields} }${also}`,
-        `      ${spec.description}`,
-      ].join("\n");
+      return `   ${index + 1}. type "${spec.type}", variant "${spec.variant}" — fields { ${fields} }${also}`;
     })
     .filter(Boolean)
     .join("\n");

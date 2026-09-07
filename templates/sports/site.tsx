@@ -1,7 +1,5 @@
 import { Bebas_Neue } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
-import { IconGlyph } from "@/lib/icons/glyph";
-import { isIconName } from "@/lib/icons/registry";
 import { SP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle } from "../shared/brand";
@@ -62,10 +60,6 @@ const ABOUT_ICONS = [
   "/templates/sports/about-icon-2.svg",
   "/templates/sports/about-icon-3.svg",
 ];
-// The design draws no symbol on the feature cards themselves, so the feature
-// items' icons are what these About rows show. Stroke weight and box match the
-// baked SVGs above (1.94 on a 27.75 grid ≈ 1.7 on lucide's 24 grid).
-const ABOUT_ICON_STROKE = 1.7;
 // Baked design chrome — generic training benefits shown beside the About copy.
 const ABOUT_BENEFITS = [
   { title: "Goal-based program", desc: "Pick a clear objective — strength, endurance, weight loss — and we build a plan around it." },
@@ -339,18 +333,8 @@ export function SportsSite({
                   <span
                     className="grid size-[4.8rem] shrink-0 place-items-center rounded-[18px] bg-white"
                   >
-                    {isIconName(features.icons[i]) ? (
-                      <IconGlyph
-                        name={features.icons[i]}
-                        size={32}
-                        color={SP.ink}
-                        strokeWidth={ABOUT_ICON_STROKE}
-                        className="size-8"
-                      />
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={ABOUT_ICONS[i % ABOUT_ICONS.length]} alt="" className="size-8 object-contain" />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ABOUT_ICONS[i % ABOUT_ICONS.length]} alt="" className="size-8 object-contain" />
                   </span>
                   <div>
                     <div className="font-semibold uppercase" style={{ color: SP.ink }}>{b.title}</div>

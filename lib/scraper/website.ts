@@ -4,16 +4,16 @@ import { env } from "@/lib/env";
 import { extractJson } from "@/lib/blueprint/schema";
 import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
 import { withTimeout } from "@/lib/ai/timeout";
-import { ScrapeError, fetchGuarded, readCappedText } from "@/lib/scraper/fetch-guard";
+import { fetchGuarded, readCappedText, ScrapeError } from "@/lib/scraper/fetch-guard";
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
+
+export { ScrapeError };
+export type { ScrapeErrorCode } from "@/lib/scraper/fetch-guard";
 
 // Website Import — the scraper behind the questionnaire's "Do you have a
 // website?" step. Fetches the customer's existing site (hardened against SSRF),
 // parses it with cheerio, then maps the text to questionnaire fields with the
 // lightweight AI chain (Cursor light model -> Gemini), falling back to rules.
-
-export { ScrapeError };
-export type { ScrapeErrorCode } from "@/lib/scraper/fetch-guard";
 
 export type ScrapedSite = {
   url: string;
@@ -25,8 +25,8 @@ export type ScrapedSite = {
   phones: string[];
   footerText: string;
   /**
-   * The raw markup, kept so the brand extractor can read the parts the text
-   * pass strips (inline SVG marks, JSON-LD, <style> blocks).
+   * Raw HTML kept only in memory for the brand pass. Never persisted or
+   * returned to the client — it still contains the page's own markup.
    */
   html: string;
 };
@@ -35,8 +35,6 @@ const BODY_CAP_BYTES = 2 * 1024 * 1024;
 const TEXT_CAP_CHARS = 8000;
 const FETCH_TIMEOUT_MS = 10_000;
 const AI_TIMEOUT_MS = 20_000;
-
-// ---- Fetch + parse ----------------------------------------------------------
 
 function collapse(s: string): string {
   return s.replace(/\s+/g, " ").trim();
@@ -102,7 +100,6 @@ export async function fetchAndParseWebsite(rawUrl: string): Promise<ScrapedSite>
 
   return {
     url: finalUrl.toString(),
-    html,
     title,
     metaDescription,
     headings,
@@ -110,6 +107,7 @@ export async function fetchAndParseWebsite(rawUrl: string): Promise<ScrapedSite>
     emails: [...emails].slice(0, 5),
     phones: [...phones].slice(0, 5),
     footerText,
+    html,
   };
 }
 

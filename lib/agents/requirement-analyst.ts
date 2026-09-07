@@ -1,9 +1,4 @@
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
-import {
-  hasImportedTheme,
-  parseImportedBrand,
-  type ImportedBrand,
-} from "@/lib/branding/imported-brand";
 import type { SectionContext } from "@/lib/sections/registry";
 import type { SiteTemplate, TemplatePageDef } from "@/lib/templates/types";
 import { featuresFromVariants } from "@/lib/quote/features";
@@ -23,13 +18,6 @@ export type NormalizedRequirements = {
    * model choose a palette only when they didn't.
    */
   colorPreferenceExplicit: boolean;
-  /** Logo, photos, colours and typeface pulled from the customer's old site. */
-  importedBrand?: ImportedBrand;
-  /**
-   * True when the customer chose to keep the imported identity. Their logo and
-   * photos are used either way — those are their own assets, not a theme.
-   */
-  useImportedTheme: boolean;
   features: string[];
   contact: { email?: string; phone?: string; address?: string };
   packageType: string;
@@ -66,8 +54,6 @@ export function analyzeRequirements(
   const demographics = answers.demographics?.trim() || "";
   const goals = answers.goals?.trim() || "";
   const brandingNotes = answers.brandingNotes?.trim() || "";
-  const importedBrand = parseImportedBrand(answers.importedBrand) ?? undefined;
-  const useImportedTheme = answers.themeSource === "imported" && hasImportedTheme(importedBrand);
   // Features come from every page's slots so a multi-page design's pricing /
   // contact / gallery pages are reflected in the deterministic quote.
   const allVariants = template.pages.flatMap((p) => p.sections);
@@ -109,8 +95,6 @@ export function analyzeRequirements(
     visualStyle,
     colorPreference,
     colorPreferenceExplicit: Boolean(colorPreferenceAnswer),
-    importedBrand,
-    useImportedTheme,
     features,
     contact: { email: context.contactEmail, phone: context.contactPhone, address: location },
     packageType: answers.packageType,

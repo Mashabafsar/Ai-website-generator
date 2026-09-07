@@ -163,27 +163,6 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
   </div>
 </section>`;
     }
-    case "FeaturesStats": {
-      const values = arr(p.statValues);
-      const labels = arr(p.statLabels);
-      return `<section class="px-6 py-24">
-  <div class="mx-auto max-w-6xl">
-    ${p.heading ? `<h2 class="text-center text-3xl font-semibold tracking-tight md:text-4xl">${esc(p.heading)}</h2>` : ""}
-    <div class="mt-14 grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
-      ${values
-        .map(
-          (value, i) => `<div>
-        <div class="text-4xl font-semibold leading-tight tracking-tight md:text-5xl" style="color:var(--primary)">${esc(
-          value
-        )}</div>
-        <p class="mt-2 text-slate-600">${esc(labels[i] ?? "")}</p>
-      </div>`
-        )
-        .join("\n      ")}
-    </div>
-  </div>
-</section>`;
-    }
     case "ServicesCards": {
       const titles = arr(p.itemTitles);
       const bodies = arr(p.itemBodies);

@@ -7,24 +7,20 @@ import { slugify } from "@/lib/utils";
 
 export type ProjectFile = { path: string; content: string | Buffer };
 
-function collectUploadPaths(blueprint: WebsiteBlueprint, site: AssembledSite): string[] {
+function collectUploadPaths(blueprint: WebsiteBlueprint): string[] {
   const paths = new Set<string>();
-  const add = (url: string | undefined) => {
-    if (url && url.startsWith("/uploads/") && !url.includes("..")) {
-      paths.add(url.replace(/^\//, ""));
+  const consider = (img?: StockImageReference | null) => {
+    if (!img?.url) return;
+    if (img.provider === "upload" && img.url.startsWith("/uploads/")) {
+      paths.add(img.url.replace(/^\//, ""));
     }
   };
-  const consider = (img?: StockImageReference | null) => add(img?.url);
-
   for (const page of blueprint.pages) {
     for (const section of page.sections) {
       consider(section.selectedImage);
       for (const item of section.itemImages ?? []) consider(item);
     }
   }
-  // The logo lives on the theme rather than in a section, so it needs its own
-  // pass or an uploaded/imported mark 404s in the exported site.
-  add(site.theme?.logoUrl);
   return [...paths];
 }
 
@@ -54,7 +50,7 @@ export async function generateProjectFiles(params: {
 
   // Include user-uploaded images and any design assets the layout falls back to,
   // so ZIP / GitHub sites stay self-contained.
-  for (const rel of [...collectUploadPaths(blueprint, site), ...bespokeAssetPaths(site)]) {
+  for (const rel of [...collectUploadPaths(blueprint), ...bespokeAssetPaths(site)]) {
     try {
       const abs = path.join(process.cwd(), "public", rel);
       const buf = await readFile(abs);

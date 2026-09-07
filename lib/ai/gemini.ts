@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 import { estimateTokens, recordUsage } from "@/lib/ai/usage";
+import { classifyAiFailure, isRetryPointless } from "@/lib/ai/failure";
 
 type GeminiPart = { text?: string };
 type GeminiCandidate = { content?: { parts?: GeminiPart[] } };

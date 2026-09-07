@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { PackageType } from "@/lib/constants";
-import { importedBrandSchema } from "@/lib/branding/imported-brand";
+import {
+  importedBrandSchema,
+  importedAssetConsentSchema,
+  parseImportedBrand,
+  parseAssetConsent,
+} from "@/lib/branding/imported-brand";
 
 // Tone, visual style, and palette vocabularies are shared: a template declares
 // its defaults, and the questionnaire may optionally override them.
@@ -42,11 +47,6 @@ export const questionnaireSchema = z.object({
   // Existing website (step 0). When "yes", the URL is scraped to prefill answers.
   hasWebsite: z.enum(["yes", "no"]).optional().or(z.literal("")),
   existingWebsiteUrl: z.string().max(300).optional().or(z.literal("")),
-  // The logo, photos, colours, and typeface pulled off that site, if any.
-  importedBrand: importedBrandSchema.optional(),
-  // Which visual identity the generated site should wear. Empty means "ai",
-  // which is what every project created before the importer existed gets.
-  themeSource: z.enum(["ai", "imported"]).optional().or(z.literal("")),
 
   // Business
   businessName: z.string().min(2, "Business name is required").max(80),
@@ -68,6 +68,13 @@ export const questionnaireSchema = z.object({
   colorPreference: optionalEnum(COLOR_PREFERENCES),
   visualStyle: optionalEnum(VISUAL_STYLES),
   brandingNotes: z.string().max(400).optional().or(z.literal("")),
+  /** Catalog id from templates/shared/fonts.ts. Empty keeps the design's type. */
+  fontFamily: z.string().max(60).optional().or(z.literal("")),
+
+  // Branding lifted from an existing website. Optional so older projects parse.
+  importedThemeChoice: z.enum(["imported", "custom"]).optional().or(z.literal("")),
+  importedBrand: importedBrandSchema.optional(),
+  importedAssetConsent: importedAssetConsentSchema.optional(),
 
   // Contact
   contactEmail: z.string().email("Enter a valid email").or(z.literal("")).optional(),
@@ -83,7 +90,6 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   templateId: "",
   hasWebsite: "",
   existingWebsiteUrl: "",
-  themeSource: "",
   businessName: "",
   industry: "",
   description: "",
@@ -96,6 +102,8 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   colorPreference: "",
   visualStyle: "",
   brandingNotes: "",
+  fontFamily: "",
+  importedThemeChoice: "",
   contactEmail: "",
   contactPhone: "",
   packageType: PackageType.SELF_HOSTING,
@@ -104,17 +112,24 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
 /** Merge stored JSON with defaults so records saved before new fields still parse. */
 export function parseQuestionnaireAnswers(raw: unknown): QuestionnaireAnswers {
   const source = typeof raw === "string" ? JSON.parse(raw) : raw;
-  const merged = { ...defaultQuestionnaire, ...(source as Partial<QuestionnaireAnswers>) };
+  const incoming = (source ?? {}) as Record<string, unknown>;
+  const merged = { ...defaultQuestionnaire, ...incoming } as QuestionnaireAnswers & {
+    importedBrand?: unknown;
+    importedAssetConsent?: unknown;
+  };
+  // A malformed brand or consent must not fail the rest of a saved questionnaire.
+  const brand = parseImportedBrand(incoming.importedBrand);
+  const consent = parseAssetConsent(incoming.importedAssetConsent);
+  if (brand) merged.importedBrand = brand;
+  else delete merged.importedBrand;
+  if (consent) merged.importedAssetConsent = consent;
+  else delete merged.importedAssetConsent;
+
   const parsed = questionnaireSchema.safeParse(merged);
   if (parsed.success) return parsed.data;
   return questionnaireSchema.parse({
     ...merged,
     demographics: merged.demographics || merged.targetAudience || "General audience",
     goals: merged.goals || "Present the business clearly and convert visitors.",
-    // Branding is an optional extra: a record that no longer validates must
-    // never stop the project's answers from loading.
-    importedBrand: importedBrandSchema.safeParse(merged.importedBrand).success
-      ? merged.importedBrand
-      : undefined,
   });
 }

@@ -6,10 +6,11 @@ import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { prisma } from "@/lib/prisma";
 import {
-  questionnaireSchema,
   defaultQuestionnaire,
+  parseQuestionnaireAnswers,
   type QuestionnaireAnswers,
 } from "@/lib/questionnaire/schema";
+import { parseAssetConsent, parseImportedBrand } from "@/lib/branding/imported-brand";
 import { getTemplateById } from "@/lib/templates/store";
 import { QuestionnaireWizard } from "@/components/questionnaire/questionnaire-wizard";
 import { Button } from "@/components/ui/button";
@@ -37,18 +38,19 @@ export default async function QuestionnairePage({
   const q = await prisma.questionnaire.findUnique({ where: { projectId } });
   let initialAnswers: QuestionnaireAnswers | null = null;
   if (q) {
-    const parsed = questionnaireSchema.safeParse({
-      ...defaultQuestionnaire,
-      ...JSON.parse(q.answers),
-      templateId: template.id,
-    });
-    if (parsed.success) {
-      initialAnswers = parsed.data;
-    } else {
-      // Old records may lack new required fields — prefill what we have.
+    try {
+      initialAnswers = {
+        ...parseQuestionnaireAnswers(q.answers),
+        templateId: template.id,
+      };
+    } catch {
+      // A scrape can persist a brand before the required text fields are filled.
+      const raw = JSON.parse(q.answers) as Record<string, unknown>;
       initialAnswers = {
         ...defaultQuestionnaire,
-        ...(JSON.parse(q.answers) as Partial<QuestionnaireAnswers>),
+        ...(raw as Partial<QuestionnaireAnswers>),
+        importedBrand: parseImportedBrand(raw.importedBrand) ?? undefined,
+        importedAssetConsent: parseAssetConsent(raw.importedAssetConsent) ?? undefined,
         templateId: template.id,
       };
     }

@@ -9,7 +9,6 @@ import { AboutSimple } from "./about-simple";
 import { ServicesGrid } from "./services-grid";
 import { ServicesCards } from "./services-cards";
 import { FeaturesGrid } from "./features-grid";
-import { FeaturesStats } from "./features-stats";
 import { PortfolioCaseStudies } from "./portfolio-case-studies";
 import { ProcessSteps } from "./process-steps";
 import { TestimonialsGrid } from "./testimonials-grid";
@@ -32,7 +31,6 @@ export const SECTION_COMPONENTS: Record<string, ComponentType<SectionProps>> = {
   ServicesCards,
   ProductsGrid,
   FeaturesGrid,
-  FeaturesStats,
   PortfolioCaseStudies,
   ProcessSteps,
   TestimonialsGrid,

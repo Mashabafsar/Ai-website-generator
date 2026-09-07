@@ -48,12 +48,6 @@ export type SectionVariantSpec = {
   /** Business-level image terms — a floor under the content-derived query. */
   keywords: (ctx: SectionContext) => string[];
   defaults: (ctx: SectionContext) => SectionContent;
-  /**
-   * Variants of the same type that this one was introduced to correct. A slot
-   * locked to this variant keeps accepting them, so tightening a design's slot
-   * does not orphan the projects generated before the change.
-   */
-  supersedes?: string[];
 };
 
 const list = (ctx: SectionContext, n: number, fallback: string[]): string[] => {
@@ -287,33 +281,6 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
         "We're here long after launch.",
       ],
     }),
-  },
-
-  {
-    type: "features",
-    variant: "features-stats",
-    label: "Features — statistics band",
-    description:
-      "A row of short numeric statistics — each a numeral like \"500+\", \"15\" or \"98%\" with a caption beneath it. Never prose.",
-    componentName: "FeaturesStats",
-    needsImage: false,
-    fields: [
-      { key: "heading", label: "Heading", type: "string" },
-      { key: "statValues", label: "Stat values (short numerals, e.g. 500+)", type: "string[]", required: true },
-      { key: "statLabels", label: "Stat labels", type: "string[]", required: true },
-    ],
-    keywords: () => [],
-    defaults: () => ({
-      heading: "By the numbers",
-      statValues: ["10+", "500+", "98%", "24/7"],
-      statLabels: [
-        "Years in business",
-        "Projects delivered",
-        "Client satisfaction",
-        "Support availability",
-      ],
-    }),
-    supersedes: ["features-grid"],
   },
 
   // ---- PORTFOLIO / CASE STUDIES ----
@@ -577,16 +544,6 @@ export function isAllowedVariant(type: string, variant: string): boolean {
 
 export function variantsForType(type: string): SectionVariantSpec[] {
   return SECTION_REGISTRY.filter((s) => s.type === type);
-}
-
-/**
- * Whether a slot locked to `expected` still accepts a stored `variant`, i.e.
- * `expected` declares it supersedes it and both describe the same section type.
- */
-export function acceptsSupersededVariant(expected: string, variant: string): boolean {
-  const spec = BY_VARIANT.get(expected);
-  if (!spec?.supersedes?.includes(variant)) return false;
-  return BY_VARIANT.get(variant)?.type === spec.type;
 }
 
 /** How many icons a section carries: the length of its `iconField` array. */

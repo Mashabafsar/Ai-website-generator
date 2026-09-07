@@ -24,10 +24,6 @@ export const ARRAY_FIELD_LIMITS: Record<string, number> = {
   itemBodies: 85,
   stepTitles: 32,
   stepBodies: 75,
-  // A statistics band sets its values at display sizes, so anything longer than
-  // a short numeral overlaps its neighbours.
-  statValues: 8,
-  statLabels: 34,
   quotes: 120,
   authors: 40,
   roles: 40,
@@ -45,8 +41,6 @@ export const ARRAY_MAX_ITEMS: Record<string, number> = {
   itemBodies: 6,
   stepTitles: 5,
   stepBodies: 5,
-  statValues: 4,
-  statLabels: 4,
   quotes: 4,
   authors: 4,
   roles: 4,
@@ -58,13 +52,6 @@ export const ARRAY_MAX_ITEMS: Record<string, number> = {
   linkLabels: 6,
   metrics: 4,
 };
-
-/** Array fields that must stay the same length as their partner. */
-const PARALLEL_ARRAYS: [string, string][] = [
-  ["itemTitles", "itemBodies"],
-  ["stepTitles", "stepBodies"],
-  ["statValues", "statLabels"],
-];
 
 function clampString(value: string, max: number): string {
   const trimmed = value.replace(/\s+/g, " ").trim();
@@ -103,17 +90,13 @@ export function clampBlueprintText(blueprint: WebsiteBlueprint): WebsiteBlueprin
         section.content[key] = clampField(key, section.content[key] as string | string[]);
       }
       // Keep parallel arrays aligned.
-      for (const [titleKey, bodyKey] of PARALLEL_ARRAYS) {
-        const titles = section.content[titleKey];
-        const bodies = section.content[bodyKey];
-        if (!Array.isArray(titles) || !Array.isArray(bodies)) continue;
-        if (titles.length === bodies.length) continue;
+      const titles = section.content.itemTitles;
+      const bodies = section.content.itemBodies;
+      if (Array.isArray(titles) && Array.isArray(bodies) && titles.length !== bodies.length) {
         const n = Math.min(titles.length, bodies.length);
-        section.content[titleKey] = titles.slice(0, n);
-        section.content[bodyKey] = bodies.slice(0, n);
-        if (titleKey === "itemTitles" && section.itemImages) {
-          section.itemImages = section.itemImages.slice(0, n);
-        }
+        section.content.itemTitles = titles.slice(0, n);
+        section.content.itemBodies = bodies.slice(0, n);
+        if (section.itemImages) section.itemImages = section.itemImages.slice(0, n);
       }
     }
   }

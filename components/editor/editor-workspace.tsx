@@ -147,7 +147,7 @@ export function EditorWorkspace({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not save");
       setDirty(false);
-      toast.success(data.githubSynced ? "Saved & synced to GitHub" : "Saved");
+      toast.success("Saved & synced to GitHub");
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Save failed");

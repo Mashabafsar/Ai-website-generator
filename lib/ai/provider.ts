@@ -2,6 +2,13 @@ import { env } from "@/lib/env";
 import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
 import { withTimeout } from "@/lib/ai/timeout";
 import { estimateTokens, recordUsage } from "@/lib/ai/usage";
+import { recordAiFailure } from "@/lib/ai/diagnostics";
+import { classifyAiFailure, FAILURE_LABEL, type AiFailure } from "@/lib/ai/failure";
+import {
+  checkCursorHeavyModel,
+  noteProviderFailure,
+  providerBlock,
+} from "@/lib/ai/provider-health";
 import {
   type SectionContent,
   buildMockBlueprint,
@@ -148,7 +155,9 @@ export class GeminiAiProvider implements AiProvider {
 
 /**
  * Fallback chain: Cursor → Gemini → deterministic template.
- * Each step only runs if the previous one throws (or is unavailable).
+ * Each step only runs if the previous one throws (or is unavailable). Every step
+ * that gives up records a classified failure, so the caller can tell an outage
+ * from a misconfiguration and knows whether a model wrote the result at all.
  */
 export class FallbackAiProvider implements AiProvider {
   readonly name = "fallback";
@@ -156,34 +165,73 @@ export class FallbackAiProvider implements AiProvider {
   private gemini = new GeminiAiProvider();
   private mock = new MockAiProvider();
 
+  /** Classifies and reports one provider's failure, then lets the chain move on. */
+  private absorb(err: unknown, provider: string, model: string, next: string): void {
+    const failure = classifyAiFailure(err, { provider, model });
+    recordAiFailure(failure);
+    noteProviderFailure(failure);
+    console.error(
+      `[ai] ${provider} ${model} failed — ${FAILURE_LABEL[failure.kind]} (${failure.kind}); ${next}: ${failure.message}`
+    );
+  }
+
+  /**
+   * A provider that already failed permanently this process is skipped rather
+   * than called again, but the skip is still reported against this request so
+   * the reason for a degraded result never goes missing.
+   */
+  private blockedFailure(provider: string, model: string): AiFailure | undefined {
+    const block = providerBlock(provider, model);
+    if (block) recordAiFailure(block);
+    return block;
+  }
+
+  private missingKey(provider: string, variable: string): void {
+    recordAiFailure({
+      provider,
+      model: "",
+      kind: "auth",
+      message: `${variable} is not configured`,
+    });
+  }
+
   async generateBlueprint(req: NormalizedRequirements): Promise<WebsiteBlueprint> {
     // 1. Cursor (bounded — don't hang forever before Gemini can run)
-    if (env.ai.cursorApiKey) {
-      try {
-        return await withTimeout(
-          this.cursor.generateBlueprint(req),
-          env.ai.cursorTimeoutMs,
-          "Cursor generation"
-        );
-      } catch (err) {
-        console.error("[ai] Cursor generation failed; trying Gemini:", err);
+    if (!env.ai.cursorApiKey) {
+      this.missingKey("cursor", "CURSOR_API_KEY");
+    } else if (!this.blockedFailure("cursor", env.ai.heavyModel)) {
+      const check = await checkCursorHeavyModel();
+      if (!check.ok) {
+        recordAiFailure(check.failure);
+      } else {
+        try {
+          return await withTimeout(
+            this.cursor.generateBlueprint(req),
+            env.ai.cursorTimeoutMs,
+            "Cursor generation"
+          );
+        } catch (err) {
+          this.absorb(err, "cursor", env.ai.heavyModel, "trying Gemini");
+        }
       }
     }
 
     // 2. Gemini
-    if (isGeminiConfigured()) {
+    if (!isGeminiConfigured()) {
+      this.missingKey("gemini", "GEMINI_API_KEY");
+    } else if (!this.blockedFailure("gemini", env.ai.geminiModel)) {
       try {
         console.log("[ai] Generating with Gemini…");
         return await this.gemini.generateBlueprint(req);
       } catch (err) {
-        console.error("[ai] Gemini generation failed; using template fallback:", err);
+        this.absorb(err, "gemini", env.ai.geminiModel, "using template fallback");
       }
-    } else if (!env.ai.cursorApiKey) {
-      console.warn("[ai] No Cursor or Gemini key configured; using template fallback.");
     }
 
     // 3. Deterministic template
-    console.warn("[ai] Using deterministic template blueprint.");
+    console.warn(
+      "[ai] No model produced a blueprint — building from the deterministic template. This generation is not billable."
+    );
     return this.mock.generateBlueprint(req);
   }
 
@@ -192,7 +240,9 @@ export class FallbackAiProvider implements AiProvider {
     instruction: string;
     brandTone: string;
   }): Promise<SectionContent> {
-    if (env.ai.cursorApiKey) {
+    if (!env.ai.cursorApiKey) {
+      this.missingKey("cursor", "CURSOR_API_KEY");
+    } else if (!this.blockedFailure("cursor", env.ai.lightModel)) {
       try {
         return await withTimeout(
           this.cursor.reviseSection(params),
@@ -200,18 +250,21 @@ export class FallbackAiProvider implements AiProvider {
           "Cursor edit"
         );
       } catch (err) {
-        console.error("[ai] Cursor section edit failed; trying Gemini:", err);
+        this.absorb(err, "cursor", env.ai.lightModel, "trying Gemini");
       }
     }
 
-    if (isGeminiConfigured()) {
+    if (!isGeminiConfigured()) {
+      this.missingKey("gemini", "GEMINI_API_KEY");
+    } else if (!this.blockedFailure("gemini", env.ai.geminiModel)) {
       try {
         return await this.gemini.reviseSection(params);
       } catch (err) {
-        console.error("[ai] Gemini section edit failed; using deterministic fallback:", err);
+        this.absorb(err, "gemini", env.ai.geminiModel, "using deterministic fallback");
       }
     }
 
+    console.warn("[ai] No model answered the edit — applying the deterministic rewrite.");
     return this.mock.reviseSection(params);
   }
 }

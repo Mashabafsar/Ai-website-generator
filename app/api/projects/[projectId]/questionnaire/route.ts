@@ -2,6 +2,12 @@ import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { questionnaireSchema } from "@/lib/questionnaire/schema";
+import {
+  parseImportedBrand,
+  parseAssetConsent,
+  importedAssetPaths,
+} from "@/lib/branding/imported-brand";
+import { isProjectImportPath, recordAssetConsent } from "@/lib/branding/asset-consent";
 import { getTemplateById, getTemplateBySlug } from "@/lib/templates/store";
 import { slugify } from "@/lib/utils";
 
@@ -42,6 +48,30 @@ export async function POST(req: Request, { params }: Ctx) {
     return jsonError("Select a design from the template library", 400, "TEMPLATE_REQUIRED");
   }
   answers.templateId = template.id;
+
+  const existing = await prisma.questionnaire.findUnique({ where: { projectId } });
+  const prev = existing ? (JSON.parse(existing.answers) as Record<string, unknown>) : {};
+  const storedBrand = parseImportedBrand(prev.importedBrand);
+  const clientBrand = parseImportedBrand(answers.importedBrand);
+  const brand =
+    storedBrand ??
+    (clientBrand &&
+    importedAssetPaths(clientBrand).every((path) => isProjectImportPath(path, projectId))
+      ? clientBrand
+      : clientBrand && importedAssetPaths(clientBrand).length === 0
+        ? clientBrand
+        : null);
+
+  if (answers.importedThemeChoice === "imported" && !brand) {
+    answers.importedThemeChoice = "";
+  }
+
+  answers.importedBrand = brand ?? undefined;
+  answers.importedAssetConsent = recordAssetConsent({
+    granted: Boolean(answers.importedAssetConsent?.granted),
+    brand,
+    previous: parseAssetConsent(prev.importedAssetConsent),
+  });
 
   await prisma.$transaction([
     prisma.questionnaire.upsert({

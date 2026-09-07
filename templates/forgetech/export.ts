@@ -1,5 +1,4 @@
 import { FT } from "./tokens";
-import { iconSvg } from "@/lib/icons/registry";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
@@ -200,14 +199,9 @@ export function renderForgeTechPage(site: AssembledSite): string {
       ${capabilityTitles
         .map(
           (title, i) => `<div>
-        <span class="grid h-14 w-14 place-items-center border-2 text-lg font-bold" style="border-color:${FT.trinidad};color:${FT.trinidad};font-family:var(--ft-display)">${
-          iconSvg(capabilities.icons[i], {
-            size: 28,
-            color: FT.trinidad,
-            strokeWidth: 1.8,
-            className: "h-7 w-7",
-          }) || String(i + 1).padStart(2, "0")
-        }</span>
+        <span class="grid h-14 w-14 place-items-center border-2 text-lg font-bold" style="border-color:${FT.trinidad};color:${FT.trinidad};font-family:var(--ft-display)">${String(
+          i + 1
+        ).padStart(2, "0")}</span>
         <h3 class="mt-5 text-xl font-semibold" style="font-family:var(--ft-display)">${esc(title)}</h3>
         <p class="mt-3 leading-relaxed" style="color:${FT.body}">${esc(
           capabilityBodies[i] || "Purpose-built fabrication for demanding environments."
@@ -318,14 +312,9 @@ export function renderForgeTechPage(site: AssembledSite): string {
       ${valueTitles
         .map(
           (title, i) => `<div class="flex gap-5 border border-white/10 bg-white/[0.04] p-6">
-        <span class="grid h-12 w-12 shrink-0 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${
-          iconSvg(value.icons[i], {
-            size: 24,
-            color: "#ffffff",
-            strokeWidth: 1.8,
-            className: "h-6 w-6",
-          }) || String(i + 1).padStart(2, "0")
-        }</span>
+        <span class="grid h-12 w-12 shrink-0 place-items-center text-sm font-bold text-white" style="background:${FT.trinidad};font-family:var(--ft-display)">${String(
+          i + 1
+        ).padStart(2, "0")}</span>
         <div>
           <h3 class="text-lg font-semibold" style="font-family:var(--ft-display)">${esc(title)}</h3>
           <p class="mt-2 text-sm leading-relaxed text-white/70">${esc(

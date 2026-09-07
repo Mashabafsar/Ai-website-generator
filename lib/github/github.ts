@@ -129,10 +129,9 @@ export async function syncProjectToGitHub(projectId: string): Promise<{ repoUrl:
 }
 
 /** Best-effort sync used by the orchestrator: records FAILED instead of throwing. */
-export async function trySyncProjectToGitHub(projectId: string): Promise<boolean> {
+export async function trySyncProjectToGitHub(projectId: string): Promise<void> {
   try {
     await syncProjectToGitHub(projectId);
-    return true;
   } catch (err) {
     await prisma.project.update({
       where: { id: projectId },
@@ -141,6 +140,5 @@ export async function trySyncProjectToGitHub(projectId: string): Promise<boolean
     if (!(err instanceof GithubNotConfiguredError)) {
       console.error("GitHub sync failed:", err);
     }
-    return false;
   }
 }

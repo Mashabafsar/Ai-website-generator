@@ -4,7 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { Github, Pencil, Repeat } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
-import { ProjectStatus } from "@/lib/constants";
+import { ProjectStatus, PAID_PROJECT_STATUSES } from "@/lib/constants";
+import { env } from "@/lib/env";
+import { GenerationNotice } from "@/components/app/generation-notice";
 import { PreviewShell } from "@/components/editor/preview-shell";
 import { ProjectTabs } from "@/components/app/project-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
@@ -62,6 +64,15 @@ export default async function PreviewPage({
       </div>
 
       <ProjectTabs projectId={projectId} />
+
+      {project.generationDegraded && (
+        <GenerationNotice
+          projectId={projectId}
+          refundedCredits={env.credits.costHeavyGenerate}
+          generateCost={env.credits.costHeavyGenerate}
+          canRetry={!PAID_PROJECT_STATUSES.has(project.status)}
+        />
+      )}
 
       {site ? (
         <PreviewShell site={site} projectId={projectId} />

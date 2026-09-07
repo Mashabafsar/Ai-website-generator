@@ -6,14 +6,13 @@ import type { WebsiteBlueprint } from "@/lib/blueprint/types";
 const contentValue = z.union([z.string(), z.array(z.string())]);
 
 export const stockImageSchema = z.object({
-  provider: z.enum(["shutterstock", "pexels", "unsplash", "placeholder", "upload", "client-site"]),
+  provider: z.enum(["shutterstock", "pexels", "unsplash", "placeholder", "upload"]),
   providerImageId: z.string().optional(),
   url: z.string(),
   photographer: z.string().optional(),
   attributionRequired: z.boolean().optional(),
   licenseInfo: z.string().optional(),
   altText: z.string(),
-  sourcePageUrl: z.string().max(500).optional(),
 });
 
 export const sectionSchema = z

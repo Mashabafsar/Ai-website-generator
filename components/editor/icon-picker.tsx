@@ -129,17 +129,19 @@ export function IconPickerList({
   items,
   values,
   onChange,
+  title = "Icons",
+  note = "Pick the symbol for each item. Designs that draw their own artwork here ignore it.",
 }: {
   items: string[];
   values: (string | null)[];
   onChange: (index: number, name: string | null) => void;
+  title?: string;
+  note?: string;
 }) {
   return (
-    <div className="space-y-2 border-t pt-3">
-      <Label className="text-xs font-semibold">Icons</Label>
-      <p className="text-[11px] opacity-60">
-        Pick the symbol for each item. Designs that draw their own artwork here ignore it.
-      </p>
+    <div className="space-y-2 border-t pt-3" role="group" aria-label={title}>
+      <Label className="text-xs font-semibold">{title}</Label>
+      <p className="text-[11px] opacity-60">{note}</p>
       {items.map((item, index) => (
         <IconPicker
           key={index}
