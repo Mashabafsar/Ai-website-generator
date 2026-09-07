@@ -167,9 +167,17 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     req.goals ? `Website goals: ${req.goals}` : "",
     `Choose the typeface and palette that suit a ${req.visualStyle.toLowerCase()},`,
     `${req.tone.toLowerCase()} ${req.business.industry} brand${req.brandingNotes ? ` (${req.brandingNotes})` : ""}.`,
-    req.colorPreferenceExplicit
-      ? `The customer asked for ${req.colorPreference} colors, so return the closest palette to that.`
-      : "",
+    req.customColors
+      ? `The customer wrote custom brand colors (${[
+          req.customColors.primary && `primary ${req.customColors.primary}`,
+          req.customColors.secondary && `secondary ${req.customColors.secondary}`,
+          req.customColors.accent && `accent ${req.customColors.accent}`,
+        ]
+          .filter(Boolean)
+          .join(", ")}). Keep design.palette unset — the platform will apply these hexes.`
+      : req.colorPreferenceExplicit
+        ? `The customer asked for ${req.colorPreference} colors, so return the closest palette to that.`
+        : "",
     "",
     OUTPUT_SHAPE,
     "",

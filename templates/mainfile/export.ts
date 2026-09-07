@@ -104,7 +104,7 @@ function header(pages: { slug: string; title: string }[], active: string, busine
         `<a href="${pageHref(p.slug)}" class="transition-colors" style="color:${p.slug === active ? MR.brandStrong : MR.ink}">${esc(p.title)}</a>`
     )
     .join("\n          ");
-  return `<header class="sticky top-0 z-50 border-b bg-white/90 backdrop-blur-md" style="border-color:${MR.line}">
+  return `<header class="sticky top-0 z-50 border-b backdrop-blur-md" style="border-color:${MR.line};background-color:${MR.white}">
   <div class="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
     ${logo(businessName, customLogo)}
     <nav class="hidden items-center gap-8 text-sm font-semibold lg:flex" style="font-family:var(--mr-display)">
@@ -199,7 +199,7 @@ function homeHero(slot: TemplateSlot): string {
     </div>
     <div class="relative">
       <div class="pointer-events-none absolute -left-8 top-8 h-24 w-24 rounded-3xl opacity-80" style="background-image:${MR_GRADIENTS[4]}" data-parallax="0.14"></div>
-      <div class="relative overflow-hidden rounded-[36px] border bg-white shadow-[0_40px_100px_-40px_rgba(125,188,255,0.6)]" style="border-color:${MR.line}">
+      <div class="relative overflow-hidden rounded-[36px] border shadow-[0_40px_100px_-40px_rgba(125,188,255,0.6)]" style="border-color:${MR.line};background-color:${MR.card}">
         <img src="${esc(slot.image || FALLBACK.hero)}" alt="${esc(text(slot.content, "headline", ""))}" class="h-full w-full object-cover" data-parallax="0.05" />
       </div>
     </div>
@@ -214,7 +214,7 @@ function featureCards(slot: TemplateSlot, startIndex = 0): string {
   const subheading = text(slot.content, "subheading", "");
   const cards = titles
     .map(
-      (title, i) => `<article class="rounded-[28px] border bg-white p-8 text-center" style="border-color:${MR.line};box-shadow:0 24px 60px -34px rgba(52,49,75,0.28)">
+      (title, i) => `<article class="rounded-[28px] border p-8 text-center" style="border-color:${MR.line};background-color:${MR.card};box-shadow:0 24px 60px -34px rgba(52,49,75,0.28)">
       <div class="mx-auto w-16">${iconTile(startIndex + i, slot.icons[i])}</div>
       <h3 class="mt-6 text-xl font-bold" style="font-family:var(--mr-display);color:${MR.ink}">${esc(title)}</h3>
       <p class="mt-3 text-sm leading-relaxed" style="color:${MR.body}">${esc(bodies[i] || "Beautifully crafted blocks you can restyle and reorder without touching code.")}</p>
@@ -231,7 +231,7 @@ function storySection(slot: TemplateSlot, image: string): string {
   const media = `<div>
       <div class="relative">
         <div class="pointer-events-none absolute -left-6 -top-6 h-28 w-28 rounded-3xl opacity-80" style="background-image:${MR_GRADIENTS[1]}" data-parallax="0.08"></div>
-        <div class="relative overflow-hidden rounded-[32px] border bg-white shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style="border-color:${MR.line}">
+        <div class="relative overflow-hidden rounded-[32px] border shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style="border-color:${MR.line};background-color:${MR.card}">
           <img src="${esc(slot.image || image)}" alt="${esc(text(slot.content, "heading", ""))}" class="h-full w-full object-cover" data-parallax="0.06" />
         </div>
       </div>
@@ -268,7 +268,7 @@ function valueList(slot: TemplateSlot): string {
   return section(`<div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
       <div class="relative">
         <div class="pointer-events-none absolute -right-6 -top-8 h-32 w-32 rounded-full opacity-70" style="background-image:${MR_GRADIENTS[3]}" data-parallax="0.1"></div>
-        <div class="relative overflow-hidden rounded-[32px] border bg-white shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style="border-color:${MR.line}">
+        <div class="relative overflow-hidden rounded-[32px] border shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style="border-color:${MR.line};background-color:${MR.card}">
           <img src="${esc(slot.image || FALLBACK.value)}" alt="" class="h-full w-full object-cover" data-parallax="0.05" />
         </div>
       </div>
@@ -287,7 +287,7 @@ function testimonials(slot: TemplateSlot): string {
   const roles = list(slot.content, "roles");
   const cards = quotes
     .map(
-      (quote, i) => `<figure class="rounded-[28px] border bg-white p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.35)]" style="border-color:${MR.line}">
+      (quote, i) => `<figure class="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.35)]" style="border-color:${MR.line};background-color:${MR.card}">
       <div class="flex items-center gap-1 text-lg" style="color:#FFC187" aria-hidden="true">★★★★★</div>
       <blockquote class="mt-4 text-base leading-relaxed" style="color:${MR.ink}">“${esc(quote)}”</blockquote>
       <figcaption class="mt-6 flex items-center gap-3">
@@ -314,7 +314,7 @@ function servicesCards(slot: TemplateSlot): string {
   const bodies = list(slot.content, "itemBodies");
   const cards = titles
     .map(
-      (title, i) => `<article class="group overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line}">
+      (title, i) => `<article class="group overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line};background-color:${MR.card}">
       <div class="h-44 overflow-hidden"><img src="${esc(slot.itemImages[i] || FALLBACK.services[i % FALLBACK.services.length])}" alt="${esc(title)}" class="h-full w-full object-cover" /></div>
       <div class="p-7">
         <h3 class="text-lg font-bold" style="font-family:var(--mr-display);color:${MR.ink}">${esc(title)}</h3>
@@ -335,7 +335,7 @@ function processSteps(slot: TemplateSlot): string {
   const bodies = list(slot.content, "stepBodies");
   const cards = titles
     .map(
-      (title, i) => `<div class="rounded-[28px] border bg-white p-7 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line}">
+      (title, i) => `<div class="rounded-[28px] border p-7 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line};background-color:${MR.card}">
       <span class="inline-block bg-clip-text text-4xl font-bold text-transparent" style="background-image:${MR_GRADIENTS[i % MR_GRADIENTS.length]};-webkit-background-clip:text;font-family:var(--mr-display)">${String(i + 1).padStart(2, "0")}</span>
       <h3 class="mt-4 text-lg font-bold" style="font-family:var(--mr-display);color:${MR.ink}">${esc(title)}</h3>
       <p class="mt-2 text-sm leading-relaxed" style="color:${MR.body}">${esc(bodies[i] || "A clear step in a process built around your goals.")}</p>
@@ -369,7 +369,7 @@ function pricing(slot: TemplateSlot): string {
       const buy = popular
         ? `<a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background-image:${MR_BRAND_GRADIENT};font-family:var(--mr-display)">Buy now</a>`
         : `<a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background:${MR.ink};font-family:var(--mr-display)">Buy now</a>`;
-      return `<div class="relative flex flex-col overflow-hidden rounded-[28px] border bg-white p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${popular ? "transparent" : MR.line};border-width:${popular ? 0 : 1}px">
+      return `<div class="relative flex flex-col overflow-hidden rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${popular ? "transparent" : MR.line};border-width:${popular ? 0 : 1}px;background-color:${MR.card}">
         ${popular ? `<span class="pointer-events-none absolute inset-x-0 top-0 h-1.5" style="background-image:${MR_BRAND_GRADIENT}"></span>` : ""}
         ${popular ? `<span class="absolute right-6 top-4 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background-image:${MR_GRADIENTS[3]};font-family:var(--mr-display)">Popular</span>` : ""}
         <p class="text-sm font-semibold uppercase tracking-wider" style="color:${MR.muted}">${esc(name)}</p>
@@ -392,14 +392,14 @@ function faqBlock(slot: TemplateSlot): string {
   const answers = list(slot.content, "answers");
   const rows = questions
     .map(
-      (question, i) => `<details ${i === 0 ? "open" : ""} class="group border-b px-7 py-5 last:border-b-0" style="border-color:${MR.line}">
+      (question, i) => `<details ${i === 0 ? "open" : ""} class="group border-b px-7 py-5 last:border-b-0" style="border-color:${MR.line};background-color:${MR.card}">
       <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold" style="font-family:var(--mr-display);color:${MR.ink}">${esc(question)}<span class="shrink-0 text-2xl leading-none transition-transform group-open:rotate-45" style="color:${MR.brandStrong}" aria-hidden="true">+</span></summary>
       <p class="mt-3 text-sm leading-relaxed" style="color:${MR.body}">${esc(answers[i] || "")}</p>
     </details>`
     )
     .join("\n      ");
   return section(`${sectionHeading("FAQ", text(slot.content, "heading", "Frequently asked questions"))}
-    <div class="mx-auto mt-12 max-w-3xl overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line}">
+    <div class="mx-auto mt-12 max-w-3xl overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line};background-color:${MR.card}">
       ${rows}
     </div>`);
 }
@@ -409,7 +409,7 @@ function contactBlock(slot: TemplateSlot, contactEmail: string, contactPhone: st
   const phone = text(slot.content, "phone", contactPhone);
   const address = text(slot.content, "address", "");
   const row = (label: string, value: string) =>
-    `<div class="rounded-2xl border bg-white px-5 py-4" style="border-color:${MR.line}"><div class="text-xs font-semibold uppercase tracking-wider" style="color:${MR.muted}">${esc(label)}</div><div class="mt-1 font-medium" style="color:${MR.ink}">${esc(value)}</div></div>`;
+    `<div class="rounded-2xl border px-5 py-4" style="border-color:${MR.line};background-color:${MR.card}"><div class="text-xs font-semibold uppercase tracking-wider" style="color:${MR.muted}">${esc(label)}</div><div class="mt-1 font-medium" style="color:${MR.ink}">${esc(value)}</div></div>`;
   return section(`<div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
       <div>
         ${sectionHeading("Contact", text(slot.content, "heading", "Get in touch"), text(slot.content, "subheading", ""), false)}
@@ -419,12 +419,12 @@ function contactBlock(slot: TemplateSlot, contactEmail: string, contactPhone: st
           ${address ? row("Office", address) : ""}
         </div>
       </div>
-      <form class="rounded-[28px] border bg-white p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line}" data-motion-skip>
+      <form class="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line};background-color:${MR.card}" data-motion-skip>
         <div class="grid gap-4 sm:grid-cols-2">
-          <input class="rounded-2xl border px-4 py-3 text-sm" style="border-color:${MR.line}" placeholder="Your name" />
-          <input class="rounded-2xl border px-4 py-3 text-sm" style="border-color:${MR.line}" placeholder="Email" />
+          <input class="rounded-2xl border px-4 py-3 text-sm" style="border-color:${MR.line};background-color:${MR.card}" placeholder="Your name" />
+          <input class="rounded-2xl border px-4 py-3 text-sm" style="border-color:${MR.line};background-color:${MR.card}" placeholder="Email" />
         </div>
-        <textarea rows="4" class="mt-4 w-full rounded-2xl border px-4 py-3 text-sm" style="border-color:${MR.line}" placeholder="How can we help?"></textarea>
+        <textarea rows="4" class="mt-4 w-full rounded-2xl border px-4 py-3 text-sm" style="border-color:${MR.line};background-color:${MR.card}" placeholder="How can we help?"></textarea>
         <button type="button" class="mt-4 w-full rounded-full py-3 text-sm font-semibold text-white" style="background-image:${MR_BRAND_GRADIENT};font-family:var(--mr-display)">${esc(text(slot.content, "ctaLabel", "Send message"))}</button>
       </form>
     </div>`);
@@ -436,7 +436,7 @@ function portfolioBlock(slot: TemplateSlot): string {
   const roles = list(slot.content, "roles");
   const cards = titles
     .map(
-      (title, i) => `<article class="group overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line}">
+      (title, i) => `<article class="group overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line};background-color:${MR.card}">
       <div class="h-52 overflow-hidden"><img src="${esc(slot.itemImages[i] || FALLBACK.portfolio[i % FALLBACK.portfolio.length])}" alt="${esc(title)}" class="h-full w-full object-cover" /></div>
       <div class="p-7">
         ${roles[i] ? `<span class="text-xs font-semibold uppercase tracking-wider" style="color:${MR.brandStrong}">${esc(roles[i])}</span>` : ""}
@@ -457,7 +457,7 @@ function blogGrid(slot: TemplateSlot): string {
   const bodies = list(slot.content, "itemBodies");
   const cards = titles
     .map(
-      (title, i) => `<article class="group overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line}">
+      (title, i) => `<article class="group overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${MR.line};background-color:${MR.card}">
       <div class="h-48 overflow-hidden"><img src="${esc(slot.itemImages[i] || FALLBACK.blog[i % FALLBACK.blog.length])}" alt="${esc(title)}" class="h-full w-full object-cover" /></div>
       <div class="p-7">
         <h3 class="text-lg font-bold leading-snug" style="font-family:var(--mr-display);color:${MR.ink}">${esc(title)}</h3>

@@ -357,7 +357,7 @@ export function ForgeTechSite({
           {serviceTitles.map((title, i) => (
             <article
               key={`${title}-${i}`}
-              className="group flex flex-col border bg-white transition-colors hover:border-[color:var(--ft-accent)]"
+              className="group flex flex-col border transition-colors hover:border-[color:var(--ft-accent)]"
               style={{
                 borderColor: FT.line,
                 backgroundColor: FT.card,

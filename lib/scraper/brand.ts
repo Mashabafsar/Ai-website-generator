@@ -440,6 +440,8 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
 
   // Implicit well-known paths — many sites only ship `/favicon.ico`.
   push(195, new URL("/favicon.svg", base).toString());
+  push(193, new URL("/apple-touch-icon.png", base).toString());
+  push(192, new URL("/apple-touch-icon-precomposed.png", base).toString());
   push(190, new URL("/favicon.png", base).toString());
   push(185, new URL("/favicon.ico", base).toString());
 
@@ -539,7 +541,8 @@ async function importLogo(
     }
 
     const size = imageSize(bytes, type);
-    if (size && (size.width < 16 || size.height < 16)) continue;
+    // Tiny favicons (16×16 and even 8×8) are still the site's mark — keep them.
+    if (size && (size.width < 8 || size.height < 8)) continue;
 
     try {
       const stored = await saveProjectImage({

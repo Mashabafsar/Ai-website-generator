@@ -383,8 +383,10 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
         .map(
           (q, i) => `<details ${
             i === 1 ? "open" : ""
-          } class="rounded-xl border px-5 py-4 ${
-            i === 1 ? "border-[#1A1A1A] bg-[#FFFBEB]" : "border-[#DAD7CE] bg-white"
+          } class="rounded-xl border px-5 py-4" style="${
+            i === 1
+              ? "border-color:var(--theme-fg,#1A1A1A);background-color:var(--theme-surface,#FFFBEB)"
+              : `border-color:${CS.line};background-color:${CS.card}`
           }">
         <summary class="flex cursor-pointer list-none items-start justify-between gap-6 text-left text-base leading-7 lg:text-[20px]">
           <span>${esc(q)}</span>

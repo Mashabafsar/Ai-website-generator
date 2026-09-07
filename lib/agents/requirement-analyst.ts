@@ -2,6 +2,8 @@ import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SectionContext } from "@/lib/sections/registry";
 import type { SiteTemplate, TemplatePageDef } from "@/lib/templates/types";
 import { featuresFromVariants } from "@/lib/quote/features";
+import { parseUserColor } from "@/lib/theme/parse-color";
+import type { CustomThemeColors } from "@/lib/agents/theme";
 
 export type NormalizedRequirements = {
   business: { name: string; industry: string; description: string; location?: string };
@@ -18,6 +20,8 @@ export type NormalizedRequirements = {
    * model choose a palette only when they didn't.
    */
   colorPreferenceExplicit: boolean;
+  /** Typed hexes when the customer wrote their own colors. */
+  customColors?: CustomThemeColors;
   features: string[];
   contact: { email?: string; phone?: string; address?: string };
   packageType: string;
@@ -50,6 +54,7 @@ export function analyzeRequirements(
   const tone = answers.tone?.trim() || template.tone;
   const visualStyle = answers.visualStyle?.trim() || template.visualStyle;
   const colorPreferenceAnswer = answers.colorPreference?.trim() || "";
+  const customColors = readCustomColors(answers);
   const colorPreference = colorPreferenceAnswer || template.colorPreference;
   const demographics = answers.demographics?.trim() || "";
   const goals = answers.goals?.trim() || "";
@@ -94,7 +99,8 @@ export function analyzeRequirements(
     tone,
     visualStyle,
     colorPreference,
-    colorPreferenceExplicit: Boolean(colorPreferenceAnswer),
+    colorPreferenceExplicit: Boolean(colorPreferenceAnswer) || Boolean(customColors),
+    ...(customColors ? { customColors } : {}),
     features,
     contact: { email: context.contactEmail, phone: context.contactPhone, address: location },
     packageType: answers.packageType,
@@ -110,3 +116,16 @@ export function analyzeRequirements(
     },
   };
 }
+
+function readCustomColors(answers: QuestionnaireAnswers): CustomThemeColors | undefined {
+  const primary = parseUserColor(answers.customPrimary || "");
+  const secondary = parseUserColor(answers.customSecondary || "");
+  const accent = parseUserColor(answers.customAccent || "");
+  if (!primary && !secondary && !accent) return undefined;
+  return {
+    ...(primary ? { primary } : {}),
+    ...(secondary ? { secondary } : {}),
+    ...(accent ? { accent } : {}),
+  };
+}
+

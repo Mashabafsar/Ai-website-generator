@@ -38,6 +38,11 @@ export const COLOR_PREFERENCES = [
   "Rose & plum",
 ] as const;
 
+/** Typed-hex option. Stored on `colorPreference`; hexes live on `customPrimary` etc. */
+export const CUSTOM_COLOR_PREFERENCE = "Custom";
+
+export const COLOR_CHOICES = [...COLOR_PREFERENCES, CUSTOM_COLOR_PREFERENCE] as const;
+
 const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
   z.enum(values).optional().or(z.literal(""));
 
@@ -66,9 +71,13 @@ export const questionnaireSchema = z.object({
 
   // Optional branding — empty means keep the template's look and voice
   tone: optionalEnum(TONES),
-  colorPreference: optionalEnum(COLOR_PREFERENCES),
+  colorPreference: optionalEnum(COLOR_CHOICES),
   visualStyle: optionalEnum(VISUAL_STYLES),
   brandingNotes: z.string().max(400).optional().or(z.literal("")),
+  /** Typed brand hexes when Colors is Custom. Optional so older records parse. */
+  customPrimary: z.string().max(40).optional().or(z.literal("")),
+  customSecondary: z.string().max(40).optional().or(z.literal("")),
+  customAccent: z.string().max(40).optional().or(z.literal("")),
   /** Catalog id from templates/shared/fonts.ts. Empty keeps the design's type. */
   fontFamily: z.string().max(60).optional().or(z.literal("")),
 
@@ -103,6 +112,9 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   colorPreference: "",
   visualStyle: "",
   brandingNotes: "",
+  customPrimary: "",
+  customSecondary: "",
+  customAccent: "",
   fontFamily: "",
   importedThemeChoice: "",
   contactEmail: "",

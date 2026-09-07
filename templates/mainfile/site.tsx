@@ -186,7 +186,7 @@ function Header({
   customLogo: string;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur-md" style={{ borderColor: MR.line }}>
+    <header className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: MR.line, backgroundColor: MR.white }}>
       <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
         <Logo businessName={businessName} customLogo={customLogo} />
 
@@ -402,8 +402,8 @@ function FeatureCards({ slot, startIndex = 0 }: { slot: TemplateSlot; startIndex
         {titles.map((title, i) => (
           <article
             key={`${title}-${i}`}
-            className="rounded-[28px] border bg-white p-8 text-center transition-transform"
-            style={{ borderColor: MR.line, boxShadow: "0 24px 60px -34px rgba(52,49,75,0.28)" }}
+            className="rounded-[28px] border p-8 text-center transition-transform"
+            style={{ borderColor: MR.line, backgroundColor: MR.card, boxShadow: "0 24px 60px -34px rgba(52,49,75,0.28)" }}
           >
             <div className="mx-auto w-16">
               <IconTile index={startIndex + i} icon={slot.icons[i]} />
@@ -428,7 +428,7 @@ function StorySection({ slot, image, flip }: { slot: TemplateSlot; image: string
         <div className={flip ? "lg:order-2" : ""}>
           <div className="relative">
             <div className="pointer-events-none absolute -left-6 -top-6 h-28 w-28 rounded-3xl opacity-80" style={{ backgroundImage: MR_GRADIENTS[1] }} data-parallax="0.08" />
-            <div className="relative overflow-hidden rounded-[32px] border bg-white shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style={{ borderColor: MR.line }}>
+            <div className="relative overflow-hidden rounded-[32px] border shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
               <img src={slot.image || image} alt={text(slot.content, "heading", "")} className="h-full w-full object-cover" data-parallax="0.06" />
             </div>
           </div>
@@ -458,7 +458,7 @@ function ValueList({ slot }: { slot: TemplateSlot }) {
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="relative order-2 lg:order-1">
           <div className="pointer-events-none absolute -right-6 -top-8 h-32 w-32 rounded-full opacity-70" style={{ backgroundImage: MR_GRADIENTS[3] }} data-parallax="0.1" />
-          <div className="relative overflow-hidden rounded-[32px] border bg-white shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style={{ borderColor: MR.line }}>
+          <div className="relative overflow-hidden rounded-[32px] border shadow-[0_30px_80px_-40px_rgba(52,49,75,0.4)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <img src={slot.image || FALLBACK.value} alt="" className="h-full w-full object-cover" data-parallax="0.05" />
           </div>
         </div>
@@ -501,7 +501,7 @@ function Testimonials({ slot }: { slot: TemplateSlot }) {
       <SectionHeading eyebrow="Testimonials" heading={text(slot.content, "heading", "What our clients say")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {quotes.map((quote, i) => (
-          <figure key={i} className="rounded-[28px] border bg-white p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.35)]" style={{ borderColor: MR.line }}>
+          <figure key={i} className="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.35)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <div className="flex items-center gap-1 text-lg" style={{ color: "#FFC187" }} aria-hidden>
               ★★★★★
             </div>
@@ -534,7 +534,7 @@ function ServicesCards({ slot }: { slot: TemplateSlot }) {
       <SectionHeading eyebrow="Our services" heading={text(slot.content, "heading", "Everything you need to grow")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {titles.map((title, i) => (
-          <article key={`${title}-${i}`} className="group overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }}>
+          <article key={`${title}-${i}`} className="group overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <div className="h-44 overflow-hidden">
               <img
                 src={slot.itemImages[i] || FALLBACK.services[i % FALLBACK.services.length]}
@@ -568,7 +568,7 @@ function ProcessSteps({ slot }: { slot: TemplateSlot }) {
       <SectionHeading eyebrow="How it works" heading={text(slot.content, "heading", "A simple, proven process")} />
       <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {titles.map((title, i) => (
-          <div key={`${title}-${i}`} className="rounded-[28px] border bg-white p-7 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }}>
+          <div key={`${title}-${i}`} className="rounded-[28px] border p-7 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <span
               className="inline-block bg-clip-text text-4xl font-bold text-transparent"
               style={{ backgroundImage: MR_GRADIENTS[i % MR_GRADIENTS.length], fontFamily: "var(--mr-display)" }}
@@ -601,8 +601,8 @@ function Pricing({ slot }: { slot: TemplateSlot }) {
           return (
             <div
               key={`${name}-${i}`}
-              className="relative flex flex-col overflow-hidden rounded-[28px] border bg-white p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]"
-              style={{ borderColor: popular ? "transparent" : MR.line, borderWidth: popular ? 0 : 1 }}
+              className="relative flex flex-col overflow-hidden rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]"
+              style={{ borderColor: popular ? "transparent" : MR.line, borderWidth: popular ? 0 : 1, backgroundColor: MR.card }}
             >
               {popular ? (
                 <span className="pointer-events-none absolute inset-x-0 top-0 h-1.5" style={{ backgroundImage: MR_BRAND_GRADIENT }} />
@@ -656,7 +656,7 @@ function Faq({ slot }: { slot: TemplateSlot }) {
   return (
     <Section theme={slot.theme}>
       <SectionHeading eyebrow="FAQ" heading={text(slot.content, "heading", "Frequently asked questions")} />
-      <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }}>
+      <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
         {questions.map((question, i) => (
           <details key={`${question}-${i}`} open={i === 0} className="group border-b px-7 py-5 last:border-b-0" style={{ borderColor: MR.line }}>
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-bold" style={{ fontFamily: "var(--mr-display)", color: MR.ink }}>
@@ -690,7 +690,7 @@ function Contact({ slot, meta }: { slot: TemplateSlot; meta: PageMeta }) {
             {address ? <ContactRow label="Office" value={address} /> : null}
           </div>
         </div>
-        <form className="rounded-[28px] border bg-white p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }} data-motion-skip>
+        <form className="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }} data-motion-skip>
           <div className="grid gap-4 sm:grid-cols-2">
             <input className="rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: MR.line }} placeholder="Your name" />
             <input className="rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: MR.line }} placeholder="Email" />
@@ -707,7 +707,7 @@ function Contact({ slot, meta }: { slot: TemplateSlot; meta: PageMeta }) {
 
 function ContactRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border bg-white px-5 py-4" style={{ borderColor: MR.line }}>
+    <div className="rounded-2xl border px-5 py-4" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
       <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: MR.muted }}>
         {label}
       </div>
@@ -727,7 +727,7 @@ function Portfolio({ slot }: { slot: TemplateSlot }) {
       <SectionHeading eyebrow="Portfolio" heading={text(slot.content, "heading", "Our recent projects")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {titles.map((title, i) => (
-          <article key={`${title}-${i}`} className="group overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }}>
+          <article key={`${title}-${i}`} className="group overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <div className="h-52 overflow-hidden">
               <img
                 src={slot.itemImages[i] || FALLBACK.portfolio[i % FALLBACK.portfolio.length]}
@@ -763,7 +763,7 @@ function BlogGrid({ slot }: { slot: TemplateSlot }) {
       <SectionHeading eyebrow="Blog" heading={text(slot.content, "heading", "Latest articles")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {titles.map((title, i) => (
-          <article key={`${title}-${i}`} className="group overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }}>
+          <article key={`${title}-${i}`} className="group overflow-hidden rounded-[28px] border shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <div className="h-48 overflow-hidden">
               <img
                 src={slot.itemImages[i] || FALLBACK.blog[i % FALLBACK.blog.length]}
@@ -848,7 +848,7 @@ function HomeHero({ slot }: { slot: TemplateSlot }) {
         </div>
         <div className="relative">
           <div className="pointer-events-none absolute -left-8 top-8 h-24 w-24 rounded-3xl opacity-80" style={{ backgroundImage: MR_GRADIENTS[4] }} data-parallax="0.14" />
-          <div className="relative overflow-hidden rounded-[36px] border bg-white shadow-[0_40px_100px_-40px_rgba(125,188,255,0.6)]" style={{ borderColor: MR.line }}>
+          <div className="relative overflow-hidden rounded-[36px] border shadow-[0_40px_100px_-40px_rgba(125,188,255,0.6)]" style={{ borderColor: MR.line, backgroundColor: MR.card }}>
             <img src={slot.image || FALLBACK.hero} alt={text(slot.content, "headline", "")} className="h-full w-full object-cover" data-parallax="0.05" />
           </div>
         </div>

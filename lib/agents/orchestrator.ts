@@ -309,6 +309,7 @@ async function runGeneration(params: {
       importedFontFamily: useImportedLook ? brand?.fontFamily : pickedFont,
       logoUrl: assets.logoUrl,
       tone: requirements.tone,
+      customColors: useImportedLook ? undefined : requirements.customColors,
     });
     blueprint = selectIcons(blueprint);
     blueprint = await sourceImages(blueprint, assets.images);

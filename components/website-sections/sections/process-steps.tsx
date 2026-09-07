@@ -35,7 +35,7 @@ export function ProcessSteps(p: SectionProps) {
                 key={index}
                 className={`relative w-full max-w-sm transition-transform duration-300 hover:z-30 hover:scale-105 md:w-[280px] md:max-w-none ${rotates[index % rotates.length]}`}
               >
-                <div className="rounded-[25px] border border-neutral-100 bg-white p-2 shadow-[0px_10px_20px_0px_#D3D3D3]">
+                <div className="rounded-[25px] border border-neutral-100 p-2 shadow-[0px_10px_20px_0px_#D3D3D3]" style={{ backgroundColor: "var(--theme-card, #ffffff)" }}>
                   {glyphs[index] ? (
                     <IconGlyph name={glyphs[index]} className={`mx-auto mb-6 size-8 ${theme.text}`} />
                   ) : (
@@ -45,8 +45,8 @@ export function ProcessSteps(p: SectionProps) {
                     <span className={`${theme.text} mb-5 text-4xl`} style={{ fontFamily: '"Comic Sans MS", "Chalkboard SE", sans-serif' }}>
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <h3 className="mb-2.5 text-2xl font-semibold leading-none text-neutral-800">{title}</h3>
-                    <p className="text-sm tracking-tight text-neutral-500">{bodies[index] ?? ""}</p>
+                    <h3 className="mb-2.5 text-2xl font-semibold leading-none" style={{ color: "var(--theme-fg, #262626)" }}>{title}</h3>
+                    <p className="text-sm tracking-tight" style={{ color: "var(--theme-muted, #737373)" }}>{bodies[index] ?? ""}</p>
                   </div>
                 </div>
               </div>

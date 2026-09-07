@@ -75,7 +75,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     <div>
       ${p.eyebrow ? `<p class="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] opacity-70">${esc(p.eyebrow)}</p>` : ""}
       <h1 class="text-4xl font-bold tracking-tight md:text-6xl">${esc(p.headline)}</h1>
-      <p class="mt-5 max-w-xl text-lg text-slate-600">${esc(p.subheadline)}</p>
+      <p class="mt-5 max-w-xl text-lg site-muted">${esc(p.subheadline)}</p>
       <div class="mt-8 flex flex-wrap gap-4">
         ${p.ctaPrimary ? `<a href="#contact" class="inline-flex rounded-full px-7 py-3.5 text-sm font-semibold text-white" style="background:var(--primary)">${esc(p.ctaPrimary)}</a>` : ""}
         ${p.ctaSecondary ? `<a href="#about" class="rounded-full border px-7 py-3.5 text-sm font-semibold">${esc(p.ctaSecondary)}</a>` : ""}
@@ -89,9 +89,9 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section class="relative overflow-hidden px-6 py-28 text-center">
   <div class="pointer-events-none absolute inset-x-0 top-0 h-[70vh]" style="background:radial-gradient(ellipse 35% 70% at 50% -10%,color-mix(in oklab,var(--primary) 35%,transparent),transparent)"></div>
   <div class="relative mx-auto max-w-3xl">
-    ${p.eyebrow ? `<p class="mx-auto mb-6 inline-flex rounded-full border bg-white/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.22em]">${esc(p.eyebrow)}</p>` : ""}
+    ${p.eyebrow ? `<p class="mx-auto mb-6 inline-flex rounded-full border site-card/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.22em]">${esc(p.eyebrow)}</p>` : ""}
     <h1 class="text-5xl font-bold tracking-tight md:text-7xl">${esc(p.headline)}</h1>
-    <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-600">${esc(p.subheadline)}</p>
+    <p class="mx-auto mt-6 max-w-2xl text-lg site-muted">${esc(p.subheadline)}</p>
     <div class="mt-10 flex justify-center gap-4">
       ${p.ctaPrimary ? `<a href="#contact" class="rounded-full px-8 py-3.5 text-sm font-semibold text-white" style="background:var(--primary)">${esc(p.ctaPrimary)}</a>` : ""}
       ${p.ctaSecondary ? `<a href="#about" class="rounded-full border px-8 py-3.5 text-sm font-semibold">${esc(p.ctaSecondary)}</a>` : ""}
@@ -116,7 +116,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section class="mx-auto max-w-6xl px-6 py-24">
   <div class="mb-10 grid gap-5 md:grid-cols-2 md:items-end">
     <h2 class="text-4xl font-semibold tracking-tight md:text-5xl">${esc(p.heading)}</h2>
-    <p class="text-lg text-slate-600">${esc(p.body)}</p>
+    <p class="text-lg site-muted">${esc(p.body)}</p>
   </div>
   <div class="grid gap-6 lg:grid-cols-3">
     ${image ? `<img src="${esc(image.url)}" alt="${esc(image.altText)}" class="max-h-[520px] w-full rounded-2xl object-cover lg:col-span-2" />` : ""}
@@ -124,7 +124,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       <div class="mb-8 h-12 w-12 rounded-xl" style="background:var(--primary);opacity:.2"></div>
       <div>
         <p class="mb-2 text-lg font-semibold">${esc(p.heading)}</p>
-        <p class="text-slate-600">${esc(p.body)}</p>
+        <p class="site-muted">${esc(p.body)}</p>
       </div>
     </div>
   </div>
@@ -133,7 +133,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     case "AboutSimple":
       return `<section class="mx-auto max-w-3xl px-6 py-24 text-center">
   <h2 class="text-3xl font-semibold md:text-4xl">${esc(p.heading)}</h2>
-  <p class="mx-auto mt-3 max-w-2xl text-slate-600">${esc(p.body)}</p>
+  <p class="mx-auto mt-3 max-w-2xl site-muted">${esc(p.body)}</p>
 </section>`;
     case "ServicesGrid":
     case "ProductsGrid":
@@ -144,7 +144,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section class="mx-auto max-w-5xl px-6 py-24">
   <div class="mb-14 text-center">
     <h2 class="text-4xl font-bold tracking-tight md:text-5xl">${esc(p.heading)}</h2>
-    ${p.subheading ? `<p class="mt-3 text-lg text-slate-600">${esc(p.subheading)}</p>` : ""}
+    ${p.subheading ? `<p class="mt-3 text-lg site-muted">${esc(p.subheading)}</p>` : ""}
   </div>
   <div class="grid gap-6 sm:grid-cols-2 ${section.componentName === "FeaturesGrid" ? "lg:grid-cols-3" : ""}">
     ${titles
@@ -157,7 +157,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
           : `<div class="mb-4 h-10 w-10 rounded-lg" style="background:var(--primary);opacity:.2"></div>`
       }
       <h3 class="text-lg font-medium">${esc(t)}</h3>
-      <p class="mt-1 text-sm text-slate-600">${esc(bodies[i] ?? "")}</p>
+      <p class="mt-1 text-sm site-muted">${esc(bodies[i] ?? "")}</p>
     </div>`;
       })
       .join("\n")}
@@ -172,7 +172,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section class="px-6 py-24">
   <div class="mx-auto max-w-6xl">
     <h2 class="max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">${esc(p.heading)}</h2>
-    ${p.subheading ? `<p class="mt-4 max-w-xl text-lg text-slate-600">${esc(p.subheading)}</p>` : ""}
+    ${p.subheading ? `<p class="mt-4 max-w-xl text-lg site-muted">${esc(p.subheading)}</p>` : ""}
     <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
       ${titles
         .map((t, i) => {
@@ -184,7 +184,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
           ${glyph || `<span class="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white" style="background:var(--primary)">✓</span>`}
           <div>
             <p class="font-medium">${esc(t)}</p>
-            <p class="mt-1 text-sm text-slate-600">${esc(bodies[i] ?? "")}</p>
+            <p class="mt-1 text-sm site-muted">${esc(bodies[i] ?? "")}</p>
           </div>
         </div>
       </div>`;
@@ -205,7 +205,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
   <div class="mx-auto max-w-6xl">
     <div class="mx-auto mb-16 max-w-2xl text-center">
       <h2 class="text-4xl font-semibold md:text-5xl">${esc(p.heading)}</h2>
-      ${p.subheading ? `<p class="mt-4 text-slate-600">${esc(p.subheading)}</p>` : ""}
+      ${p.subheading ? `<p class="mt-4 site-muted">${esc(p.subheading)}</p>` : ""}
     </div>
     <div class="flex flex-col gap-20">
       ${titles
@@ -216,8 +216,8 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
         <div class="lg:col-span-2 ${i % 2 === 1 ? "lg:order-2" : ""}">
           ${image ? `<img src="${esc(image.url)}" alt="${esc(image.altText || t)}" class="mb-4 max-w-xs rounded-2xl object-cover" />` : ""}
           <h3 class="text-xl font-medium">${esc(t)}</h3>
-          <p class="mt-2 text-slate-600">${esc(bodies[i] ?? "")}</p>
-          <p class="mt-6 font-medium">${esc(authors[i] ?? "")}<span class="block text-sm font-normal text-slate-500">${esc(roles[i] ?? "")}</span></p>
+          <p class="mt-2 site-muted">${esc(bodies[i] ?? "")}</p>
+          <p class="mt-6 font-medium">${esc(authors[i] ?? "")}<span class="block text-sm font-normal site-muted">${esc(roles[i] ?? "")}</span></p>
         </div>
         <div class="grid gap-8 ${i % 2 === 1 ? "lg:order-1" : ""}">
           <div><p class="text-3xl font-medium">${esc(m[0] ?? "")}</p><p>${esc(m[1] ?? "")}</p></div>
@@ -240,12 +240,12 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     ${titles
       .map((t, i) => {
         const glyph = iconSvg(glyphs[i], { size: 32, color: "var(--primary)", className: "mx-auto mb-4" });
-        return `<div class="rounded-[25px] border bg-white p-2 shadow-lg ${i % 2 === 0 ? "md:rotate-2" : "md:-rotate-2"}">
+        return `<div class="rounded-[25px] border site-card p-2 shadow-lg ${i % 2 === 0 ? "md:rotate-2" : "md:-rotate-2"}">
       ${glyph}
       <div class="rounded-[15px] border p-5" style="background:color-mix(in oklab,var(--primary) 10%,white);border-color:color-mix(in oklab,var(--primary) 20%,white)">
         <span class="mb-4 block text-4xl font-semibold" style="color:var(--primary)">${String(i + 1).padStart(2, "0")}</span>
         <h3 class="text-xl font-semibold">${esc(t)}</h3>
-        <p class="mt-2 text-sm text-slate-600">${esc(bodies[i] ?? "")}</p>
+        <p class="mt-2 text-sm site-muted">${esc(bodies[i] ?? "")}</p>
       </div>
     </div>`;
       })
@@ -263,9 +263,9 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       ${quotes
         .map(
-          (q, i) => `<figure class="rounded-2xl border bg-white p-6 shadow-sm ${i === 0 ? "sm:col-span-2" : ""}">
-        <blockquote class="${i === 0 ? "text-xl font-medium" : ""} text-slate-700">“${esc(q)}”</blockquote>
-        <figcaption class="mt-6 text-sm font-medium">${esc(authors[i] ?? "")}<span class="block font-normal text-slate-500">${esc(roles[i] ?? "")}</span></figcaption>
+          (q, i) => `<figure class="rounded-2xl border site-card p-6 shadow-sm ${i === 0 ? "sm:col-span-2" : ""}">
+        <blockquote class="${i === 0 ? "text-xl font-medium" : ""} site-muted">“${esc(q)}”</blockquote>
+        <figcaption class="mt-6 text-sm font-medium">${esc(authors[i] ?? "")}<span class="block font-normal site-muted">${esc(roles[i] ?? "")}</span></figcaption>
       </figure>`
         )
         .join("\n")}
@@ -279,12 +279,12 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section class="px-6 py-24" style="background:var(--secondary)">
   <div class="mx-auto max-w-5xl">
     <h2 class="text-4xl font-semibold tracking-tight">${esc(p.heading)}</h2>
-    <div class="mt-10 overflow-hidden rounded-2xl border bg-white px-8 shadow-sm">
+    <div class="mt-10 overflow-hidden rounded-2xl border site-card px-8 shadow-sm">
       ${questions
         .map(
           (q, i) => `<details class="border-b border-dotted py-5 last:border-b-0">
         <summary class="cursor-pointer text-base font-medium">${esc(q)}</summary>
-        <p class="mt-3 text-sm text-slate-600">${esc(answers[i] ?? "")}</p>
+        <p class="mt-3 text-sm site-muted">${esc(answers[i] ?? "")}</p>
       </details>`
         )
         .join("\n")}
@@ -299,15 +299,15 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section class="mx-auto max-w-6xl px-6 py-24">
   <div class="mb-12 text-center">
     <h2 class="text-4xl font-bold tracking-tight sm:text-5xl">${esc(p.heading)}</h2>
-    ${p.subheading ? `<p class="mt-4 text-lg text-slate-600">${esc(p.subheading)}</p>` : ""}
+    ${p.subheading ? `<p class="mt-4 text-lg site-muted">${esc(p.subheading)}</p>` : ""}
   </div>
   <div class="grid gap-5 md:grid-cols-3">
     ${names
       .map((n, i) => {
         const popular = i === 1 || names.length === 1;
-        return `<div class="relative flex flex-col rounded-2xl border bg-white p-7 ${popular ? "border-2 shadow-xl md:-translate-y-3" : ""}" ${popular ? 'style="border-color:var(--primary)"' : ""}>
+        return `<div class="relative flex flex-col rounded-2xl border site-card p-7 ${popular ? "border-2 shadow-xl md:-translate-y-3" : ""}" ${popular ? 'style="border-color:var(--primary)"' : ""}>
       ${popular ? `<span class="absolute right-0 top-0 rounded-bl-xl rounded-tr-xl px-3 py-1 text-xs font-semibold text-white" style="background:var(--primary)">Popular</span>` : ""}
-      <p class="text-sm font-semibold text-slate-500">${esc(n)}</p>
+      <p class="text-sm font-semibold site-muted">${esc(n)}</p>
       <div class="mt-4 text-5xl font-bold tracking-tight">${esc(prices[i] ?? "")}</div>
       <ul class="mt-6 space-y-2 text-sm">
         ${(features[i] ?? "")
@@ -327,11 +327,11 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
       return `<section id="contact" class="px-6 py-24">
   <div class="mx-auto max-w-6xl">
     <h2 class="text-4xl font-bold md:text-5xl">${esc(p.heading)}</h2>
-    ${p.subheading ? `<p class="mt-3 max-w-xl text-base text-slate-600">${esc(p.subheading)}</p>` : ""}
+    ${p.subheading ? `<p class="mt-3 max-w-xl text-base site-muted">${esc(p.subheading)}</p>` : ""}
     <div class="mt-12 grid border-y md:grid-cols-3">
-      ${p.email ? `<div class="border-b p-5 md:border-b-0 md:border-r"><p class="mb-2 text-sm font-medium text-slate-500">Email</p><p class="font-mono text-sm font-medium">${esc(p.email)}</p></div>` : ""}
-      ${p.phone ? `<div class="border-b p-5 md:border-b-0 md:border-r"><p class="mb-2 text-sm font-medium text-slate-500">Phone</p><p class="font-mono text-sm font-medium">${esc(p.phone)}</p></div>` : ""}
-      ${p.address ? `<div class="p-5"><p class="mb-2 text-sm font-medium text-slate-500">Office</p><p class="font-mono text-sm font-medium">${esc(p.address)}</p></div>` : ""}
+      ${p.email ? `<div class="border-b p-5 md:border-b-0 md:border-r"><p class="mb-2 text-sm font-medium site-muted">Email</p><p class="font-mono text-sm font-medium">${esc(p.email)}</p></div>` : ""}
+      ${p.phone ? `<div class="border-b p-5 md:border-b-0 md:border-r"><p class="mb-2 text-sm font-medium site-muted">Phone</p><p class="font-mono text-sm font-medium">${esc(p.phone)}</p></div>` : ""}
+      ${p.address ? `<div class="p-5"><p class="mb-2 text-sm font-medium site-muted">Office</p><p class="font-mono text-sm font-medium">${esc(p.address)}</p></div>` : ""}
     </div>
     <form class="mt-10 grid gap-3 rounded-2xl border p-6 md:grid-cols-2">
       <input class="w-full rounded-lg border p-3" placeholder="Your name" />
@@ -344,7 +344,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     case "ContactSimple":
       return `<section id="contact" class="mx-auto max-w-2xl px-6 py-24 text-center">
   <h2 class="text-4xl font-bold tracking-tight">${esc(p.heading)}</h2>
-  ${p.subheading ? `<p class="mt-4 text-lg text-slate-600">${esc(p.subheading)}</p>` : ""}
+  ${p.subheading ? `<p class="mt-4 text-lg site-muted">${esc(p.subheading)}</p>` : ""}
   <div class="mt-8 space-y-1 text-lg font-medium">
     ${p.email ? `<p>${esc(p.email)}</p>` : ""}
     ${p.phone ? `<p>${esc(p.phone)}</p>` : ""}
@@ -390,7 +390,7 @@ function renderNav(page: AssembledPage, site: AssembledSite): string {
   const links = NAV_TYPES.filter((n) => presentTypes.has(n.type))
     .map(
       (n) =>
-        `<a href="#${n.type}" class="site-btn rounded-md px-2 py-1 text-slate-600 transition hover:text-[var(--primary)]">${esc(n.label)}</a>`
+        `<a href="#${n.type}" class="site-btn rounded-md px-2 py-1 site-muted transition hover:text-[var(--primary)]">${esc(n.label)}</a>`
     )
     .join("\n");
   const brand = site.businessName || site.seo.title.split("|")[0].trim();
@@ -398,7 +398,7 @@ function renderNav(page: AssembledPage, site: AssembledSite): string {
   const logoHtml = logo
     ? `<img src="${esc(logo)}" alt="${esc(brand)} logo" class="h-9 w-auto max-w-[160px] object-contain" />`
     : `<span class="text-lg font-bold" style="color:var(--primary)">${esc(brand)}</span>`;
-  return `<header class="sticky top-0 z-50 border-b bg-white/90 backdrop-blur-md">
+  return `<header class="sticky top-0 z-50 border-b bg-[var(--theme-bg,#ffffff)]/90 backdrop-blur-md">
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
     <a href="#top" class="site-btn shrink-0">${logoHtml}</a>
     <nav class="hidden items-center gap-4 text-sm font-medium md:flex lg:gap-6">${links}</nav>
@@ -437,7 +437,7 @@ function renderPage(page: AssembledPage, site: AssembledSite): string {
       --accent: ${t.colors.accent};
       ${brandCss(t, t.colors.primary)}
     }
-    body { background: ${t.colors.background}; color: ${t.colors.foreground}; font-family: ${
+    body { background: var(--theme-bg, ${t.colors.background}); color: var(--theme-fg, ${t.colors.foreground}); font-family: ${
       resolveThemeFont(t)?.stack ?? "ui-sans-serif, system-ui, sans-serif"
     }; }
     html { scroll-behavior: smooth; }
@@ -446,6 +446,8 @@ function renderPage(page: AssembledPage, site: AssembledSite): string {
     .site-btn { cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
     .site-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
     .site-btn:active { transform: scale(.98); }
+    .site-muted { color: var(--theme-muted, #475569); }
+    .site-card { background-color: var(--theme-card, #ffffff); }
   </style>
 </head>
 <body id="top">

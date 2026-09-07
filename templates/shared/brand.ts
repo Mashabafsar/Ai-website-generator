@@ -86,6 +86,8 @@ function toVars(theme: BrandTheme, fallback: string): Record<string, string> {
       "--primary": surface.brand,
       "--secondary": surface.soft,
       "--accent": surface.strong,
+      "--background": surface.bg,
+      "--foreground": surface.fg,
     };
   }
   const { brand, strong, soft } = resolveBrand(theme, fallback);
@@ -98,7 +100,12 @@ function toVars(theme: BrandTheme, fallback: string): Record<string, string> {
 
 /** Inline style for a React design root. */
 export function brandStyle(theme: BrandTheme, fallback: string): CSSProperties {
-  return toVars(theme, fallback) as CSSProperties;
+  const vars = toVars(theme, fallback);
+  const surface = resolveSurface(theme, fallback);
+  return {
+    ...vars,
+    ...(surface ? { color: surface.fg, backgroundColor: surface.bg } : {}),
+  } as CSSProperties;
 }
 
 /** CSS declarations for the static export's `<style>` block. */

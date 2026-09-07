@@ -529,7 +529,7 @@ export function SportsSite({
               const featureLines = (planFeatures[i] || "").split("\n").map((f) => f.trim()).filter(Boolean);
               return (
                 <div className="w-full shrink-0 lg:w-[34rem]">
-                  <div className="flex flex-col rounded-[32px] bg-white p-8 lg:p-9">
+                  <div className="flex flex-col rounded-[32px] p-8 lg:p-9" style={{ backgroundColor: SP.card }}>
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div
@@ -662,8 +662,8 @@ export function SportsSite({
             </p>
             <a
               href={contactHref}
-              className="inline-flex h-14 items-center rounded-[18px] border bg-white px-5 text-base font-medium"
-              style={{ borderColor: SP.line, color: SP.body }}
+              className="inline-flex h-14 items-center rounded-[18px] border px-5 text-base font-medium"
+              style={{ borderColor: SP.line, color: SP.body, backgroundColor: SP.card }}
             >
               Contact us
             </a>
@@ -675,7 +675,8 @@ export function SportsSite({
                 <details
                   key={`${question}-${i}`}
                   open={i === 0}
-                  className="group overflow-hidden rounded-xl bg-white"
+                  className="group overflow-hidden rounded-xl"
+                  style={{ backgroundColor: SP.card }}
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-left">
                     <span className="text-base font-semibold lg:text-lg" style={{ color: SP.ink }}>{question}</span>
@@ -703,7 +704,7 @@ export function SportsSite({
           <img src={eventImage} alt="" data-parallax="0.08" className="h-[38rem] w-full object-cover lg:h-[44rem]" />
           <div className="absolute inset-0 bg-black/50" />
           <div className="absolute inset-x-6 bottom-6 lg:inset-x-8 lg:bottom-8 lg:right-auto lg:w-[32rem]">
-            <div className="flex flex-col gap-6 rounded-[20px] bg-white p-6 lg:p-8">
+            <div className="flex flex-col gap-6 rounded-[20px] p-6 lg:p-8" style={{ backgroundColor: SP.card }}>
               <span
                 className="w-fit rounded-full px-4 py-2 text-sm font-medium"
                 style={{ backgroundColor: SP.surface, color: SP.ink }}

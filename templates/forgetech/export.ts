@@ -263,7 +263,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
           const art = image
             ? `background-image:url('${esc(image)}')`
             : `background-image:linear-gradient(140deg,${FT.trinidadWash} 0%,${FT.trinidadDeep} 100%)`;
-          return `<article class="flex flex-col border bg-white" style="border-color:${FT.line}">
+          return `<article class="flex flex-col border" style="border-color:${FT.line};background-color:${FT.card}">
         <div class="h-44 bg-cover bg-center" style="background-color:${FT.trinidadWash};${art}"></div>
         <div class="flex flex-1 flex-col p-6">
           <h3 class="text-lg font-semibold" style="font-family:var(--ft-display)">${esc(title)}</h3>
@@ -420,7 +420,7 @@ ${
         .map((title, i) => {
           const image =
             articles.itemImages[i] || [FALLBACK.hero, FALLBACK.about, FALLBACK.project][i % 3];
-          return `<article class="flex flex-col bg-white">
+          return `<article class="flex flex-col" style="background-color:${FT.card}">
         <div class="h-48 bg-cover bg-center" style="background-image:url('${esc(image)}')"></div>
         <div class="flex flex-1 flex-col border border-t-0 p-6" style="border-color:${FT.line}">
           <h3 class="text-lg font-semibold leading-snug" style="font-family:var(--ft-display)">${esc(title)}</h3>

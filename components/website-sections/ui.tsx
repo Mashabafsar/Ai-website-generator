@@ -51,7 +51,7 @@ export function SiteButton({
       "border border-current bg-transparent hover:-translate-y-0.5 hover:bg-black/[0.03]",
     variant === "ghost" && "hover:bg-black/[0.05]",
     variant === "white" &&
-      "bg-white text-[var(--primary)] shadow-md hover:-translate-y-0.5 hover:bg-neutral-100 hover:shadow-lg",
+      "bg-[var(--theme-card,#ffffff)] text-[var(--primary)] shadow-md hover:-translate-y-0.5 hover:brightness-95 hover:shadow-lg",
     className
   );
 

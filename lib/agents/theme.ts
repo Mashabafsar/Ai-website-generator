@@ -4,6 +4,7 @@ import {
   IMPORTED_PALETTE_NAME,
   type ImportedBrandColors,
 } from "@/lib/branding/imported-brand";
+import { parseUserColor } from "@/lib/theme/parse-color";
 
 // Theme Agent — maps a color preference + visual style + brand tone to concrete
 // design tokens. Deterministic (rules-based) so results are consistent; the
@@ -112,11 +113,53 @@ export function isDeliberateTheme(
   return Boolean(theme?.palette?.trim());
 }
 
+export type CustomThemeColors = {
+  primary?: string;
+  secondary?: string;
+  accent?: string;
+  background?: string;
+  foreground?: string;
+};
+
+/** Normalize typed hexes / names. Any one valid channel is enough to paint. */
+export function resolveCustomColors(
+  input: CustomThemeColors | null | undefined,
+  tone?: string | null
+): ThemeTokens["colors"] | null {
+  if (!input) return null;
+  const primary = input.primary ? parseUserColor(input.primary) : null;
+  const secondary = input.secondary ? parseUserColor(input.secondary) : null;
+  const accent = input.accent ? parseUserColor(input.accent) : null;
+  const background = input.background ? parseUserColor(input.background) : null;
+  const foreground = input.foreground ? parseUserColor(input.foreground) : null;
+  if (!primary && !secondary && !accent && !background && !foreground) return null;
+
+  const brand = primary || secondary || accent || "#5D4AFE";
+  const surface = deriveSurface(
+    {
+      primary: brand,
+      secondary: secondary || undefined,
+      accent: accent || brand,
+      background: background || undefined,
+      foreground: foreground || undefined,
+    },
+    brand,
+    tone
+  );
+  return {
+    primary: brand,
+    secondary: secondary || surface.soft,
+    accent: accent || brand,
+    background: background || surface.bg,
+    foreground: foreground || surface.fg,
+  };
+}
+
 /**
  * Builds the design tokens for a site. `colorPreference` is the questionnaire's
  * answer (falling back to the template's own), so an explicit customer choice
  * always outranks the model's; `choice.palette` only applies when the customer
- * left it alone.
+ * left it alone. Typed custom hexes always win and mark the theme as Custom.
  */
 export function createTheme(
   colorPreference: string,
@@ -130,10 +173,19 @@ export function createTheme(
     logoUrl?: string;
     /** Brand tone from the questionnaire or template — shapes contrast of dark bands. */
     tone?: string;
+    /** Typed hexes / names when the customer picked Custom (or overrode a preset). */
+    customColors?: CustomThemeColors | null;
   } = {}
 ): ThemeTokens {
-  const { choice, colorPreferenceExplicit, importedColors, importedFontFamily, logoUrl, tone } =
-    options;
+  const {
+    choice,
+    colorPreferenceExplicit,
+    importedColors,
+    importedFontFamily,
+    logoUrl,
+    tone,
+    customColors,
+  } = options;
   const radius = RADII[visualStyle] ?? "0.75rem";
   const catalogFont =
     importedFontFamily && THEME_FONTS.some((f) => f.id === importedFontFamily)
@@ -156,9 +208,30 @@ export function createTheme(
     };
   }
 
+  const painted = resolveCustomColors(customColors, tone);
+  if (painted) {
+    return {
+      colors: painted,
+      radius,
+      fontStyle,
+      palette: CUSTOM_PALETTE_NAME,
+      ...extras,
+    };
+  }
+
   const paletteName = colorPreferenceExplicit
     ? colorPreference
     : choice?.palette ?? colorPreference;
+
+  if (paletteName === CUSTOM_PALETTE_NAME && colorPreferenceExplicit) {
+    return {
+      colors: PALETTES["Brand blue & violet"],
+      radius,
+      fontStyle,
+      palette: CUSTOM_PALETTE_NAME,
+      ...extras,
+    };
+  }
 
   // Only a deliberate pick is recorded, so an untouched project keeps letting
   // each bespoke design paint with its own accent.
@@ -240,10 +313,9 @@ function toneProfile(tone?: string | null): ToneProfile {
 }
 
 function parseHex(hex: string): [number, number, number] | null {
-  const raw = hex.trim();
-  const m = raw.match(/^#([0-9a-f]{6})$/i);
-  if (!m) return null;
-  const n = parseInt(m[1], 16);
+  const normalized = parseUserColor(hex, "commit");
+  if (!normalized) return null;
+  const n = parseInt(normalized.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 

@@ -3,7 +3,7 @@ import type { AssembledSite } from "@/lib/blueprint/types";
 import { SECTION_COMPONENTS } from "@/components/website-sections/sections";
 import { SiteHeader } from "@/components/website-sections/ui";
 import { BespokePreview, hasBespokePreview } from "@/templates/preview-registry";
-import { brandStyle, sectionBandStyle } from "@/templates/shared/brand";
+import { brandStyle, isDeliberateTheme, sectionBandStyle } from "@/templates/shared/brand";
 import { themeFontHref, themeFontStyle } from "@/templates/shared/fonts";
 
 const NAV: Array<{ type: string; label: string }> = [
@@ -34,13 +34,18 @@ export function SitePreview({ site, pageSlug }: { site: AssembledSite; pageSlug?
     label: n.label,
   }));
 
+  const branded = brandStyle(site.theme, site.theme.colors.primary);
   const themeStyle: CSSProperties = {
-    ...brandStyle(site.theme, site.theme.colors.primary),
-    ["--primary" as string]: site.theme.colors.primary,
-    ["--secondary" as string]: site.theme.colors.secondary,
-    ["--accent" as string]: site.theme.colors.accent,
-    background: site.theme.colors.background,
-    color: site.theme.colors.foreground,
+    ...branded,
+    ...(isDeliberateTheme(site.theme)
+      ? {}
+      : {
+          ["--primary" as string]: site.theme.colors.primary,
+          ["--secondary" as string]: site.theme.colors.secondary,
+          ["--accent" as string]: site.theme.colors.accent,
+          background: site.theme.colors.background,
+          color: site.theme.colors.foreground,
+        }),
     ...themeFontStyle(site.theme, []),
   };
   const fontHref = themeFontHref(site.theme);

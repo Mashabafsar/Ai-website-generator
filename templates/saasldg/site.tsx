@@ -129,7 +129,7 @@ export function SaasLandingSite({
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b bg-white/90 backdrop-blur" style={{ borderColor: SL.line }}>
+      <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: SL.line, backgroundColor: SL.white }}>
         <div className="mx-auto flex max-w-[80rem] items-center gap-4 px-6 py-4 lg:px-6">
           <a href="#sl-top" className="mr-auto flex items-center gap-2.5">
             {customLogo ? (

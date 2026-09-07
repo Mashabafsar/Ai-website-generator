@@ -496,7 +496,12 @@ export function CraftedSpacesSite({
               <details
                 key={`${q}-${i}`}
                 open={i === 1}
-                className={`rounded-xl border px-5 py-4 ${i === 1 ? "border-[#1A1A1A] bg-[#FFFBEB]" : "border-[#DAD7CE] bg-white"}`}
+                className={`rounded-xl border px-5 py-4 ${i === 1 ? "border-[#1A1A1A]" : ""}`}
+                style={
+                  i === 1
+                    ? { borderColor: CS.ink, backgroundColor: "var(--theme-surface, #FFFBEB)" }
+                    : { borderColor: CS.line, backgroundColor: CS.card }
+                }
               >
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-6 text-left text-base leading-7 lg:text-[20px]">
                   <span>{q}</span>

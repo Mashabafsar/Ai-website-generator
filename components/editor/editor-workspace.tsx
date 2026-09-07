@@ -14,8 +14,9 @@ import type {
   SectionTheme,
 } from "@/lib/blueprint/types";
 import { assembleSite } from "@/lib/agents/section-assembly";
-import { CUSTOM_PALETTE_NAME, PALETTE_NAMES, paletteColors } from "@/lib/agents/theme";
+import { CUSTOM_PALETTE_NAME, PALETTE_NAMES, deriveSurface, paletteColors } from "@/lib/agents/theme";
 import { TONES } from "@/lib/questionnaire/schema";
+import { ColorField } from "@/components/theme/color-field";
 import { getVariantSpec, iconCount } from "@/lib/sections/registry";
 import { SitePreview } from "@/components/editor/site-preview";
 import { ImagePicker } from "@/components/editor/image-picker";
@@ -273,15 +274,21 @@ function ThemeEditor({
   theme: ThemeTokens;
   onChange: (t: ThemeTokens) => void;
 }) {
-  const markCustom = (next: ThemeTokens): ThemeTokens => ({
-    ...next,
-    palette: next.palette && next.palette !== CUSTOM_PALETTE_NAME ? next.palette : CUSTOM_PALETTE_NAME,
-  });
-
-  const set = (key: keyof ThemeTokens["colors"], value: string) =>
-    onChange(markCustom({ ...theme, colors: { ...theme.colors, [key]: value } }));
+  const set = (key: keyof ThemeTokens["colors"], value: string) => {
+    const colors = { ...theme.colors, [key]: value };
+    if (key === "primary" || key === "secondary" || key === "accent") {
+      const surface = deriveSurface(colors, colors.primary, theme.tone);
+      colors.background = surface.bg;
+      colors.foreground = surface.fg;
+    }
+    onChange({ ...theme, colors, palette: CUSTOM_PALETTE_NAME });
+  };
 
   function applyPalette(name: string) {
+    if (name === CUSTOM_PALETTE_NAME) {
+      onChange({ ...theme, palette: CUSTOM_PALETTE_NAME });
+      return;
+    }
     const colors = paletteColors(name);
     if (!colors) return;
     onChange({ ...theme, colors, palette: name });
@@ -305,27 +312,25 @@ function ThemeEditor({
                 {name}
               </SelectItem>
             ))}
+            <SelectItem value={CUSTOM_PALETTE_NAME}>{CUSTOM_PALETTE_NAME}</SelectItem>
           </SelectContent>
         </Select>
         <p className="mt-2 text-xs text-muted-foreground">
           A chosen palette repaints the whole site — canvas, bands, cards, and buttons.
+          Type a hex or name if the color you want is not in the list.
         </p>
       </div>
 
       <div>
         <div className="mb-2 text-sm font-semibold">Brand colors</div>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(["primary", "secondary", "accent", "background", "foreground"] as const).map((key) => (
-            <div key={key} className="space-y-1">
-              <Label className="text-[10px] capitalize">{key}</Label>
-              <input
-                type="color"
-                value={theme.colors[key]}
-                onChange={(e) => set(key, e.target.value)}
-                className="h-8 w-8 cursor-pointer rounded border"
-                aria-label={`${key} color`}
-              />
-            </div>
+            <ColorField
+              key={key}
+              label={key}
+              value={theme.colors[key]}
+              onChange={(hex) => set(key, hex)}
+            />
           ))}
         </div>
       </div>
@@ -743,7 +748,7 @@ function SectionThemeControls({
           <span className="text-[11px] text-muted-foreground">Inherit site theme</span>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2">
         {(
           [
             ["background", "Band"],
@@ -752,25 +757,21 @@ function SectionThemeControls({
           ] as const
         ).map(([key, label]) => (
           <div key={key} className="space-y-1">
-            <Label className="text-[10px]">{label}</Label>
-            <div className="flex items-center gap-1">
-              <input
-                type="color"
-                value={value?.[key] || "#888888"}
-                onChange={(e) => set(key, e.target.value)}
-                className="h-7 w-7 cursor-pointer rounded border"
-                aria-label={`${label} color`}
-              />
-              {value?.[key] ? (
-                <button
-                  type="button"
-                  className="text-[10px] text-muted-foreground"
-                  onClick={() => clear(key)}
-                >
-                  Reset
-                </button>
-              ) : null}
-            </div>
+            <ColorField
+              label={label}
+              value={value?.[key] || ""}
+              allowEmpty
+              onChange={(hex) => (hex ? set(key, hex) : clear(key))}
+            />
+            {value?.[key] ? (
+              <button
+                type="button"
+                className="text-[10px] text-muted-foreground"
+                onClick={() => clear(key)}
+              >
+                Reset {label.toLowerCase()}
+              </button>
+            ) : null}
           </div>
         ))}
       </div>

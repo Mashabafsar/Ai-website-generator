@@ -10,10 +10,13 @@ import {
   questionnaireSchema,
   defaultQuestionnaire,
   TONES,
-  COLOR_PREFERENCES,
+  COLOR_CHOICES,
+  CUSTOM_COLOR_PREFERENCE,
   VISUAL_STYLES,
   type QuestionnaireAnswers,
 } from "@/lib/questionnaire/schema";
+import { ColorField } from "@/components/theme/color-field";
+import { parseUserColor } from "@/lib/theme/parse-color";
 import { PackageType } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +42,7 @@ const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   0: ["hasWebsite", "existingWebsiteUrl"],
   1: ["businessName", "industry", "description", "location"],
   2: ["targetAudience", "demographics", "goals", "services"],
-  3: ["tone", "colorPreference", "visualStyle", "brandingNotes", "fontFamily"],
+  3: ["tone", "colorPreference", "customPrimary", "customSecondary", "customAccent", "visualStyle", "brandingNotes", "fontFamily"],
   4: ["contactEmail", "contactPhone", "packageType"],
 };
 
@@ -51,10 +54,37 @@ const IMPORTABLE_FIELDS = [
   "location",
   "targetAudience",
   "demographics",
+  "goals",
   "services",
   "contactEmail",
   "contactPhone",
 ] as const;
+
+const IMPORT_FIELD_LABELS: Record<(typeof IMPORTABLE_FIELDS)[number], string> = {
+  businessName: "Business name",
+  industry: "Industry",
+  description: "Description",
+  location: "Location",
+  targetAudience: "Target audience",
+  demographics: "Demographics",
+  goals: "Website goals",
+  services: "Services",
+  contactEmail: "Contact email",
+  contactPhone: "Contact phone",
+};
+
+function labelsFromAnswers(answers: QuestionnaireAnswers | null | undefined): string[] {
+  if (!answers) return [];
+  const filled: string[] = [];
+  for (const key of IMPORTABLE_FIELDS) {
+    const value = answers[key];
+    if (typeof value === "string" && value.trim()) filled.push(IMPORT_FIELD_LABELS[key]);
+    else if (key === "services" && Array.isArray(value) && value.length) {
+      filled.push(IMPORT_FIELD_LABELS.services);
+    }
+  }
+  return filled;
+}
 
 const DESIGN_DEFAULT = "__design_default__";
 
@@ -80,6 +110,9 @@ export function QuestionnaireWizard({
   const [serviceInput, setServiceInput] = useState("");
   const [importing, setImporting] = useState(false);
   const [removingAssets, setRemovingAssets] = useState(false);
+  const [importedSummary, setImportedSummary] = useState<string[]>(() =>
+    labelsFromAnswers(initialAnswers)
+  );
 
   const form = useForm<QuestionnaireAnswers>({
     resolver: zodResolver(questionnaireSchema),
@@ -97,9 +130,19 @@ export function QuestionnaireWizard({
   const { control, register, handleSubmit, trigger, watch, setValue, formState } = form;
   const services = watch("services");
 
+  function customColorsReady() {
+    if (watch("colorPreference") !== CUSTOM_COLOR_PREFERENCE) return true;
+    return Boolean(parseUserColor(watch("customPrimary") || ""));
+  }
+
   async function next() {
     const ok = await trigger(STEP_FIELDS[step]);
-    if (ok) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (!ok) return;
+    if (step === 3 && !customColorsReady()) {
+      toast.error("Enter a valid primary color, or pick a preset.");
+      return;
+    }
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
   // Step 0 — pull business details from the customer's existing website and
@@ -127,19 +170,21 @@ export function QuestionnaireWizard({
         throw new Error(data?.error || "We couldn't read that website.");
       }
       const fields = (data.fields ?? {}) as Record<string, unknown>;
-      let applied = 0;
+      const filled: string[] = [];
       for (const key of IMPORTABLE_FIELDS) {
         const value = fields[key];
         if (typeof value === "string" && value.trim()) {
-          setValue(key, value.trim(), { shouldDirty: true });
-          applied++;
+          setValue(key, value.trim(), { shouldDirty: true, shouldValidate: true });
+          filled.push(IMPORT_FIELD_LABELS[key]);
         } else if (key === "services" && Array.isArray(value) && value.length) {
           setValue("services", value.filter((v): v is string => typeof v === "string" && !!v), {
+            shouldDirty: true,
             shouldValidate: true,
           });
-          applied++;
+          filled.push(IMPORT_FIELD_LABELS.services);
         }
       }
+      setImportedSummary(filled);
       const brand = parseImportedBrand(data.brand);
       if (brand) {
         setValue("importedBrand", brand, { shouldDirty: true });
@@ -150,10 +195,14 @@ export function QuestionnaireWizard({
         );
         setValue("importedAssetConsent", undefined, { shouldDirty: true });
       }
-      if (applied === 0 && !brand) {
+      if (filled.length === 0 && !brand) {
         toast.info("We read the site but couldn't pull out details — you can fill them in next.");
       } else if (brand) {
-        toast.success("Imported — choose whether to keep this look, then continue.");
+        toast.success(
+          filled.length
+            ? "Imported answers and branding — review the look, then continue."
+            : "Imported — choose whether to keep this look, then continue."
+        );
       } else {
         toast.success("Details imported — review the next steps.");
         setStep(1);
@@ -198,6 +247,10 @@ export function QuestionnaireWizard({
   }
 
   async function onSubmit(values: QuestionnaireAnswers) {
+    if (values.colorPreference === CUSTOM_COLOR_PREFERENCE && !parseUserColor(values.customPrimary || "")) {
+      toast.error("Enter a valid primary color, or pick a preset.");
+      return;
+    }
     setSubmitting(true);
     try {
       const saveRes = await fetch(`/api/projects/${projectId}/questionnaire`, {
@@ -302,6 +355,7 @@ export function QuestionnaireWizard({
                         setValue("importedBrand", undefined, { shouldDirty: true });
                         setValue("importedThemeChoice", "", { shouldDirty: true });
                         setValue("importedAssetConsent", undefined, { shouldDirty: true });
+                        setImportedSummary([]);
                         // No website means nothing to import — jump straight in.
                         setStep(1);
                       }}
@@ -338,6 +392,13 @@ export function QuestionnaireWizard({
                       </Button>
                     </div>
                   </Field>
+                )}
+
+                {watch("hasWebsite") === "yes" && importedSummary.length > 0 && (
+                  <div className="rounded-xl border bg-muted/30 p-3">
+                    <p className="text-sm font-medium">Answers filled from your site</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{importedSummary.join(" · ")}</p>
+                  </div>
                 )}
 
                 {watch("hasWebsite") === "yes" && importedBrand && hasImportedBrand(importedBrand) && (
@@ -479,11 +540,53 @@ export function QuestionnaireWizard({
                       label="Colors"
                       error={err.colorPreference?.message}
                       value={watch("colorPreference")}
-                      onChange={(v) =>
-                        setValue("colorPreference", v, { shouldValidate: true })
-                      }
-                      options={COLOR_PREFERENCES}
+                      onChange={(v) => {
+                        setValue("colorPreference", v, { shouldValidate: true });
+                        if (v !== CUSTOM_COLOR_PREFERENCE) {
+                          setValue("customPrimary", "", { shouldDirty: true });
+                          setValue("customSecondary", "", { shouldDirty: true });
+                          setValue("customAccent", "", { shouldDirty: true });
+                        }
+                      }}
+                      options={COLOR_CHOICES}
                     />
+                    {watch("colorPreference") === CUSTOM_COLOR_PREFERENCE && (
+                      <div className="space-y-3 rounded-xl border bg-muted/30 p-3">
+                        <p className="text-sm text-muted-foreground">
+                          Type a hex or CSS color name if it is not in the preset list.
+                        </p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <ColorField
+                            label="Primary"
+                            value={watch("customPrimary") || ""}
+                            allowEmpty
+                            onChange={(hex) =>
+                              setValue("customPrimary", hex, { shouldDirty: true, shouldValidate: true })
+                            }
+                          />
+                          <ColorField
+                            label="Secondary"
+                            value={watch("customSecondary") || ""}
+                            allowEmpty
+                            onChange={(hex) =>
+                              setValue("customSecondary", hex, { shouldDirty: true, shouldValidate: true })
+                            }
+                          />
+                          <ColorField
+                            label="Accent (optional)"
+                            value={watch("customAccent") || ""}
+                            allowEmpty
+                            className="sm:col-span-2"
+                            onChange={(hex) =>
+                              setValue("customAccent", hex, { shouldDirty: true, shouldValidate: true })
+                            }
+                          />
+                        </div>
+                        {watch("customPrimary") && !parseUserColor(watch("customPrimary") || "") ? (
+                          <p className="text-sm text-destructive">Enter a valid primary color.</p>
+                        ) : null}
+                      </div>
+                    )}
                     <FontSelect
                       value={watch("fontFamily")}
                       onChange={(v) => setValue("fontFamily", v, { shouldValidate: true })}

@@ -112,7 +112,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   <span class="font-semibold" style="font-family:var(--sl-display)">New —</span> ${esc(businessName)} automations now launch in minutes, not weeks.
 </div>
 
-<header class="sticky top-0 z-20 border-b bg-white/90 backdrop-blur" style="border-color:${SL.line}">
+<header class="sticky top-0 z-20 border-b backdrop-blur" style="border-color:${SL.line};background-color:${SL.white}">
   <div class="mx-auto flex max-w-[80rem] items-center gap-4 px-6 py-4">
     <a href="#sl-top" class="mr-auto flex items-center gap-2.5">
       ${mark}

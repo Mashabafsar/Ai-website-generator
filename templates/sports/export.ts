@@ -308,7 +308,7 @@ export function renderSportsPage(site: AssembledSite): string {
         const featureLines = (planFeatures[i] || "").split("\n").map((f) => f.trim()).filter(Boolean);
         const items = featureLines.map((line) => `<li class="flex items-start gap-3">${check("mt-1 h-4 w-4 shrink-0", SP.ink)}<span class="leading-snug" style="color:${SP.ink}">${esc(line)}</span></li>`).join("\n            ");
         return `<div class="w-full shrink-0 lg:w-[34rem]">
-        <div class="flex flex-col rounded-[32px] bg-white p-8 lg:p-9">
+        <div class="flex flex-col rounded-[32px] p-8 lg:p-9" style="background-color:${SP.card}">
           <div class="flex items-start justify-between gap-4">
             <div><div class="text-3xl font-semibold uppercase leading-none tracking-[-0.36px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(planNames[i])}</div><div class="mt-2 text-base font-medium" style="color:${SP.body}">${esc((planFeatures[i] || "").split("\n")[0] || "Our most popular plan")}</div></div>
             <span class="grid size-16 shrink-0 place-items-center rounded-[20px]" style="background:${SP.surface}">${arrow("h-6 w-6", SP.ink)}</span>
@@ -351,11 +351,11 @@ export function renderSportsPage(site: AssembledSite): string {
     <div class="flex flex-col gap-5 lg:w-[38rem]">
       <h2 class="font-semibold uppercase leading-none tracking-[-0.6px] text-[clamp(1.75rem,4.5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(faq.content, "heading", "Your questions, answered"))}</h2>
       <p class="text-lg leading-relaxed lg:text-xl" style="color:${SP.muted}">Get quick answers to the most common questions about our programs, memberships and facilities.</p>
-      <a href="${contactHref}" class="inline-flex h-14 items-center rounded-[18px] border bg-white px-5 text-base font-medium" style="border-color:${SP.line};color:${SP.body}">Contact us</a>
+      <a href="${contactHref}" class="inline-flex h-14 items-center rounded-[18px] border px-5 text-base font-medium" style="border-color:${SP.line};color:${SP.body};background-color:${SP.card}">Contact us</a>
     </div>
     <div class="w-full flex-1 rounded-[24px] p-4" style="background:${SP.surface}">
       <div class="flex flex-col gap-3">
-        ${questions.map((question, i) => `<details ${i === 0 ? "open" : ""} class="group overflow-hidden rounded-xl bg-white">
+        ${questions.map((question, i) => `<details ${i === 0 ? "open" : ""} class="group overflow-hidden rounded-xl" style="background-color:${SP.card}">
           <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-left"><span class="text-base font-semibold lg:text-lg" style="color:${SP.ink}">${esc(question)}</span><span class="grid size-6 shrink-0 place-items-center transition-transform group-open:rotate-45">${plus("h-5 w-5", SP.ink)}</span></summary>
           <p class="px-5 pb-5 text-[0.95rem] leading-relaxed" style="color:${SP.body}">${esc(answers[i] || "Reach out to our team any time — we'll give you a direct answer within 24 hours.")}</p>
         </details>`).join("\n        ")}
@@ -369,7 +369,7 @@ export function renderSportsPage(site: AssembledSite): string {
     <img src="${esc(eventImage)}" alt="" data-parallax="0.08" class="h-[38rem] w-full object-cover lg:h-[44rem]" />
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="absolute inset-x-6 bottom-6 lg:inset-x-8 lg:bottom-8 lg:right-auto lg:w-[32rem]">
-      <div class="flex flex-col gap-6 rounded-[20px] bg-white p-6 lg:p-8">
+      <div class="flex flex-col gap-6 rounded-[20px] p-6 lg:p-8" style="background-color:${SP.card}">
         <span class="w-fit rounded-full px-4 py-2 text-sm font-medium" style="background:${SP.surface};color:${SP.ink}">${esc(businessName)} Event</span>
         <div class="font-semibold uppercase leading-[1.05] tracking-[-0.4px] text-[clamp(2rem,4vw,2.8rem)]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(text(event.content, "headline", "Ultimate padel adventure"))}</div>
         <div><div class="text-base lg:text-lg" style="color:${SP.ink}">March 19, 2025</div><div class="mt-1 text-base font-semibold lg:text-lg" style="color:${SP.ink}">123 Padel Player, Adventure City</div></div>
