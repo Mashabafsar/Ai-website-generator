@@ -2,7 +2,7 @@ import { Sora } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
@@ -246,7 +246,7 @@ export function CraftedSpacesSite({
       </section>
 
       {/* Recent projects */}
-      <section id="cs-work" className="pt-20 lg:pt-[110px]">
+      <section id="cs-work" className="pt-20 lg:pt-[110px]" style={sectionBandStyle(projects.theme)}>
         <Shell>
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -291,14 +291,14 @@ export function CraftedSpacesSite({
       </section>
 
       {/* Experience band */}
-      <section id="cs-about" className="mt-20 bg-[#1A1A1A] py-20 text-white lg:mt-[110px] lg:py-[120px]">
+      <section id="cs-about" className="mt-20 py-20 text-white lg:mt-[110px] lg:py-[120px]" style={{ backgroundColor: CS.inverse, ...sectionBandStyle(about.theme) }}>
         <Shell className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,780px)]">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[#D5CCBF]">What We Do</p>
             <h2 className="mt-4 max-w-xl text-4xl leading-tight lg:text-[56px]">
               {text(about.content, "heading", "35 Years Combined Experience of Crafting Spaces")}
             </h2>
-            <p className="mt-7 max-w-xl text-sm leading-7 text-[#B0B0B0] lg:text-base">
+            <p className="mt-7 max-w-xl text-sm leading-7 text-[color:var(--theme-muted,#B0B0B0)] lg:text-base">
               {text(
                 about.content,
                 "body",
@@ -327,7 +327,7 @@ export function CraftedSpacesSite({
                     <img src={A.icons[i % A.icons.length]} alt="" width={70} height={70} className="size-[70px]" />
                   )}
                   <h3 className="mt-4 text-2xl">{title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#B0B0B0]">{capabilityBodies[i] || ""}</p>
+                  <p className="mt-3 text-sm leading-7 text-[color:var(--theme-muted,#B0B0B0)]">{capabilityBodies[i] || ""}</p>
                 </div>
               ))}
             </div>
@@ -336,7 +336,7 @@ export function CraftedSpacesSite({
       </section>
 
       {/* Services cards */}
-      <section id="cs-services" className="py-20 lg:py-[120px]">
+      <section id="cs-services" className="py-20 lg:py-[120px]" style={sectionBandStyle(services.theme)}>
         <Shell>
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.2em] text-[#7A6E62]">
@@ -518,7 +518,7 @@ export function CraftedSpacesSite({
       </section>
 
       {/* CTA + footer */}
-      <section id="cs-contact" className="bg-[#1A1A1A] pt-16 text-white lg:pt-[100px]">
+      <section id="cs-contact" className="pt-16 text-white lg:pt-[100px]" style={{ backgroundColor: CS.inverse, ...sectionBandStyle(cta.theme) }}>
         <Shell className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,650px)]">
           <div>
             <h2 className="text-4xl leading-tight lg:text-[56px]">
@@ -530,7 +530,7 @@ export function CraftedSpacesSite({
               </Pill>
             </div>
           </div>
-          <p className="text-sm leading-7 text-[#B0B0B0] lg:text-base">
+          <p className="text-sm leading-7 text-[color:var(--theme-muted,#B0B0B0)] lg:text-base">
             {text(
               cta.content,
               "subheadline",
@@ -557,7 +557,7 @@ export function CraftedSpacesSite({
                   {businessName}
                 </span>
               </div>
-              <p className="mt-4 max-w-sm text-sm leading-7 text-[#B0B0B0]">
+              <p className="mt-4 max-w-sm text-sm leading-7 text-[color:var(--theme-muted,#B0B0B0)]">
                 {text(footer.content, "tagline", "Designing spaces that feel as good as they look.")}
               </p>
               <div className="mt-6 flex items-center gap-3">
@@ -598,7 +598,7 @@ export function CraftedSpacesSite({
             </FooterCol>
           </div>
 
-          <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 py-6 text-sm text-[#B0B0B0]">
+          <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 py-6 text-sm text-[color:var(--theme-muted,#B0B0B0)]">
             <span>&copy; {new Date().getFullYear()} {businessName}. All rights reserved.</span>
             <span className="flex gap-6">
               <span>Terms of Use</span>
@@ -631,7 +631,7 @@ function GalleryImage({ src, className = "" }: { src: string; className?: string
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-4 text-sm uppercase tracking-[0.18em] text-[#B0B0B0]">{title}</p>
+      <p className="mb-4 text-sm uppercase tracking-[0.18em] text-[color:var(--theme-muted,#B0B0B0)]">{title}</p>
       <div className="flex flex-col gap-3 text-sm leading-7">{children}</div>
     </div>
   );

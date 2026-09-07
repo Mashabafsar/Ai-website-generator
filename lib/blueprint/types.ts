@@ -11,6 +11,13 @@ export type StockImageReference = {
   altText: string;
 };
 
+/** Optional per-section color overrides. Empty/unset means inherit the site theme. */
+export type SectionTheme = {
+  background?: string;
+  foreground?: string;
+  accent?: string;
+};
+
 export type WebsiteSection = {
   id: string;
   type: string; // e.g. "hero" (must be an allowed section type)
@@ -26,6 +33,8 @@ export type WebsiteSection = {
    * project generated before icons existed, means the design's own glyph.
    */
   icons?: (string | null)[];
+  /** Per-section colors. Omitted on older projects — they inherit the site theme. */
+  theme?: SectionTheme;
 };
 
 export type WebsitePage = {
@@ -77,6 +86,11 @@ export type ThemeTokens = {
    * so templates can use it to decide whether to swap their built-in mark.
    */
   logoUrl?: string;
+  /**
+   * Questionnaire / editor brand tone (e.g. "Bold & energetic"). Used to derive
+   * contrast for dark bands vs body surfaces. Unset keeps a balanced default.
+   */
+  tone?: string;
 };
 
 export type WebsiteBlueprint = {
@@ -117,6 +131,8 @@ export type AssembledSection = {
   variant: string;
   componentName: string;
   props: Record<string, unknown>;
+  /** Per-section color overrides, forwarded from the blueprint. */
+  theme?: SectionTheme;
 };
 
 export type AssembledPage = {

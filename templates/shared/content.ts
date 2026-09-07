@@ -2,7 +2,7 @@
 // content out of the blueprint's fixed slots, so the layout can never change —
 // only the words and images inside it.
 
-import type { AssembledSite, WebsiteBlueprint } from "@/lib/blueprint/types";
+import type { AssembledSite, SectionTheme, WebsiteBlueprint } from "@/lib/blueprint/types";
 
 export type SlotContent = Record<string, string | string[]>;
 
@@ -18,6 +18,8 @@ export type TemplateSlot = {
    * the wrong icon.
    */
   icons: (string | undefined)[];
+  /** Per-section color overrides. Empty means inherit the site theme. */
+  theme?: SectionTheme;
 };
 
 type ImageLike = { url?: string } | null | undefined;
@@ -58,6 +60,7 @@ export function toSlots(
       image: url(section.selectedImage),
       itemImages: (section.itemImages ?? []).map(url),
       icons: names(section.icons),
+      theme: section.theme,
     }));
   }
 
@@ -69,6 +72,7 @@ export function toSlots(
         selectedImage?: ImageLike;
         itemImages?: ImageLike[];
         icons?: unknown;
+        theme?: SectionTheme;
       };
       return {
         type: section.type,
@@ -77,6 +81,7 @@ export function toSlots(
         image: url(props.image) || url(props.selectedImage),
         itemImages: (props.itemImages ?? []).map(url),
         icons: names(props.icons),
+        theme: section.theme ?? props.theme,
       };
     });
   }

@@ -11,8 +11,11 @@ import type {
   WebsiteSection,
   SiteContact,
   StockImageReference,
+  SectionTheme,
 } from "@/lib/blueprint/types";
 import { assembleSite } from "@/lib/agents/section-assembly";
+import { CUSTOM_PALETTE_NAME, PALETTE_NAMES, paletteColors } from "@/lib/agents/theme";
+import { TONES } from "@/lib/questionnaire/schema";
 import { getVariantSpec, iconCount } from "@/lib/sections/registry";
 import { SitePreview } from "@/components/editor/site-preview";
 import { ImagePicker } from "@/components/editor/image-picker";
@@ -229,6 +232,14 @@ export function EditorWorkspace({
               onItemImage={(itemIndex, img) => updateItemImage(section.id, itemIndex, img)}
               onIcon={(itemIndex, name) => updateIcon(section.id, itemIndex, name)}
               onAiEdit={(content) => applyAiEdit(section.id, content)}
+              onTheme={(next) =>
+                mutate((bp) => {
+                  const s = withSection(bp, section.id);
+                  if (!s) return;
+                  if (next) s.theme = next;
+                  else delete s.theme;
+                })
+              }
             />
           ))}
         </div>
@@ -262,17 +273,51 @@ function ThemeEditor({
   theme: ThemeTokens;
   onChange: (t: ThemeTokens) => void;
 }) {
+  const markCustom = (next: ThemeTokens): ThemeTokens => ({
+    ...next,
+    palette: next.palette && next.palette !== CUSTOM_PALETTE_NAME ? next.palette : CUSTOM_PALETTE_NAME,
+  });
+
   const set = (key: keyof ThemeTokens["colors"], value: string) =>
-    onChange({ ...theme, colors: { ...theme.colors, [key]: value } });
+    onChange(markCustom({ ...theme, colors: { ...theme.colors, [key]: value } }));
+
+  function applyPalette(name: string) {
+    const colors = paletteColors(name);
+    if (!colors) return;
+    onChange({ ...theme, colors, palette: name });
+  }
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4">
       <div>
-        <div className="mb-3 text-sm font-semibold">Brand colors</div>
-        <div className="grid grid-cols-3 gap-3">
-          {(["primary", "secondary", "accent"] as const).map((key) => (
+        <div className="mb-3 text-sm font-semibold">Site theme</div>
+        <Label className="text-xs">Palette</Label>
+        <Select value={theme.palette || "__template"} onValueChange={(v) => applyPalette(v)}>
+          <SelectTrigger className="mt-1 h-9" aria-label="Website palette">
+            <span>{theme.palette || "Template default"}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__template" disabled>
+              Template default
+            </SelectItem>
+            {PALETTE_NAMES.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-2 text-xs text-muted-foreground">
+          A chosen palette repaints the whole site — canvas, bands, cards, and buttons.
+        </p>
+      </div>
+
+      <div>
+        <div className="mb-2 text-sm font-semibold">Brand colors</div>
+        <div className="grid grid-cols-5 gap-2">
+          {(["primary", "secondary", "accent", "background", "foreground"] as const).map((key) => (
             <div key={key} className="space-y-1">
-              <Label className="text-xs capitalize">{key}</Label>
+              <Label className="text-[10px] capitalize">{key}</Label>
               <input
                 type="color"
                 value={theme.colors[key]}
@@ -283,6 +328,25 @@ function ThemeEditor({
             </div>
           ))}
         </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Brand tone</Label>
+        <Select
+          value={theme.tone || TONES[0]}
+          onValueChange={(tone) => onChange({ ...theme, tone, palette: theme.palette || CUSTOM_PALETTE_NAME })}
+        >
+          <SelectTrigger className="mt-1 h-9" aria-label="Brand tone">
+            <span>{theme.tone || TONES[0]}</span>
+          </SelectTrigger>
+          <SelectContent>
+            {TONES.map((tone) => (
+              <SelectItem key={tone} value={tone}>
+                {tone}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <FontPicker
@@ -453,6 +517,7 @@ function SectionEditor({
   onItemImage,
   onIcon,
   onAiEdit,
+  onTheme,
 }: {
   projectId: string;
   pageSlug: string;
@@ -464,6 +529,7 @@ function SectionEditor({
   onItemImage: (index: number, image: StockImageReference | null) => void;
   onIcon: (index: number, name: string | null) => void;
   onAiEdit: (content: Record<string, string | string[]>) => void;
+  onTheme: (theme: SectionTheme | undefined) => void;
 }) {
   const spec = getVariantSpec(section.variant);
   const [open, setOpen] = useState(defaultOpen);
@@ -615,6 +681,8 @@ function SectionEditor({
             />
           )}
 
+          <SectionThemeControls value={section.theme} onChange={onTheme} />
+
           {spec?.needsItemImages && (
             <div className="space-y-2 border-t pt-3">
               <Label className="text-xs font-semibold">Item images</Label>
@@ -638,6 +706,74 @@ function SectionEditor({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SectionThemeControls({
+  value,
+  onChange,
+}: {
+  value?: SectionTheme;
+  onChange: (theme: SectionTheme | undefined) => void;
+}) {
+  const set = (key: keyof SectionTheme, hex: string) => {
+    onChange({ ...value, [key]: hex });
+  };
+  const clear = (key: keyof SectionTheme) => {
+    const next = { ...value };
+    delete next[key];
+    onChange(next.background || next.foreground || next.accent ? next : undefined);
+  };
+  const hasOverride = Boolean(value?.background || value?.foreground || value?.accent);
+
+  return (
+    <div className="space-y-2 border-t pt-3">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs font-semibold">Section colors</Label>
+        {hasOverride ? (
+          <button
+            type="button"
+            className="text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+            onClick={() => onChange(undefined)}
+          >
+            Inherit site theme
+          </button>
+        ) : (
+          <span className="text-[11px] text-muted-foreground">Inherit site theme</span>
+        )}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {(
+          [
+            ["background", "Band"],
+            ["foreground", "Text"],
+            ["accent", "Accent"],
+          ] as const
+        ).map(([key, label]) => (
+          <div key={key} className="space-y-1">
+            <Label className="text-[10px]">{label}</Label>
+            <div className="flex items-center gap-1">
+              <input
+                type="color"
+                value={value?.[key] || "#888888"}
+                onChange={(e) => set(key, e.target.value)}
+                className="h-7 w-7 cursor-pointer rounded border"
+                aria-label={`${label} color`}
+              />
+              {value?.[key] ? (
+                <button
+                  type="button"
+                  className="text-[10px] text-muted-foreground"
+                  onClick={() => clear(key)}
+                >
+                  Reset
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

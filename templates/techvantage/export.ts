@@ -1,6 +1,6 @@
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandCss } from "../shared/brand";
+import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
@@ -258,7 +258,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
   </div>
 </div>
 
-<section id="tv-services" class="bg-white py-16 lg:py-[110px]">
+<section id="tv-services" class="py-16 lg:py-[110px]" style="background:${TV.canvas}">
   <div class="${SHELL}">
     ${eyebrow(text(services.content, "eyebrow", "Our services"))}
     <div class="flex flex-wrap items-end justify-between gap-6">
@@ -327,7 +327,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
   </div>
 </section>
 
-<section class="bg-white py-16 lg:py-[110px]">
+<section class="py-16 lg:py-[110px]" style="background:${TV.canvas}">
   <div class="${SHELL}">
     <div class="mx-auto max-w-[720px] text-center">
       ${eyebrow(text(why.content, "eyebrow", "Why choose us"), { center: true })}
@@ -409,7 +409,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="tv-work" class="bg-white py-16 lg:py-[110px]">
+<section id="tv-work" class="py-16 lg:py-[110px]" style="background:${TV.canvas}">
   <div class="${SHELL}">
     ${eyebrow(text(work.content, "eyebrow", "Our work"))}
     <div class="flex flex-wrap items-end justify-between gap-6">
@@ -453,7 +453,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="tv-articles" class="bg-white py-16 lg:py-[110px]">
+<section id="tv-articles" class="py-16 lg:py-[110px]" style="background:${TV.canvas}">
   <div class="${SHELL}">
     ${eyebrow(text(articles.content, "eyebrow", "Blogs"))}
     <div class="flex flex-wrap items-end justify-between gap-6">
@@ -532,7 +532,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
   </div>
 </section>
 
-<div id="tv-contact" style="background:${PANEL}">
+<div id="tv-contact" style="background:${PANEL};${sectionBandCss(cta.theme)}">
   <div style="background-image:linear-gradient(to bottom, ${TV.surface} 45%, transparent 45%)">
     <div class="${SHELL}">
       <div class="overflow-hidden rounded-[24px] px-7 py-9 lg:px-14 lg:py-11" style="background-color:${TV.blue};background-image:url(${A.ctaBg});background-size:cover;background-position:center">
@@ -647,7 +647,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
     body {
       font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
       color: ${TV.ink};
-      background: #ffffff;
+      background: ${TV.canvas};
       -webkit-font-smoothing: antialiased;
     }
     a { color: inherit; text-decoration: none; }

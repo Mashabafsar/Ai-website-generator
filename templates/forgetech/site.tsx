@@ -1,8 +1,8 @@
 import { Nunito_Sans, Space_Grotesk } from "next/font/google";
-import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
+import type { AssembledSite, SectionTheme, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FT } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 
 const display = Space_Grotesk({
@@ -135,7 +135,7 @@ export function ForgeTechSite({
         ...brandStyle(site?.theme, "#FF750B"),
         fontFamily: "var(--ft-body), ui-sans-serif, system-ui, sans-serif",
         color: FT.ink,
-        backgroundColor: "#ffffff",
+        backgroundColor: FT.canvas,
         ...themeFontStyle(site?.theme, ["--ft-display", "--ft-body"]),
       }}
     >
@@ -213,6 +213,7 @@ export function ForgeTechSite({
         style={{
           backgroundColor: FT.woodsmoke,
           backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.15) 100%), url(${heroImage})`,
+          ...sectionBandStyle(hero.theme),
         }}
       >
         <div className="mx-auto w-full max-w-[1400px]">
@@ -252,7 +253,7 @@ export function ForgeTechSite({
       </section>
 
       {/* Capabilities */}
-      <Section>
+      <Section theme={capabilities.theme}>
         <SectionHeading
           eyebrow="What we build"
           heading={text(capabilities.content, "heading", "Core industries we serve")}
@@ -282,7 +283,7 @@ export function ForgeTechSite({
       </Section>
 
       {/* About & metrics */}
-      <section id="ft-about" className="px-4 py-20 md:px-8 md:py-28" style={{ backgroundColor: FT.surface }}>
+      <section id="ft-about" className="px-4 py-20 md:px-8 md:py-28" style={{ backgroundColor: FT.surface, ...sectionBandStyle(about.theme) }}>
         <div className="mx-auto max-w-[1400px]">
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
             <div>
@@ -338,7 +339,7 @@ export function ForgeTechSite({
       </section>
 
       {/* Services */}
-      <Section id="ft-services">
+      <Section id="ft-services" theme={services.theme}>
         <div className="mx-auto max-w-3xl text-center">
           <Eyebrow center>Our services</Eyebrow>
           <h2
@@ -357,7 +358,11 @@ export function ForgeTechSite({
             <article
               key={`${title}-${i}`}
               className="group flex flex-col border bg-white transition-colors hover:border-[color:var(--ft-accent)]"
-              style={{ borderColor: FT.line, ["--ft-accent" as string]: FT.trinidad }}
+              style={{
+                borderColor: FT.line,
+                backgroundColor: FT.card,
+                ["--ft-accent" as string]: FT.trinidad,
+              }}
             >
               <div
                 className="h-44 bg-cover bg-center"
@@ -397,7 +402,10 @@ export function ForgeTechSite({
             <span
               key={`strip-${title}-${i}`}
               className="text-base font-bold uppercase tracking-tight sm:text-lg"
-              style={{ fontFamily: "var(--ft-display)", color: `${FT.shark}66` }}
+              style={{
+                fontFamily: "var(--ft-display)",
+                color: `color-mix(in oklab, ${FT.shark} 40%, transparent)`,
+              }}
             >
               {title}
             </span>
@@ -408,7 +416,7 @@ export function ForgeTechSite({
       {/* Value proposition */}
       <section
         className="px-4 py-20 text-white md:px-8 md:py-28"
-        style={{ backgroundColor: FT.woodsmoke }}
+        style={{ backgroundColor: FT.woodsmoke, ...sectionBandStyle(value.theme) }}
       >
         <div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
@@ -461,7 +469,7 @@ export function ForgeTechSite({
       </section>
 
       {/* Testimonials */}
-      <Section>
+      <Section theme={testimonials.theme}>
         <SectionHeading
           eyebrow="Testimonials"
           heading={text(testimonials.content, "heading", "What our clients say")}
@@ -505,6 +513,7 @@ export function ForgeTechSite({
         style={{
           backgroundColor: FT.shark,
           backgroundImage: `linear-gradient(rgba(0,0,0,0.62), rgba(0,0,0,0.62)), url(${showcaseImage})`,
+          ...sectionBandStyle(showcase.theme),
         }}
       >
         <div className="mx-auto max-w-[1400px] text-white">
@@ -538,7 +547,7 @@ export function ForgeTechSite({
       </section>
 
       {/* FAQ */}
-      <Section>
+      <Section theme={faq.theme}>
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
           <div>
             <Eyebrow>FAQs</Eyebrow>
@@ -581,7 +590,7 @@ export function ForgeTechSite({
 
       {/* Articles */}
       {articleTitles.length > 0 && (
-        <section id="ft-articles" className="px-4 py-20 md:px-8 md:py-28" style={{ backgroundColor: FT.surface }}>
+        <section id="ft-articles" className="px-4 py-20 md:px-8 md:py-28" style={{ backgroundColor: FT.surface, ...sectionBandStyle(articles.theme) }}>
           <div className="mx-auto max-w-[1400px]">
             <SectionHeading
               eyebrow="Insights"
@@ -590,7 +599,7 @@ export function ForgeTechSite({
             />
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {articleTitles.slice(0, 3).map((title, i) => (
-                <article key={`${title}-${i}`} className="flex flex-col bg-white">
+                <article key={`${title}-${i}`} className="flex flex-col" style={{ backgroundColor: FT.card }}>
                   <div
                     className="h-48 bg-cover bg-center"
                     style={{
@@ -624,7 +633,7 @@ export function ForgeTechSite({
       <section
         id="ft-contact"
         className="px-4 py-20 text-center text-white md:px-8"
-        style={{ backgroundColor: FT.trinidad }}
+        style={{ backgroundColor: FT.trinidad, ...sectionBandStyle(cta.theme) }}
       >
         <div className="mx-auto max-w-3xl">
           <h2
@@ -694,7 +703,7 @@ export function ForgeTechSite({
       </section>
 
       {/* Footer */}
-      <footer className="px-4 py-14 text-white md:px-8" style={{ backgroundColor: FT.woodsmoke }}>
+      <footer className="px-4 py-14 text-white md:px-8" style={{ backgroundColor: FT.woodsmoke, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[1400px]">
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="max-w-sm">
@@ -732,9 +741,17 @@ export function ForgeTechSite({
   );
 }
 
-function Section({ id, children }: { id?: string; children: React.ReactNode }) {
+function Section({
+  id,
+  children,
+  theme,
+}: {
+  id?: string;
+  children: React.ReactNode;
+  theme?: SectionTheme;
+}) {
   return (
-    <section id={id} className="px-4 py-20 md:px-8 md:py-28">
+    <section id={id} className="px-4 py-20 md:px-8 md:py-28" style={sectionBandStyle(theme)}>
       <div className="mx-auto max-w-[1400px]">{children}</div>
     </section>
   );

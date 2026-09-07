@@ -232,7 +232,13 @@ export function QuestionnaireWizard({
         throw new Error(data.error || "Generation failed");
       }
 
-      toast.success("Website generated!");
+      if (data.fromTemplate) {
+        toast.error(
+          "This website is using starter content. We couldn't reach the tools that write your copy, so you were not charged. You can try writing it again from the preview."
+        );
+      } else {
+        toast.success("Website generated!");
+      }
       router.push(`/app/project/${projectId}/preview`);
       router.refresh();
     } catch (err) {

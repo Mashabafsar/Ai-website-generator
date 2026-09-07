@@ -31,6 +31,7 @@ export const VISUAL_STYLES = [
 export const COLOR_PREFERENCES = [
   "Brand blue & violet",
   "Emerald & teal",
+  "Green & black",
   "Warm sunset",
   "Monochrome",
   "Deep navy",

@@ -1,6 +1,6 @@
 import { FT } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandCss } from "../shared/brand";
+import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
@@ -163,7 +163,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
   </div>
 </div>
 
-<section class="relative flex min-h-[520px] items-center bg-cover bg-center px-4 py-24 md:min-h-[640px] md:px-8" style="background-color:${FT.woodsmoke};background-image:linear-gradient(90deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.55) 45%,rgba(0,0,0,0.15) 100%),url('${esc(heroImage)}')">
+<section class="relative flex min-h-[520px] items-center bg-cover bg-center px-4 py-24 md:min-h-[640px] md:px-8" style="background-color:${FT.woodsmoke};background-image:linear-gradient(90deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.55) 45%,rgba(0,0,0,0.15) 100%),url('${esc(heroImage)}');${sectionBandCss(hero.theme)}">
   <div class="mx-auto w-full max-w-[1400px]">
     <div class="max-w-2xl text-white">
       ${eyebrow(text(hero.content, "eyebrow", "Industrial fabrication"), true)}
@@ -213,7 +213,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="ft-about" class="px-4 py-20 md:px-8 md:py-28" style="background:${FT.surface}">
+<section id="ft-about" class="px-4 py-20 md:px-8 md:py-28" style="background:${FT.surface};${sectionBandCss(about.theme)}">
   <div class="mx-auto max-w-[1400px]">
     <div class="grid gap-10 lg:grid-cols-2 lg:gap-16">
       <div>
@@ -286,13 +286,13 @@ export function renderForgeTechPage(site: AssembledSite): string {
       .slice(0, 5)
       .map(
         (title) =>
-          `<span class="text-base font-bold uppercase tracking-tight sm:text-lg" style="font-family:var(--ft-display);color:${FT.shark}66">${esc(title)}</span>`
+          `<span class="text-base font-bold uppercase tracking-tight sm:text-lg" style="font-family:var(--ft-display);color:color-mix(in oklab,${FT.shark} 40%,transparent)">${esc(title)}</span>`
       )
       .join("\n    ")}
   </div>
 </div>
 
-<section class="px-4 py-20 text-white md:px-8 md:py-28" style="background:${FT.woodsmoke}">
+<section class="px-4 py-20 text-white md:px-8 md:py-28" style="background:${FT.woodsmoke};${sectionBandCss(value.theme)}">
   <div class="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-2 lg:gap-16">
     <div>
       ${eyebrow("Why choose us", true)}
@@ -353,7 +353,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="ft-projects" class="relative bg-cover bg-center px-4 py-20 md:px-8 md:py-28" style="background-color:${FT.shark};background-image:linear-gradient(rgba(0,0,0,0.62),rgba(0,0,0,0.62)),url('${esc(showcaseImage)}')">
+<section id="ft-projects" class="relative bg-cover bg-center px-4 py-20 md:px-8 md:py-28" style="background-color:${FT.shark};background-image:linear-gradient(rgba(0,0,0,0.62),rgba(0,0,0,0.62)),url('${esc(showcaseImage)}');${sectionBandCss(showcase.theme)}">
   <div class="mx-auto max-w-[1400px] text-white">
     ${eyebrow("Our projects", true)}
     <h2 class="mt-4 max-w-2xl text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl lg:text-[3.25rem]" style="font-family:var(--ft-display)">${esc(
@@ -406,7 +406,7 @@ export function renderForgeTechPage(site: AssembledSite): string {
 
 ${
   articleTitles.length > 0
-    ? `<section id="ft-articles" class="px-4 py-20 md:px-8 md:py-28" style="background:${FT.surface}">
+    ? `<section id="ft-articles" class="px-4 py-20 md:px-8 md:py-28" style="background:${FT.surface};${sectionBandCss(articles.theme)}">
   <div class="mx-auto max-w-[1400px]">
     <div class="max-w-3xl">
       ${eyebrow("Insights")}
@@ -438,7 +438,7 @@ ${
     : ""
 }
 
-<section id="ft-contact" class="px-4 py-20 text-center text-white md:px-8" style="background:${FT.trinidad}">
+<section id="ft-contact" class="px-4 py-20 text-center text-white md:px-8" style="background:${FT.trinidad};${sectionBandCss(cta.theme)}">
   <div class="mx-auto max-w-3xl">
     <h2 class="text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl lg:text-[3.25rem]" style="font-family:var(--ft-display)">${esc(
       text(cta.content, "headline", "Have a project in mind?")
@@ -476,7 +476,7 @@ ${
   </div>
 </section>
 
-<footer class="px-4 py-14 text-white md:px-8" style="background:${FT.woodsmoke}">
+<footer class="px-4 py-14 text-white md:px-8" style="background:${FT.woodsmoke};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[1400px]">
     <div class="flex flex-wrap items-start justify-between gap-8">
       <div class="max-w-sm">
@@ -516,7 +516,7 @@ ${
     body {
       font-family: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
       color: ${FT.ink};
-      background: #ffffff;
+      background: ${FT.canvas};
       -webkit-font-smoothing: antialiased;
     }
     .ft-nav { transition: color .2s ease; }

@@ -2,7 +2,7 @@ import { Inter, Rubik } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { WH } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
@@ -218,7 +218,7 @@ function Footer({
   contactPhone: string;
 }) {
   return (
-    <footer className="relative overflow-hidden pt-20 text-white" style={{ background: WH.mirage }}>
+    <footer className="relative overflow-hidden pt-20 text-white" style={{ background: WH.inverse }}>
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full opacity-30" style={{ background: WH.brand, filter: "blur(80px)" }} />
       <div className="relative mx-auto max-w-[1240px] px-5 pb-10 lg:px-8">
         <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr] md:gap-8">
@@ -310,7 +310,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 function PageHeader({ slot, fallbackTitle }: { slot: TemplateSlot; fallbackTitle: string }) {
   return (
-    <section className="relative overflow-hidden" style={{ background: WH.surface }}>
+    <section className="relative overflow-hidden" style={{ background: WH.surface, ...sectionBandStyle(slot.theme) }}>
       <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full opacity-40" style={{ background: WH.brandSoft, filter: "blur(60px)" }} data-parallax="0.1" />
       <div className="relative mx-auto max-w-[1240px] px-5 py-20 text-center lg:px-8 lg:py-28">
         <Eyebrow>{text(slot.content, "eyebrow", fallbackTitle)}</Eyebrow>
@@ -325,9 +325,20 @@ function PageHeader({ slot, fallbackTitle }: { slot: TemplateSlot; fallbackTitle
   );
 }
 
-function Section({ children, tint }: { children: React.ReactNode; tint?: boolean }) {
+function Section({
+  children,
+  tint,
+  theme,
+}: {
+  children: React.ReactNode;
+  tint?: boolean;
+  theme?: import("@/lib/blueprint/types").SectionTheme;
+}) {
   return (
-    <section className="px-5 py-20 lg:px-8 lg:py-28" style={tint ? { background: WH.surface } : undefined}>
+    <section
+      className="px-5 py-20 lg:px-8 lg:py-28"
+      style={{ ...(tint ? { background: WH.surface } : {}), ...sectionBandStyle(theme) }}
+    >
       <div className="mx-auto max-w-[1240px]">{children}</div>
     </section>
   );
@@ -365,7 +376,7 @@ function FeatureCards({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles", ["User centered design", "Earn extra money", "Launch your service"]);
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <div className="grid gap-6 md:grid-cols-3">
         {titles.map((title, i) => (
           <article
@@ -395,7 +406,7 @@ function FeatureCards({ slot }: { slot: TemplateSlot }) {
 
 function StorySection({ slot, image, flip }: { slot: TemplateSlot; image: string; flip?: boolean }) {
   return (
-    <Section tint>
+    <Section tint theme={slot.theme}>
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div className={flip ? "lg:order-2" : ""}>
           <div className="relative">
@@ -426,7 +437,7 @@ function ValueList({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles", ["User centered design", "Get latest updates", "Transparent pricing"]);
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <SectionHeading
@@ -472,7 +483,7 @@ function Testimonials({ slot }: { slot: TemplateSlot }) {
   const authors = list(slot.content, "authors");
   const roles = list(slot.content, "roles");
   return (
-    <Section tint>
+    <Section tint theme={slot.theme}>
       <SectionHeading eyebrow="Testimonials" heading={text(slot.content, "heading", "Customers are loving it")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {quotes.map((quote, i) => (
@@ -505,7 +516,7 @@ function ServicesCards({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles", ["Digital Marketing", "Content Writing", "UI Design"]);
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Our services" heading={text(slot.content, "heading", "Everything you need to grow")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {titles.map((title, i) => (
@@ -539,7 +550,7 @@ function ProcessSteps({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "stepTitles", ["Discover", "Plan", "Build", "Launch"]);
   const bodies = list(slot.content, "stepBodies");
   return (
-    <Section tint>
+    <Section tint theme={slot.theme}>
       <SectionHeading eyebrow="How it works" heading={text(slot.content, "heading", "A simple, proven process")} />
       <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {titles.map((title, i) => (
@@ -565,7 +576,7 @@ function Pricing({ slot }: { slot: TemplateSlot }) {
   const prices = list(slot.content, "planPrices", ["$99", "$299", "$599"]);
   const features = list(slot.content, "planFeatures");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Pricing" heading={text(slot.content, "heading", "Simple, transparent pricing")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {names.map((name, i) => {
@@ -619,7 +630,7 @@ function Faq({ slot }: { slot: TemplateSlot }) {
   const questions = list(slot.content, "questions");
   const answers = list(slot.content, "answers");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="FAQ" heading={text(slot.content, "heading", "Frequently asked questions")} />
       <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(29,38,58,0.3)]" style={{ borderColor: WH.line }}>
         {questions.map((question, i) => (
@@ -645,7 +656,7 @@ function Contact({ slot, meta }: { slot: TemplateSlot; meta: PageMeta }) {
   const phone = text(slot.content, "phone", meta.contactPhone);
   const address = text(slot.content, "address", "");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <SectionHeading eyebrow="Contact" heading={text(slot.content, "heading", "Get in touch")} subheading={text(slot.content, "subheading", "")} center={false} />
@@ -688,7 +699,7 @@ function Portfolio({ slot }: { slot: TemplateSlot }) {
   const bodies = list(slot.content, "itemBodies");
   const roles = list(slot.content, "roles");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Portfolio" heading={text(slot.content, "heading", "Selected work")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {titles.map((title, i) => (
@@ -724,7 +735,7 @@ function BlogGrid({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles");
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Blog" heading={text(slot.content, "heading", "Latest articles")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {titles.map((title, i) => (
@@ -787,7 +798,7 @@ function CtaBanner({ slot }: { slot: TemplateSlot }) {
 
 function HomeHero({ slot }: { slot: TemplateSlot }) {
   return (
-    <section className="relative overflow-hidden" style={{ background: WH.surface }}>
+    <section className="relative overflow-hidden" style={{ background: WH.surface, ...sectionBandStyle(slot.theme) }}>
       <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full opacity-50" style={{ background: WH.brandSoft, filter: "blur(70px)" }} />
       <div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full opacity-40" style={{ background: WH.skeptic, filter: "blur(80px)" }} />
       <div className="relative mx-auto grid max-w-[1240px] items-center gap-12 px-5 py-20 lg:grid-cols-2 lg:px-8 lg:py-28">

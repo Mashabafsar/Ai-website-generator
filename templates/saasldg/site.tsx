@@ -2,7 +2,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { SL, SL_FEATURE_COLORS, SL_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
@@ -171,7 +171,7 @@ export function SaasLandingSite({
       {/* Hero */}
       <section
         className="mx-4 mt-6 rounded-[2rem] border px-5 pt-16 sm:mx-6 md:pt-20"
-        style={{ backgroundColor: SL.surface, borderColor: SL.line }}
+        style={{ backgroundColor: SL.surface, borderColor: SL.line, ...sectionBandStyle(hero.theme) }}
       >
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <Eyebrow center>{text(hero.content, "eyebrow", "Cloud workspace")}</Eyebrow>
@@ -239,7 +239,7 @@ export function SaasLandingSite({
       </section>
 
       {/* Features */}
-      <section id="sl-features" className="px-6 py-8 md:py-12">
+      <section id="sl-features" className="px-6 py-8 md:py-12" style={sectionBandStyle(features.theme)}>
         <div className="mx-auto max-w-2xl text-center">
           <Eyebrow center>Features</Eyebrow>
           <h2
@@ -276,7 +276,7 @@ export function SaasLandingSite({
       </section>
 
       {/* Pricing */}
-      <section id="sl-pricing" className="px-4 py-16 sm:px-6 md:py-24">
+      <section id="sl-pricing" className="px-4 py-16 sm:px-6 md:py-24" style={sectionBandStyle(pricing.theme)}>
         <div
           className="mx-auto max-w-6xl rounded-[2rem] border px-6 py-16 md:px-10"
           style={{ backgroundColor: SL.surface, borderColor: SL.line }}
@@ -531,7 +531,7 @@ export function SaasLandingSite({
       </section>
 
       {/* Footer */}
-      <footer className="border-t px-6 py-14" style={{ borderColor: SL.line }}>
+      <footer className="border-t px-6 py-14" style={{ borderColor: SL.line, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[80rem]">
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="max-w-sm">

@@ -2,7 +2,7 @@ import { Inter, Urbanist } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
@@ -180,7 +180,7 @@ export function TechvantageSite({
         ...brandStyle(site?.theme, "#0C3DFF"),
         fontFamily: "var(--tv-body), ui-sans-serif, system-ui, sans-serif",
         color: TV.ink,
-        backgroundColor: "#ffffff",
+        backgroundColor: TV.canvas,
         ...themeFontStyle(site?.theme, ["--tv-display", "--tv-body"]),
       }}
     >
@@ -265,7 +265,7 @@ export function TechvantageSite({
       </div>
 
       {/* Services */}
-      <section id="tv-services" className="bg-white py-16 lg:py-[110px]">
+      <section id="tv-services" className="py-16 lg:py-[110px]" style={{ backgroundColor: TV.canvas, ...sectionBandStyle(services.theme) }}>
         <Shell>
           <Eyebrow>{text(services.content, "eyebrow", "Our services")}</Eyebrow>
           <div className="flex flex-wrap items-end justify-between gap-6">
@@ -329,7 +329,7 @@ export function TechvantageSite({
       </section>
 
       {/* Story + statistics */}
-      <section id="tv-about" className="py-16 lg:py-[110px]" style={{ backgroundColor: TV.surface }}>
+      <section id="tv-about" className="py-16 lg:py-[110px]" style={{ backgroundColor: TV.surface, ...sectionBandStyle(about.theme) }}>
         <Shell>
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,649px)_minmax(0,1fr)]">
             <div>
@@ -377,7 +377,7 @@ export function TechvantageSite({
       </section>
 
       {/* Why choose us */}
-      <section className="bg-white py-16 lg:py-[110px]">
+      <section className="py-16 lg:py-[110px]" style={{ backgroundColor: TV.canvas }}>
         <Shell>
           <div className="mx-auto max-w-[720px] text-center">
             <Eyebrow center>{text(why.content, "eyebrow", "Why choose us")}</Eyebrow>
@@ -423,7 +423,7 @@ export function TechvantageSite({
       </section>
 
       {/* Our approach */}
-      <section className="bg-white pb-16 lg:pb-[110px]">
+      <section className="pb-16 lg:pb-[110px]" style={{ backgroundColor: TV.canvas }}>
         <Shell>
           <div className="h-px w-full" style={{ backgroundColor: TV.line }} />
           <div className="mt-16 grid items-center gap-12 lg:mt-[100px] lg:grid-cols-2 lg:gap-16">
@@ -456,7 +456,7 @@ export function TechvantageSite({
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 lg:py-[110px]" style={{ background: PANEL }}>
+      <section className="py-16 lg:py-[110px]" style={{ background: PANEL, ...sectionBandStyle(testimonials.theme) }}>
         <Shell className="text-center">
           <Eyebrow center onDark>
             {text(testimonials.content, "eyebrow", "Testimonials")}
@@ -496,7 +496,7 @@ export function TechvantageSite({
       </section>
 
       {/* Case studies */}
-      <section id="tv-work" className="bg-white py-16 lg:py-[110px]">
+      <section id="tv-work" className="py-16 lg:py-[110px]" style={{ backgroundColor: TV.canvas, ...sectionBandStyle(work.theme) }}>
         <Shell>
           <Eyebrow>{text(work.content, "eyebrow", "Our work")}</Eyebrow>
           <div className="flex flex-wrap items-end justify-between gap-6">
@@ -559,7 +559,7 @@ export function TechvantageSite({
       </section>
 
       {/* Articles */}
-      <section id="tv-articles" className="bg-white py-16 lg:py-[110px]">
+      <section id="tv-articles" className="py-16 lg:py-[110px]" style={{ backgroundColor: TV.canvas, ...sectionBandStyle(articles.theme) }}>
         <Shell>
           <Eyebrow>{text(articles.content, "eyebrow", "Blogs")}</Eyebrow>
           <div className="flex flex-wrap items-end justify-between gap-6">
@@ -671,7 +671,7 @@ export function TechvantageSite({
       </section>
 
       {/* Closing call to action, straddling the light section and the footer */}
-      <div style={{ background: PANEL }} id="tv-contact">
+      <div style={{ background: PANEL, ...sectionBandStyle(cta.theme) }} id="tv-contact">
         {/* The hard-stop gradient puts the card's top half on the section above. */}
         <div
           style={{
@@ -856,7 +856,7 @@ function Heading({
       className={`text-[32px] font-medium leading-[1.18] sm:text-[40px] lg:text-[48px] lg:leading-[58px] ${
         center ? "mx-auto" : ""
       } ${className}`}
-      style={{ fontFamily: "var(--tv-display)", color: onDark ? "#ffffff" : TV.ink }}
+      style={{ fontFamily: "var(--tv-display)", color: onDark ? TV.onDark : TV.ink }}
     >
       {children}
     </h2>

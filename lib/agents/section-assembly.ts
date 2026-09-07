@@ -28,11 +28,13 @@ export function assembleSite(blueprint: WebsiteBlueprint, theme: ThemeTokens): A
           type: section.type,
           variant: section.variant,
           componentName: spec.componentName,
+          theme: section.theme,
           props: {
             ...section.content,
             image: section.selectedImage ?? null,
             itemImages: section.itemImages ?? [],
             icons: section.icons ?? [],
+            ...(section.theme ? { theme: section.theme } : {}),
             ...(section.type === "footer" || section.type === "hero" ? brandProps : {}),
           },
         };

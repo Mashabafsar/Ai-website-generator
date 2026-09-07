@@ -1,6 +1,6 @@
 import { SL, SL_FEATURE_COLORS, SL_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandCss } from "../shared/brand";
+import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
@@ -326,7 +326,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   </div>
 </section>
 
-<footer class="border-t px-6 py-14" style="border-color:${SL.line}">
+<footer class="border-t px-6 py-14" style="border-color:${SL.line};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[80rem]">
     <div class="flex flex-wrap items-start justify-between gap-8">
       <div class="max-w-sm">

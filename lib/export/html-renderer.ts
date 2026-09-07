@@ -5,6 +5,7 @@ import type {
   StockImageReference,
 } from "@/lib/blueprint/types";
 import { renderBespokeSite, hasBespokeExport } from "@/templates/export-registry";
+import { brandCss, sectionBandCss } from "@/templates/shared/brand";
 import { resolveThemeFont, themeFontHref } from "@/templates/shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 
@@ -410,7 +411,10 @@ function renderPage(page: AssembledPage, site: AssembledSite): string {
   const t = site.theme;
   const body = page.sections
     .filter((s) => s.type !== "footer")
-    .map((s) => `<div id="${esc(s.type)}">${renderSection(s, site)}</div>`)
+    .map((s) => {
+      const band = sectionBandCss(s.theme);
+      return `<div id="${esc(s.type)}"${band ? ` style="${band}"` : ""}>${renderSection(s, site)}</div>`;
+    })
     .join("\n");
   const footer = page.sections
     .filter((s) => s.type === "footer")
@@ -431,6 +435,7 @@ function renderPage(page: AssembledPage, site: AssembledSite): string {
       --primary: ${t.colors.primary};
       --secondary: ${t.colors.secondary};
       --accent: ${t.colors.accent};
+      ${brandCss(t, t.colors.primary)}
     }
     body { background: ${t.colors.background}; color: ${t.colors.foreground}; font-family: ${
       resolveThemeFont(t)?.stack ?? "ui-sans-serif, system-ui, sans-serif"

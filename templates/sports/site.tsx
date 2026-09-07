@@ -2,7 +2,7 @@ import { Bebas_Neue } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { SP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 
 // The design's display/body face is Clash Grotesk (Fontshare — not on Google
@@ -186,7 +186,7 @@ export function SportsSite({
         href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=swap"
       />
       {/* Hero — full-bleed action photo with the nav overlaid on top */}
-      <section className="relative w-full min-h-[92vh] overflow-hidden">
+      <section className="relative w-full min-h-[92vh] overflow-hidden" style={sectionBandStyle(hero.theme)}>
         <div className="absolute inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -310,7 +310,7 @@ export function SportsSite({
       </section>
 
       {/* About */}
-      <section id="sp-about" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
+      <section id="sp-about" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24" style={sectionBandStyle(about.theme)}>
         <SectionHeader label="About us" index={2} />
         <div className="mt-10 flex flex-col items-start gap-12 lg:flex-row">
           <div className="flex flex-1 flex-col gap-8">
@@ -374,7 +374,7 @@ export function SportsSite({
       </section>
 
       {/* Features */}
-      <section id="sp-features" className="px-4 py-16 lg:px-[3.75rem] lg:py-24" style={{ backgroundColor: SP.surface }}>
+      <section id="sp-features" className="px-4 py-16 lg:px-[3.75rem] lg:py-24" style={{ backgroundColor: SP.surface, ...sectionBandStyle(features.theme) }}>
         <div className="mx-auto max-w-[90rem]">
           <SectionHeader label="Features" index={4} />
           <div className="mt-10 flex flex-col items-start justify-between gap-6 lg:flex-row">
@@ -422,7 +422,7 @@ export function SportsSite({
       </section>
 
       {/* Categories */}
-      <section id="sp-categories" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
+      <section id="sp-categories" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24" style={sectionBandStyle(categories.theme)}>
         <SectionHeader label="Categories" index={5} />
         <div className="mx-auto mt-10 max-w-3xl text-center">
           <h2
@@ -471,11 +471,11 @@ export function SportsSite({
       </section>
 
       {/* Pricing */}
-      <section id="sp-pricing" className="relative isolate overflow-hidden">
+      <section id="sp-pricing" className="relative isolate overflow-hidden" style={sectionBandStyle(pricing.theme)}>
         <div aria-hidden className="absolute inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={PRICING_BG} alt="" className="h-full w-full object-cover opacity-60" />
-          <div className="absolute inset-0" style={{ backgroundColor: "rgba(14,18,27,0.86)" }} />
+          <div className="absolute inset-0" style={{ backgroundColor: `color-mix(in oklab, ${SP.inverse} 86%, transparent)` }} />
         </div>
         <div className="relative z-10 mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
           <SectionHeader label="Pricing" index={6} light />
@@ -594,7 +594,7 @@ export function SportsSite({
       </section>
 
       {/* Testimonials */}
-      <section id="sp-testimonials" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
+      <section id="sp-testimonials" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20" style={sectionBandStyle(testimonials.theme)}>
         <SectionHeader label="Testimonials" index={7} />
         <div className="mt-10 flex flex-col items-center gap-5 text-center">
           <div className="flex items-center -space-x-3">
@@ -647,7 +647,7 @@ export function SportsSite({
       </section>
 
       {/* FAQ */}
-      <section id="sp-faq" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
+      <section id="sp-faq" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20" style={sectionBandStyle(faq.theme)}>
         <SectionHeader label="FAQ" index={8} />
         <div className="mt-10 flex flex-col items-start gap-12 lg:flex-row">
           <div className="flex flex-col gap-5 lg:w-[38rem]">
@@ -697,7 +697,7 @@ export function SportsSite({
       </section>
 
       {/* Event / closing CTA */}
-      <section id="sp-event" className="mx-auto max-w-[90rem] px-4 pb-16 lg:px-[3.75rem] lg:pb-20">
+      <section id="sp-event" className="mx-auto max-w-[90rem] px-4 pb-16 lg:px-[3.75rem] lg:pb-20" style={sectionBandStyle(event.theme)}>
         <div className="relative overflow-hidden rounded-[24px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={eventImage} alt="" data-parallax="0.08" className="h-[38rem] w-full object-cover lg:h-[44rem]" />
@@ -755,7 +755,7 @@ export function SportsSite({
       </section>
 
       {/* Footer */}
-      <footer className="bg-white px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24">
+      <footer className="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style={{ backgroundColor: SP.white, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[82.5rem]">
           <div className="flex flex-col items-start gap-10 lg:flex-row lg:gap-24">
             <div className="flex flex-col items-start gap-8 lg:flex-row">

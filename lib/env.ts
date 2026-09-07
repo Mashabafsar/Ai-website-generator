@@ -16,7 +16,7 @@ export const env = {
 
   ai: {
     cursorApiKey: process.env.CURSOR_API_KEY ?? "",
-    heavyModel: process.env.HEAVY_MODEL_NAME ?? "kimi-k3-high",
+    heavyModel: process.env.HEAVY_MODEL_NAME ?? "kimi-k3",
     lightModel: process.env.LIGHT_MODEL_NAME ?? "composer-2.5",
     // Gemini is the fallback when Cursor fails (or when Cursor isn't configured).
     geminiApiKey: process.env.GEMINI_API_KEY ?? "",

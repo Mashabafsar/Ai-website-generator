@@ -2,7 +2,7 @@ import { Hind, Open_Sans } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { MR, MR_GRADIENTS, MR_BRAND_GRADIENT, MR_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
-import { brandStyle } from "../shared/brand";
+import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
@@ -231,7 +231,7 @@ function Footer({
   contactPhone: string;
 }) {
   return (
-    <footer className="relative overflow-hidden pt-20 text-white" style={{ backgroundColor: MR.ink }}>
+    <footer className="relative overflow-hidden pt-20 text-white" style={{ backgroundColor: MR.inverse }}>
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full opacity-40" style={{ backgroundImage: MR_BRAND_GRADIENT, filter: "blur(90px)" }} />
       <div className="pointer-events-none absolute -right-16 top-10 h-64 w-64 rounded-full opacity-30" style={{ background: MR.violet, filter: "blur(90px)" }} />
       <div className="relative mx-auto max-w-[1200px] px-5 pb-10 lg:px-8">
@@ -327,7 +327,7 @@ function IconTile({ index, icon }: { index: number; icon?: string }) {
 
 function PageHeader({ slot, fallbackTitle }: { slot: TemplateSlot; fallbackTitle: string }) {
   return (
-    <section className="relative overflow-hidden" style={{ backgroundColor: MR.heroBg }}>
+    <section className="relative overflow-hidden" style={{ backgroundColor: MR.heroBg, ...sectionBandStyle(slot.theme) }}>
       <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full opacity-50" style={{ backgroundImage: MR_BRAND_GRADIENT, filter: "blur(70px)" }} data-parallax="0.1" />
       <div className="pointer-events-none absolute -left-16 bottom-0 h-64 w-64 rounded-full opacity-40" style={{ background: MR.violet, filter: "blur(80px)" }} />
       <div className="relative mx-auto max-w-[1200px] px-5 py-20 text-center lg:px-8 lg:py-28">
@@ -343,9 +343,20 @@ function PageHeader({ slot, fallbackTitle }: { slot: TemplateSlot; fallbackTitle
   );
 }
 
-function Section({ children, tint }: { children: React.ReactNode; tint?: boolean }) {
+function Section({
+  children,
+  tint,
+  theme,
+}: {
+  children: React.ReactNode;
+  tint?: boolean;
+  theme?: import("@/lib/blueprint/types").SectionTheme;
+}) {
   return (
-    <section className="px-5 py-20 lg:px-8 lg:py-24" style={tint ? { background: MR.surface } : undefined}>
+    <section
+      className="px-5 py-20 lg:px-8 lg:py-24"
+      style={{ ...(tint ? { background: MR.surface } : {}), ...sectionBandStyle(theme) }}
+    >
       <div className="mx-auto max-w-[1200px]">{children}</div>
     </section>
   );
@@ -385,7 +396,7 @@ function FeatureCards({ slot, startIndex = 0 }: { slot: TemplateSlot; startIndex
   const heading = text(slot.content, "heading", "");
   const subheading = text(slot.content, "subheading", "");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       {heading ? <SectionHeading heading={heading} subheading={subheading} /> : null}
       <div className={`grid gap-6 md:grid-cols-3 ${heading ? "mt-14" : ""}`}>
         {titles.map((title, i) => (
@@ -412,7 +423,7 @@ function FeatureCards({ slot, startIndex = 0 }: { slot: TemplateSlot; startIndex
 
 function StorySection({ slot, image, flip }: { slot: TemplateSlot; image: string; flip?: boolean }) {
   return (
-    <Section tint>
+    <Section tint theme={slot.theme}>
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div className={flip ? "lg:order-2" : ""}>
           <div className="relative">
@@ -443,7 +454,7 @@ function ValueList({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles", ["Responsive web", "High quality design", "Cool animations"]);
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="relative order-2 lg:order-1">
           <div className="pointer-events-none absolute -right-6 -top-8 h-32 w-32 rounded-full opacity-70" style={{ backgroundImage: MR_GRADIENTS[3] }} data-parallax="0.1" />
@@ -486,7 +497,7 @@ function Testimonials({ slot }: { slot: TemplateSlot }) {
   const authors = list(slot.content, "authors");
   const roles = list(slot.content, "roles");
   return (
-    <Section tint>
+    <Section tint theme={slot.theme}>
       <SectionHeading eyebrow="Testimonials" heading={text(slot.content, "heading", "What our clients say")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {quotes.map((quote, i) => (
@@ -519,7 +530,7 @@ function ServicesCards({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles", ["Brand & identity", "UI / UX design", "Web & app build"]);
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Our services" heading={text(slot.content, "heading", "Everything you need to grow")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {titles.map((title, i) => (
@@ -553,7 +564,7 @@ function ProcessSteps({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "stepTitles", ["Discover", "Design", "Build", "Launch"]);
   const bodies = list(slot.content, "stepBodies");
   return (
-    <Section tint>
+    <Section tint theme={slot.theme}>
       <SectionHeading eyebrow="How it works" heading={text(slot.content, "heading", "A simple, proven process")} />
       <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {titles.map((title, i) => (
@@ -582,7 +593,7 @@ function Pricing({ slot }: { slot: TemplateSlot }) {
   const prices = list(slot.content, "planPrices", ["$29", "$99", "$499"]);
   const features = list(slot.content, "planFeatures");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Pricing" heading={text(slot.content, "heading", "Simple, transparent pricing")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {names.map((name, i) => {
@@ -643,7 +654,7 @@ function Faq({ slot }: { slot: TemplateSlot }) {
   const questions = list(slot.content, "questions");
   const answers = list(slot.content, "answers");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="FAQ" heading={text(slot.content, "heading", "Frequently asked questions")} />
       <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-[28px] border bg-white shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line }}>
         {questions.map((question, i) => (
@@ -669,7 +680,7 @@ function Contact({ slot, meta }: { slot: TemplateSlot; meta: PageMeta }) {
   const phone = text(slot.content, "phone", meta.contactPhone);
   const address = text(slot.content, "address", "");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <SectionHeading eyebrow="Contact" heading={text(slot.content, "heading", "Get in touch")} subheading={text(slot.content, "subheading", "")} center={false} />
@@ -712,7 +723,7 @@ function Portfolio({ slot }: { slot: TemplateSlot }) {
   const bodies = list(slot.content, "itemBodies");
   const roles = list(slot.content, "roles");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Portfolio" heading={text(slot.content, "heading", "Our recent projects")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {titles.map((title, i) => (
@@ -748,7 +759,7 @@ function BlogGrid({ slot }: { slot: TemplateSlot }) {
   const titles = list(slot.content, "itemTitles");
   const bodies = list(slot.content, "itemBodies");
   return (
-    <Section>
+    <Section theme={slot.theme}>
       <SectionHeading eyebrow="Blog" heading={text(slot.content, "heading", "Latest articles")} subheading={text(slot.content, "subheading", "")} />
       <div className="mt-14 grid gap-6 md:grid-cols-3">
         {titles.map((title, i) => (

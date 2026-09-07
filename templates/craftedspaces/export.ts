@@ -1,7 +1,7 @@
 import type { AssembledSite } from "@/lib/blueprint/types";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
-import { brandCss } from "../shared/brand";
+import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 
@@ -240,7 +240,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="cs-about" class="mt-20 bg-[#1A1A1A] py-20 text-white lg:mt-[110px] lg:py-[120px]">
+<section id="cs-about" class="mt-20 py-20 text-white lg:mt-[110px] lg:py-[120px]" style="background:${CS.inverse};${sectionBandCss(about.theme)}">
   <div class="${shell} grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,780px)]">
     <div>
       <p class="text-xs uppercase tracking-[0.2em] text-[#D5CCBF]">What We Do</p>
@@ -399,7 +399,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="cs-contact" class="bg-[#1A1A1A] pt-16 text-white lg:pt-[100px]">
+<section id="cs-contact" class="pt-16 text-white lg:pt-[100px]" style="background:${CS.inverse};${sectionBandCss(cta.theme)}">
   <div class="${shell} grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,650px)]">
     <div>
       <h2 class="text-4xl leading-tight lg:text-[56px]">${esc(

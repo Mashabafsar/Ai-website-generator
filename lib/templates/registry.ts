@@ -73,7 +73,7 @@ export const TECHVANTAGE_SEED: TemplateSeed = {
     "hero-split-with-image",
     "services-cards",
     "about-with-image",
-    "features-grid",
+    "features-stats",
     "features-grid",
     "features-grid",
     "testimonials-grid",

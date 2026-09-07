@@ -1,20 +1,20 @@
-// Mraval design tokens, mapped from the "Mraval" multipurpose Bootstrap theme (a
-// colorful, gradient-forward creative/app-landing look). The blue-violet accent
-// resolves to the editor's brand color via --brand, with the original hex as the
-// fallback so the default look is unchanged. The multicolor gradient accents
-// mirror the original theme's playful icon palette.
+// Mraval design tokens. Theme variables take over when a custom theme is
+// chosen; original hexes stay as fallbacks so the default look is unchanged.
 export const MR = {
   brand: "var(--brand, #7DBCFF)",
   brandStrong: "var(--brand-strong, #57A6FF)",
   brandSoft: "var(--brand-soft, #EFECFD)",
-  ink: "#34314B",
-  body: "#666666",
-  muted: "#B0AEBE",
-  line: "#ECEAF6",
-  surface: "#F6F8F9",
-  heroBg: "#EFECFD",
-  violet: "#8667F7",
-  white: "#FFFFFF",
+  ink: "var(--theme-fg, #34314B)",
+  body: "var(--theme-muted, #666666)",
+  muted: "var(--theme-muted, #B0AEBE)",
+  line: "var(--theme-line, #ECEAF6)",
+  surface: "var(--theme-surface, #F6F8F9)",
+  heroBg: "var(--theme-surface, #EFECFD)",
+  violet: "var(--brand-strong, #8667F7)",
+  white: "var(--theme-bg, #FFFFFF)",
+  card: "var(--theme-card, #FFFFFF)",
+  inverse: "var(--theme-inverse, #34314B)",
+  onDark: "var(--theme-inverse-fg, #ffffff)",
 } as const;
 
 // The signature multicolor icon gradients (from the original bg-color-* set),

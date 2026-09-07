@@ -3,6 +3,7 @@ import type { AssembledSite } from "@/lib/blueprint/types";
 import { SECTION_COMPONENTS } from "@/components/website-sections/sections";
 import { SiteHeader } from "@/components/website-sections/ui";
 import { BespokePreview, hasBespokePreview } from "@/templates/preview-registry";
+import { brandStyle, sectionBandStyle } from "@/templates/shared/brand";
 import { themeFontHref, themeFontStyle } from "@/templates/shared/fonts";
 
 const NAV: Array<{ type: string; label: string }> = [
@@ -34,6 +35,7 @@ export function SitePreview({ site, pageSlug }: { site: AssembledSite; pageSlug?
   }));
 
   const themeStyle: CSSProperties = {
+    ...brandStyle(site.theme, site.theme.colors.primary),
     ["--primary" as string]: site.theme.colors.primary,
     ["--secondary" as string]: site.theme.colors.secondary,
     ["--accent" as string]: site.theme.colors.accent,
@@ -55,7 +57,7 @@ export function SitePreview({ site, pageSlug }: { site: AssembledSite; pageSlug?
         const Component = SECTION_COMPONENTS[section.componentName];
         if (!Component) return null;
         return (
-          <div key={section.id} id={section.type}>
+          <div key={section.id} id={section.type} style={sectionBandStyle(section.theme)}>
             <Component {...section.props} />
           </div>
         );

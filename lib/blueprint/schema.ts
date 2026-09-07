@@ -27,6 +27,13 @@ export const sectionSchema = z
     // Any string parses so a saved project keeps loading after the catalog
     // changes; the icon selection agent drops names it no longer allows.
     icons: z.array(z.string().max(60).nullable()).optional(),
+    theme: z
+      .object({
+        background: z.string().max(40).optional(),
+        foreground: z.string().max(40).optional(),
+        accent: z.string().max(40).optional(),
+      })
+      .optional(),
   })
   .refine((s) => isAllowedVariant(s.type, s.variant), {
     message: "Section variant is not in the approved registry",
@@ -76,6 +83,7 @@ export const themeSchema = z.object({
       message: "Logo must be an uploaded path, https URL, or raster image data URL",
     })
     .optional(),
+  tone: z.string().max(80).optional(),
 });
 
 export const blueprintSchema = z.object({

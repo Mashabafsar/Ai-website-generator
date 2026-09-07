@@ -1,6 +1,6 @@
 import { MR, MR_GRADIENTS, MR_BRAND_GRADIENT, MR_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
-import { brandCss } from "../shared/brand";
+import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
@@ -121,7 +121,8 @@ function footer(
   customLogo: string,
   tagline: string,
   contactEmail: string,
-  contactPhone: string
+  contactPhone: string,
+  theme?: import("@/lib/blueprint/types").SectionTheme
 ): string {
   const links = pages
     .map((p) => `<li><a href="${pageHref(p.slug)}" class="transition-colors hover:text-white">${esc(p.title)}</a></li>`)
@@ -133,7 +134,7 @@ function footer(
           ${contactPhone ? `<a href="tel:${esc(contactPhone)}" class="block transition-colors hover:text-white">${esc(contactPhone)}</a>` : ""}
         </div>`
       : "";
-  return `<footer class="relative overflow-hidden pt-20 text-white" style="background-color:${MR.ink}">
+  return `<footer class="relative overflow-hidden pt-20 text-white" style="background-color:${MR.inverse};${sectionBandCss(theme)}">
   <div class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full opacity-40" style="background-image:${MR_BRAND_GRADIENT};filter:blur(90px)"></div>
   <div class="pointer-events-none absolute -right-16 top-10 h-64 w-64 rounded-full opacity-30" style="background:${MR.violet};filter:blur(90px)"></div>
   <div class="relative mx-auto max-w-[1200px] px-5 pb-10 lg:px-8">
@@ -583,7 +584,7 @@ ${header(pages, active, businessName, customLogo)}
 <main>
 ${pageBody(active, slots, contactEmail, contactPhone)}
 </main>
-${footer(pages, businessName, customLogo, tagline, contactEmail, contactPhone)}
+${footer(pages, businessName, customLogo, tagline, contactEmail, contactPhone, footerSlot.theme)}
 </body>
 </html>`;
 

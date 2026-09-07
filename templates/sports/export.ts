@@ -1,6 +1,6 @@
 import { SP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandCss } from "../shared/brand";
+import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
 
@@ -169,7 +169,7 @@ export function renderSportsPage(site: AssembledSite): string {
     : `<img src="${LOGO}" alt="" class="h-7 w-7 -rotate-90 object-contain" />`;
 
   const body = `
-<section class="relative w-full min-h-[92vh] overflow-hidden">
+<section class="relative w-full min-h-[92vh] overflow-hidden" style="${sectionBandCss(hero.theme)}">
   <div class="absolute inset-0 overflow-hidden">
     <img src="${esc(heroImage)}" alt="" data-parallax="0.12" class="h-[112%] w-full object-cover object-center" />
     <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/70"></div>
@@ -384,7 +384,7 @@ export function renderSportsPage(site: AssembledSite): string {
   </div>
 </section>
 
-<footer class="bg-white px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24">
+<footer class="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style="background:${SP.white};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[82.5rem]">
     <div class="flex flex-col items-start gap-10 lg:flex-row lg:gap-24">
       <div class="flex flex-col items-start gap-8 lg:flex-row">
