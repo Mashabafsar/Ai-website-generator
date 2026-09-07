@@ -1,5 +1,8 @@
 import { imageSize } from "@/lib/scraper/image-size";
+import { decodeIcoToPng } from "@/lib/images/ico";
 import type { StoredImageType } from "@/lib/images/storage";
+
+export { extractLargestPngFromIco, isIcoBuffer } from "@/lib/images/ico";
 
 // Re-encodes third-party bytes before they are stored. A customer's hero image
 // is routinely a multi-megabyte original sized for a print workflow; shipping it
@@ -43,6 +46,7 @@ type SharpPipeline = {
     fit: "inside";
     withoutEnlargement: boolean;
   }) => SharpPipeline;
+  png: (options?: { compressionLevel?: number }) => SharpPipeline;
   webp: (options: { lossless?: boolean; quality?: number; effort: number }) => SharpPipeline;
   toBuffer: (options: {
     resolveWithObject: true;
@@ -74,6 +78,29 @@ async function loadSharp(): Promise<SharpFactory | null> {
 }
 
 /**
+ * Turns a favicon ICO into PNG. Sharp first, then an embedded PNG frame, then
+ * a BMP-in-ICO decode — so a site that only ships `/favicon.ico` still gets a
+ * logo the generated header can show.
+ */
+export async function decodeIcoToRaster(
+  bytes: Buffer
+): Promise<{ bytes: Buffer; type: StoredImageType } | null> {
+  const sharp = await loadSharp();
+  if (sharp) {
+    try {
+      const encoded = await sharp(bytes).png().toBuffer({ resolveWithObject: true });
+      if (encoded.data.length > 0) {
+        return { bytes: encoded.data, type: "image/png" };
+      }
+    } catch {
+      // Classic BMP-in-ICO is the usual sharp miss.
+    }
+  }
+  const png = decodeIcoToPng(bytes);
+  return png ? { bytes: png, type: "image/png" } : null;
+}
+
+/**
  * Downscales and re-encodes an image for the web. Aspect ratio is preserved,
  * nothing is ever enlarged, an SVG is returned untouched, and a result that
  * came out heavier than the original is discarded in favour of the original.
@@ -88,6 +115,16 @@ export async function optimizeImage(
   // A sanitized SVG is already small, resolution-independent, and would only
   // lose by being rasterized.
   if (contentType === "image/svg+xml") return original;
+
+  // Favicon ICO cannot stay as a multi-image container in the generated site.
+  // Convert to PNG first; if that fails, keep the original so `<img>` can
+  // still show it in browsers that decode ICO.
+  if (contentType === "image/x-icon") {
+    const raster = await decodeIcoToRaster(bytes);
+    if (!raster) return original;
+    const converted = await optimizeImage(raster.bytes, raster.type, profile);
+    return { ...converted, originalLength: bytes.length };
+  }
 
   const edge = MAX_EDGE[profile];
   const size = imageSize(bytes, contentType);

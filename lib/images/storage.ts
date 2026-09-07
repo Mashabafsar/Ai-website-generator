@@ -9,7 +9,10 @@ import { optimizeImage, type ImageProfile } from "@/lib/images/optimize";
 
 export const RASTER_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
-export type StoredImageType = (typeof RASTER_IMAGE_TYPES)[number] | "image/svg+xml";
+export type StoredImageType =
+  | (typeof RASTER_IMAGE_TYPES)[number]
+  | "image/svg+xml"
+  | "image/x-icon";
 
 const EXTENSIONS: Record<StoredImageType, string> = {
   "image/jpeg": "jpg",
@@ -17,6 +20,7 @@ const EXTENSIONS: Record<StoredImageType, string> = {
   "image/webp": "webp",
   "image/gif": "gif",
   "image/svg+xml": "svg",
+  "image/x-icon": "ico",
 };
 
 /**
@@ -45,6 +49,18 @@ export function sniffImageType(bytes: Buffer): StoredImageType | null {
     bytes.subarray(8, 12).toString("latin1") === "WEBP"
   ) {
     return "image/webp";
+  }
+  // Favicon ICO (`00 00 01 00`). A `.ico` URL that is actually PNG/SVG is
+  // caught by the signatures above / below, so this only fires for a real
+  // container — which we convert on ingest when sharp can.
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0 &&
+    bytes[1] === 0 &&
+    bytes[2] === 1 &&
+    bytes[3] === 0
+  ) {
+    return "image/x-icon";
   }
 
   const head = bytes.subarray(0, 1024).toString("utf8").trimStart();

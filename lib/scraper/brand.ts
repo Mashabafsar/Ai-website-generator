@@ -15,6 +15,7 @@ import {
 } from "@/lib/scraper/color";
 import { matchThemeFont, type FontMatch } from "@/lib/scraper/font-match";
 import { imageSize, orientationOf } from "@/lib/scraper/image-size";
+import { decodeIcoToRaster, isIcoBuffer } from "@/lib/images/optimize";
 import {
   sanitizeSvg,
   saveProjectImage,
@@ -40,7 +41,7 @@ const STYLESHEET_BYTES = 400 * 1024;
 const STYLESHEET_TIMEOUT_MS = 6_000;
 const CSS_PARSE_CAP = 600 * 1024;
 
-const LOGO_CANDIDATE_LIMIT = 5;
+const LOGO_CANDIDATE_LIMIT = 10;
 const LOGO_BYTES = 1024 * 1024;
 const ASSET_TIMEOUT_MS = 8_000;
 
@@ -82,7 +83,7 @@ function widestFromSrcset(srcset: string | undefined): string | null {
 }
 
 function decodeDataImage(value: string): { bytes: Buffer; type: StoredImageType } | null {
-  const match = value.match(/^data:image\/[a-z+]+\s*;\s*base64\s*,(.+)$/is);
+  const match = value.match(/^data:image\/[a-z0-9.+-]+\s*;\s*base64\s*,(.+)$/is);
   if (!match) return null;
   try {
     const bytes = Buffer.from(match[1], "base64");
@@ -340,8 +341,49 @@ function detectFont($: CheerioAPI, site: SiteCss): FontMatch | null {
 
 type LogoCandidate = { score: number; url?: URL; inline?: string };
 
-
 const LOGO_HINT = /logo|wordmark|brandmark|site-?brand|site-?title/i;
+
+/**
+ * Favicon first. Header wordmarks and JSON-LD logos are fallbacks only.
+ * Among icons: apple-touch (~180), then 32×32 PNG/SVG, then ICO.
+ */
+function declaredIconSize(sizes: string | undefined, href: string, rel: string): number {
+  const raw = (sizes || "").toLowerCase().trim();
+  if (raw === "any") return 256;
+  let max = 0;
+  for (const part of raw.split(/\s+/)) {
+    const match = part.match(/^(\d+)x(\d+)$/i);
+    if (match) max = Math.max(max, Math.min(Number(match[1]), Number(match[2])));
+  }
+  if (max) return max;
+  const file = href.match(/(\d+)x(\d+)/);
+  if (file) return Math.min(Number(file[1]), Number(file[2]));
+  if (/apple-touch-icon/i.test(rel)) return 180;
+  if (/\.svg(\?|$)/i.test(href)) return 256;
+  if (/\.png(\?|$)/i.test(href)) return 32;
+  if (/\.ico(\?|$)/i.test(href)) return 16;
+  return 16;
+}
+
+function faviconScore(size: number, href: string): number {
+  // Every favicon outranks wordmarks (those sit at ≤ 90).
+  if (size >= 180) return 240;
+  if (/\.svg(\?|$)/i.test(href) || size >= 128) return 230;
+  if (size >= 32) return 220;
+  if (/\.png(\?|$)/i.test(href)) return 210;
+  if (/\.ico(\?|$)/i.test(href)) return 200;
+  return 205;
+}
+
+function isFaviconRel(rel: string): boolean {
+  const tokens = rel.toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.includes("mask-icon")) return false;
+  return (
+    tokens.includes("icon") ||
+    tokens.includes("shortcut") ||
+    tokens.some((token) => token === "apple-touch-icon" || token.startsWith("apple-touch-icon"))
+  );
+}
 
 export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
   const found: LogoCandidate[] = [];
@@ -388,14 +430,27 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
     return LOGO_HINT.test(haystack);
   };
 
+  $("link[rel]").each((_, el) => {
+    const $el = $(el);
+    const rel = $el.attr("rel") || "";
+    if (!isFaviconRel(rel)) return;
+    const href = $el.attr("href") || "";
+    push(faviconScore(declaredIconSize($el.attr("sizes"), href, rel), href), href);
+  });
+
+  // Implicit well-known paths — many sites only ship `/favicon.ico`.
+  push(195, new URL("/favicon.svg", base).toString());
+  push(190, new URL("/favicon.png", base).toString());
+  push(185, new URL("/favicon.ico", base).toString());
+
   $("header img, nav img, [class*='header'] img, [id*='header'] img, [class*='navbar'] img").each(
     (_, el) => {
-      push(looksLikeLogo(el) ? 100 : 60, imgSource(el));
+      push(looksLikeLogo(el) ? 90 : 40, imgSource(el));
     }
   );
 
   $("img").each((_, el) => {
-    if (looksLikeLogo(el)) push(80, imgSource(el));
+    if (looksLikeLogo(el)) push(70, imgSource(el));
   });
 
   $('script[type="application/ld+json"]').each((_, el) => {
@@ -409,10 +464,10 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
         for (const entry of [record, ...graph]) {
           if (!entry || typeof entry !== "object") continue;
           const logo = (entry as Record<string, unknown>).logo;
-          if (typeof logo === "string") push(95, logo);
+          if (typeof logo === "string") push(85, logo);
           else if (logo && typeof logo === "object") {
             const url = (logo as Record<string, unknown>).url;
-            if (typeof url === "string") push(95, url);
+            if (typeof url === "string") push(85, url);
           }
         }
       }
@@ -423,16 +478,10 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
 
   $("header svg, nav svg, [class*='logo'] svg").each((_, el) => {
     const markup = $.html(el);
-    if (markup && markup.length < 200_000) found.push({ score: 70, inline: markup });
+    if (markup && markup.length < 200_000) found.push({ score: 60, inline: markup });
   });
 
-  $('link[rel~="apple-touch-icon"]').each((_, el) => push(40, $(el).attr("href")));
-  $('link[rel~="icon"], link[rel~="shortcut"]').each((_, el) => {
-    const href = $(el).attr("href") || "";
-    if (/\.ico(\?|$)/i.test(href)) return; // multi-resolution containers don't render in <img>
-    push(30, href);
-  });
-  push(15, $('meta[property="og:logo"]').attr("content"));
+  push(20, $('meta[property="og:logo"]').attr("content"));
 
   return found.sort((a, b) => b.score - a.score).slice(0, LOGO_CANDIDATE_LIMIT);
 }
@@ -469,7 +518,19 @@ async function importLogo(
       }
     }
 
-    if (!bytes || !type) continue;
+    if (!bytes) continue;
+
+    if (type === "image/x-icon" || (!type && isIcoBuffer(bytes))) {
+      const raster = await decodeIcoToRaster(bytes);
+      if (raster) {
+        bytes = raster.bytes;
+        type = raster.type;
+      } else if (!type) {
+        type = "image/x-icon";
+      }
+    }
+
+    if (!type) continue;
 
     if (type === "image/svg+xml") {
       const safe = sanitizeSvg(bytes.toString("utf8"));
