@@ -13,6 +13,7 @@ import { whiterMeta } from "./whiter/metadata";
 import { mainfileMeta } from "./mainfile/metadata";
 import { saasldgMeta } from "./saasldg/metadata";
 import { sportsMeta } from "./sports/metadata";
+import { forgelimeMeta } from "./forgelime/metadata";
 
 /** Every bespoke design. Add a new module's metadata here to register it. */
 export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
@@ -23,6 +24,7 @@ export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
   mainfileMeta,
   saasldgMeta,
   sportsMeta,
+  forgelimeMeta,
 ];
 
 const BY_RENDERER = new Map(TEMPLATE_MODULES.map((m) => [m.renderer, m]));

@@ -10,6 +10,7 @@ export const TEMPLATE_RENDERERS = [
   "mainfile",
   "saasldg",
   "sports",
+  "forgelime",
 ] as const;
 export type TemplateRenderer = (typeof TEMPLATE_RENDERERS)[number];
 

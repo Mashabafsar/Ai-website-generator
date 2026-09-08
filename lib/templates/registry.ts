@@ -367,6 +367,40 @@ export const SPORTS_SEED: TemplateSeed = {
 };
 
 /**
+ * Forge Lime — a bespoke, SINGLE-PAGE dark-lime growth template ported from
+ * the "Forge" Figma design. It keeps a locked sequence of strategic sections:
+ * hero, value story, solutions, process, stats, testimonials, advantages, FAQ,
+ * contact, then footer.
+ */
+export const FORGELIME_SEED: TemplateSeed = {
+  slug: "forgelime",
+  name: "Forge Lime",
+  tagline: "Dark high-contrast growth template with neon-lime accents and bold typography.",
+  bestFor: "Sales consultancies, growth agencies & B2B marketing firms",
+  thumbnailUrl: "/templates/forgelime/preview.png",
+  previewImageUrl: "/templates/forgelime/preview.png",
+  accent: "#A9FF5C",
+  colorPreference: "Neon lime",
+  visualStyle: "Bold",
+  tone: "Modern & trustworthy",
+  renderer: "forgelime",
+  published: true,
+  sortOrder: 7,
+  sections: [
+    "hero-centered",
+    "features-grid",
+    "services-cards",
+    "process-steps",
+    "features-stats",
+    "testimonials-grid",
+    "features-grid",
+    "faq-accordion",
+    "contact-split",
+    "footer-simple",
+  ],
+};
+
+/**
  * Layout skeletons built from the approved section library. They are seeded but
  * left unpublished: the gallery only offers designs that have been fully art
  * directed and given their own renderer, so a shopper never picks something
@@ -567,6 +601,7 @@ export const ALL_SEEDS: TemplateSeed[] = [
   MAINFILE_SEED,
   SAASLDG_SEED,
   SPORTS_SEED,
+  FORGELIME_SEED,
   ...STANDARD_SEEDS,
 ];
 
