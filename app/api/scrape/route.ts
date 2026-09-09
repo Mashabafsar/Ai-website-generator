@@ -19,7 +19,13 @@ import {
 import { importBrandFromSite } from "@/lib/scraper/brand";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { defaultQuestionnaire } from "@/lib/questionnaire/schema";
-import { hasImportedBrand, hasImportedTheme } from "@/lib/branding/imported-brand";
+import {
+  hasImportedBrand,
+  hasImportedTheme,
+  importedAssetPaths,
+  parseImportedBrand,
+  type ImportedBrand,
+} from "@/lib/branding/imported-brand";
 
 // Website Import — scrapes a customer's existing site and maps it to
 // questionnaire fields, then pulls logo / photos / colours / typeface.
@@ -96,6 +102,12 @@ export async function POST(req: Request) {
     const prev = existing
       ? (JSON.parse(existing.answers) as Record<string, unknown>)
       : {};
+    const prevBrand = parseImportedBrand(prev.importedBrand);
+    const sameSource = Boolean(
+      brand && prevBrand && normalizeHttpUrl(brand.sourceUrl) === normalizeHttpUrl(prevBrand.sourceUrl)
+    );
+    const nextBrand = mergeImportedBrand(brand, prevBrand, sameSource);
+    const assetsChanged = importedAssetsChanged(prevBrand, nextBrand);
     const next = {
       ...defaultQuestionnaire,
       ...prev,
@@ -103,10 +115,10 @@ export async function POST(req: Request) {
       templateId: project.templateId || prev.templateId || "",
       hasWebsite: "yes",
       existingWebsiteUrl: site.url,
-      importedBrand: brand ?? undefined,
-      importedThemeChoice: hasImportedTheme(brand) ? "imported" : "custom",
-      // A new download invalidates the previous yes — the files changed.
-      importedAssetConsent: undefined,
+      importedBrand: nextBrand ?? undefined,
+      importedThemeChoice: hasImportedTheme(nextBrand) ? "imported" : "custom",
+      // Only clear consent when imported files actually changed.
+      importedAssetConsent: assetsChanged ? undefined : prev.importedAssetConsent,
     };
     await prisma.questionnaire.upsert({
       where: { projectId },
@@ -117,7 +129,7 @@ export async function POST(req: Request) {
     return jsonOk({
       ok: true,
       fields,
-      brand: hasImportedBrand(brand) ? brand : null,
+      brand: hasImportedBrand(nextBrand) ? nextBrand : null,
     });
   } catch (err) {
     if (spent) {
@@ -145,4 +157,42 @@ function definedFields(fields: Record<string, unknown>): Record<string, unknown>
     out[key] = value;
   }
   return out;
+}
+
+function mergeImportedBrand(
+  next: ImportedBrand | null,
+  previous: ImportedBrand | null,
+  sameSource: boolean
+): ImportedBrand | null {
+  if (!next) return previous;
+  if (!previous || !sameSource) return next;
+  return {
+    ...next,
+    // If only one piece failed this run, keep the last known good assets.
+    logoUrl: next.logoUrl ?? previous.logoUrl,
+    images: next.images.length ? next.images : previous.images,
+  };
+}
+
+function importedAssetsChanged(
+  previous: ImportedBrand | null,
+  next: ImportedBrand | null
+): boolean {
+  const prevAssets = previous ? importedAssetPaths(previous).slice().sort() : [];
+  const nextAssets = next ? importedAssetPaths(next).slice().sort() : [];
+  if (prevAssets.length !== nextAssets.length) return true;
+  for (let i = 0; i < prevAssets.length; i += 1) {
+    if (prevAssets[i] !== nextAssets[i]) return true;
+  }
+  const prevSource = previous ? normalizeHttpUrl(previous.sourceUrl) : "";
+  const nextSource = next ? normalizeHttpUrl(next.sourceUrl) : "";
+  return prevSource !== nextSource;
+}
+
+function normalizeHttpUrl(value: string): string {
+  try {
+    return new URL(value).toString();
+  } catch {
+    return value.trim();
+  }
 }
