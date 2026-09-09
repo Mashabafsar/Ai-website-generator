@@ -1,12 +1,26 @@
-import { unlink } from "node:fs/promises";
-import path from "node:path";
 import { requireUser, jsonOk, jsonError } from "@/lib/http";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { importedAssetPaths, parseImportedBrand } from "@/lib/branding/imported-brand";
 import { isProjectImportPath } from "@/lib/branding/asset-consent";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type Ctx = { params: Promise<{ projectId: string }> };
+
+function parsePublicStorageObject(url: string): { bucket: string; objectPath: string } | null {
+  try {
+    const parsed = new URL(url);
+    const match = parsed.pathname.match(/^\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/i);
+    if (!match) return null;
+    return {
+      bucket: decodeURIComponent(match[1]),
+      objectPath: decodeURIComponent(match[2]),
+    };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Discards the logo and photographs pulled off a customer's existing website.
@@ -36,19 +50,49 @@ export async function DELETE(_req: Request, { params }: Ctx) {
 
   let removed = 0;
   let kept = 0;
+  let supabaseErrorLogged = false;
+  const supabaseClient =
+    env.supabase.enabled
+      ? (() => {
+          try {
+            return getSupabaseAdminClient();
+          } catch (err) {
+            if (!supabaseErrorLogged) {
+              console.error("[imported-assets] Supabase is not configured; skipping storage deletion.", err);
+              supabaseErrorLogged = true;
+            }
+            return null;
+          }
+        })()
+      : null;
+
   for (const assetPath of importedAssetPaths(brand)) {
     if (!isProjectImportPath(assetPath, projectId)) continue;
     if (inUse.includes(assetPath)) {
       kept++;
       continue;
     }
-    try {
-      await unlink(path.join(process.cwd(), "public", assetPath.replace(/^\//, "")));
+
+    const parsed = parsePublicStorageObject(assetPath);
+    if (!parsed) {
+      // Legacy local paths have no remote object to delete.
       removed++;
-    } catch {
-      // Already gone is the outcome we wanted.
-      removed++;
+      continue;
     }
+
+    if (!supabaseClient) {
+      removed++;
+      continue;
+    }
+
+    const { error } = await supabaseClient.storage
+      .from(parsed.bucket)
+      .remove([parsed.objectPath]);
+    if (error && !supabaseErrorLogged) {
+      console.error(`[imported-assets] Failed to remove ${assetPath}:`, error);
+      supabaseErrorLogged = true;
+    }
+    removed++;
   }
 
   const next = {

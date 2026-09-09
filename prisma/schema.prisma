@@ -1,14 +1,15 @@
 // Agency Partner Interactive — AI Website Builder
-// SQLite + Prisma. SQLite has no native enums, so enum-like fields are stored
-// as strings; allowed values live in TypeScript constants (see lib/constants).
+// Supabase Postgres + Prisma. Enum-like fields are stored as strings; allowed
+// values live in TypeScript constants (see lib/constants).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgres"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@ import { getAuthBaseURL, getAuthTrustedOrigins } from "@/lib/auth/config";
 
 export const auth = betterAuth({
   appName: "Agency Partner AI Website Builder",
-  database: prismaAdapter(prisma, { provider: "sqlite" }),
+  database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: getAuthBaseURL(),
   trustedOrigins: getAuthTrustedOrigins(),

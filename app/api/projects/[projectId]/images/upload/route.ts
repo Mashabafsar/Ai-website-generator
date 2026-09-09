@@ -1,9 +1,7 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomBytes } from "crypto";
 import { requireUser, jsonOk, jsonError } from "@/lib/http";
 import { getOwnedProject } from "@/lib/projects/projects";
 import type { StockImageReference } from "@/lib/blueprint/types";
+import { saveProjectImage, type StoredImageType } from "@/lib/images/storage";
 
 type Ctx = { params: Promise<{ projectId: string }> };
 
@@ -30,25 +28,23 @@ export async function POST(req: Request, { params }: Ctx) {
     return jsonError("Image must be 2MB or smaller", 400);
   }
 
-  const ext =
-    file.type === "image/png"
-      ? "png"
-      : file.type === "image/webp"
-        ? "webp"
-        : file.type === "image/gif"
-          ? "gif"
-          : "jpg";
-
-  const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", projectId);
-  await mkdir(dir, { recursive: true });
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, filename), buffer);
+  let stored;
+  try {
+    stored = await saveProjectImage({
+      projectId,
+      bytes: buffer,
+      contentType: file.type as StoredImageType,
+    });
+  } catch (err) {
+    console.error("[images/upload] failed to store uploaded image:", err);
+    return jsonError("Image upload failed. Please try again.", 502, "UPLOAD_FAILED");
+  }
 
   const image: StockImageReference = {
     provider: "upload",
-    providerImageId: filename,
-    url: `/uploads/${projectId}/${filename}`,
+    providerImageId: stored.filename,
+    url: stored.url,
     altText: altText.slice(0, 160),
     attributionRequired: false,
     licenseInfo: "User upload",

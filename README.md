@@ -1,6 +1,6 @@
 # Agency Partner Interactive — AI Website Builder
 
-Generate a complete business website from a short questionnaire, preview and edit it, get an automated quote, pay with Stripe, and either download the source as a ZIP or deploy it live on a subdomain. Built with Next.js (App Router), TypeScript, Tailwind, ShadCN, Prisma + SQLite, and Better Auth.
+Generate a complete business website from a short questionnaire, preview and edit it, get an automated quote, pay with Stripe, and either download the source as a ZIP or deploy it live on a subdomain. Built with Next.js (App Router), TypeScript, Tailwind, ShadCN, Prisma + Supabase Postgres, and Better Auth.
 
 ## How it works
 
@@ -8,7 +8,7 @@ Generate a complete business website from a short questionnaire, preview and edi
 2. **Questionnaire** — describe the business, audience, services, tone, style, pages, and package.
 3. **Generate** — the AI produces a structured `WebsiteBlueprint` (JSON only). The app maps it onto approved ShadCN sections — the model never writes raw frontend code.
 4. **Preview & edit** — a live preview with a manual editor (text, reorder, add/remove sections, theme). Optional lightweight AI rewrites per section.
-5. **Persist & back up** — the project is always saved to SQLite and pushed to a private GitHub repo, regardless of payment.
+5. **Persist & back up** — the project is always saved to Supabase Postgres and pushed to a private GitHub repo, regardless of payment.
 6. **Quote & pay** — a deterministic quote engine prices the site; Stripe Checkout handles website packages and credit packs.
 7. **Deliver** — self-hosting unlocks a ZIP download; managed hosting deploys to `{slug}.{PLATFORM_DOMAIN}`.
 
@@ -24,7 +24,7 @@ Credits gate AI work (generation, section rewrites). Delivery (ZIP / live deploy
 ```bash
 npm install
 cp .env.example .env       # then edit values (see below)
-npm run db:push            # create the SQLite schema
+npm run db:push            # create/update the Postgres schema
 npm run dev                # http://localhost:3000
 ```
 
@@ -36,7 +36,8 @@ See `.env.example` for the full list. Highlights:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | SQLite connection (`file:./dev.db`) |
+| `DATABASE_URL` | Supabase Postgres runtime URL (pooler transaction mode, `:6543`, usually with `pgbouncer=true`) |
+| `DIRECT_URL` | Supabase Postgres direct/session URL for Prisma migrations (`:5432`) |
 | `BETTER_AUTH_SECRET` | Auth session signing secret |
 | `CURSOR_API_KEY` | Cursor SDK key (primary AI) |
 | `HEAVY_MODEL_NAME` / `LIGHT_MODEL_NAME` | Cursor models for generation vs. edits |
@@ -49,6 +50,16 @@ See `.env.example` for the full list. Highlights:
 | `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Optional. Email the account owner when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG`, `GITHUB_REPO_VISIBILITY` | GitHub backup |
 | `DEPLOYMENT_TOKEN`, `PLATFORM_DOMAIN` | Managed subdomain deploys (Vercel) |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase Storage uploads for scraped/editor images |
+| `SUPABASE_STORAGE_BUCKET` | Storage bucket name for uploaded assets (default `scraped-assets`) |
+
+### Supabase setup notes
+
+- **Prisma + Postgres:** keep Prisma as the ORM; set both `DATABASE_URL` and `DIRECT_URL`.
+- **Migrations:** run `prisma migrate deploy` in deploy pipelines using `DIRECT_URL`.
+- **Storage bucket:** create `scraped-assets` as a **public** bucket so generated image URLs work directly in `<img>` tags.
+- **Storage CORS:** in Supabase Storage settings, allow at least `GET`, `HEAD`, `OPTIONS` from your app domain (or `*` for simpler setup).
+- **Data API hardening:** if Prisma is your only database client, disable Supabase Data API and apply `prisma/sql/rls_and_storage.sql`.
 
 ### Stripe webhook (local)
 
@@ -93,7 +104,7 @@ lib/
 | `npm run dev` | Start the dev server |
 | `npm run build` | `prisma generate` + production build |
 | `npm run start` | Start the production server |
-| `npm run db:push` | Sync the Prisma schema to SQLite |
+| `npm run db:push` | Sync the Prisma schema to Postgres |
 | `npm run db:studio` | Open Prisma Studio |
 
 ## Notes

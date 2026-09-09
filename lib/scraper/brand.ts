@@ -572,7 +572,8 @@ async function importLogo(
         optimize: "logo",
       });
       return { url: stored.url };
-    } catch {
+    } catch (err) {
+      console.error("[scrape] logo upload failed; trying next candidate:", err);
       continue;
     }
   }
@@ -692,8 +693,9 @@ async function importImages(
           saved.width && saved.height ? { width: saved.width, height: saved.height } : size
         ),
       });
-    } catch {
-      break;
+    } catch (err) {
+      console.error("[scrape] image upload failed; continuing with next photo:", err);
+      continue;
     }
   }
 

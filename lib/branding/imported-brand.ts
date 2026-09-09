@@ -15,10 +15,17 @@ export const IMPORTED_PALETTE_NAME = "Imported from your website";
 export const MAX_IMPORTED_IMAGES = 12;
 
 /** Assets always land in this project's own upload folder — never hot-linked. */
+const legacyUploadPath = /^\/uploads\/[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+const supabasePublicUploadPath =
+  /^https:\/\/[^/]+\/storage\/v1\/object\/public\/[A-Za-z0-9._-]+\/[A-Za-z0-9][A-Za-z0-9._/-]*$/i;
+
 const uploadPath = z
   .string()
-  .max(300)
-  .regex(/^\/uploads\/[A-Za-z0-9][A-Za-z0-9._/-]*$/, "Imported assets must be stored uploads")
+  .max(2_000)
+  .refine(
+    (v) => legacyUploadPath.test(v) || supabasePublicUploadPath.test(v),
+    "Imported assets must be stored upload URLs"
+  )
   .refine((v) => !v.includes(".."), "Invalid upload path");
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Expected a #rrggbb colour");

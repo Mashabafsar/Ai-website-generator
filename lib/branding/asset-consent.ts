@@ -31,7 +31,20 @@ export function importedAssetDigest(brand: ImportedBrand): string {
 
 /** Imported files live in the project's own folder; anything else is not ours to serve. */
 export function isProjectImportPath(url: string, projectId: string): boolean {
-  return url.startsWith(`/uploads/${projectId}/imported/`) && !url.includes("..");
+  if (url.startsWith(`/uploads/${projectId}/imported/`) && !url.includes("..")) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return false;
+    const match = parsed.pathname.match(/^\/storage\/v1\/object\/public\/[^/]+\/(.+)$/i);
+    if (!match) return false;
+    const objectPath = decodeURIComponent(match[1] || "");
+    return objectPath.startsWith(`${projectId}/imported/`) && !objectPath.includes("..");
+  } catch {
+    return false;
+  }
 }
 
 export type AssetConsentDenial =

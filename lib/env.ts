@@ -52,6 +52,19 @@ export const env = {
     unsplash: process.env.UNSPLASH_ACCESS_KEY ?? "",
   },
 
+  supabase: {
+    url: process.env.SUPABASE_URL ?? "",
+    serviceRoleKey:
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "",
+    storageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "scraped-assets",
+    get enabled() {
+      return Boolean(
+        process.env.SUPABASE_URL &&
+          (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)
+      );
+    },
+  },
+
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY ?? "",
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",

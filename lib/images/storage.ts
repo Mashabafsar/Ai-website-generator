@@ -1,7 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { optimizeImage, type ImageProfile } from "@/lib/images/optimize";
+import { env } from "@/lib/env";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // Every image the platform stores for a project — editor uploads and assets
 // pulled from a customer's existing website — lands here, so there is one place
@@ -116,17 +116,61 @@ export type StoredImage = {
   bytesReceived: number;
 };
 
+export class StorageUploadError extends Error {
+  constructor(message: string, public cause?: unknown) {
+    super(message);
+    this.name = "StorageUploadError";
+  }
+}
+
 /**
- * Writes an image into the project's public upload folder and returns the
- * path the renderer and the static export both use. Callers that hand over
- * third-party bytes pass a profile so the file is downscaled and re-encoded
- * before it is stored, rather than after it has already shipped.
+ * Uploads one image to Supabase Storage and returns the public URL.
+ * `filename` is the full object path inside the bucket.
+ */
+export async function uploadScrapedImage(
+  buffer: Buffer,
+  filename: string,
+  contentType: string
+): Promise<string> {
+  const bucket = env.supabase.storageBucket;
+  if (!bucket) throw new StorageUploadError("Missing SUPABASE_STORAGE_BUCKET.");
+
+  let client: ReturnType<typeof getSupabaseAdminClient>;
+  try {
+    client = getSupabaseAdminClient();
+  } catch (err) {
+    throw new StorageUploadError("Supabase Storage is not configured.", err);
+  }
+
+  const { error } = await client.storage.from(bucket).upload(filename, buffer, {
+    contentType,
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (error) {
+    throw new StorageUploadError(
+      `Failed to upload ${filename} to bucket ${bucket}: ${error.message}`,
+      error
+    );
+  }
+
+  const { data } = client.storage.from(bucket).getPublicUrl(filename);
+  if (!data?.publicUrl) {
+    throw new StorageUploadError(`Supabase did not return a public URL for ${filename}.`);
+  }
+  return data.publicUrl;
+}
+
+/**
+ * Uploads an image into Supabase Storage and returns the URL the renderer and
+ * generated site can use directly. Callers that hand over third-party bytes
+ * pass a profile so the file is downscaled and re-encoded before upload.
  */
 export async function saveProjectImage(params: {
   projectId: string;
   bytes: Buffer;
   contentType: StoredImageType;
-  /** Optional sub-folder, e.g. "imported", to keep provenance obvious on disk. */
+  /** Optional sub-folder, e.g. "imported", to keep provenance obvious in storage. */
   subdir?: string;
   optimize?: ImageProfile;
 }): Promise<StoredImage> {
@@ -139,13 +183,8 @@ export async function saveProjectImage(params: {
 
   const safeSubdir = subdir?.replace(/[^a-z0-9-]/gi, "") || "";
   const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${EXTENSIONS[contentType]}`;
-
-  const segments = ["public", "uploads", projectId, ...(safeSubdir ? [safeSubdir] : [])];
-  const dir = path.join(process.cwd(), ...segments);
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), bytes);
-
-  const url = `/uploads/${projectId}/${safeSubdir ? `${safeSubdir}/` : ""}${filename}`;
+  const objectKey = `${projectId}/${safeSubdir ? `${safeSubdir}/` : ""}${filename}`;
+  const url = await uploadScrapedImage(bytes, objectKey, contentType);
   return {
     url,
     filename,
