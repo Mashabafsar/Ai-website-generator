@@ -73,7 +73,6 @@ export class CursorAiProvider implements AiProvider {
     const result = await Agent.prompt(prompt, {
       apiKey: env.ai.cursorApiKey,
       model: { id: model },
-      local: { cwd: process.cwd() },
     });
     if (result.status === "error") {
       throw new Error("Cursor agent run failed");

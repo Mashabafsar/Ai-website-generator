@@ -396,7 +396,6 @@ async function runLightPrompt(prompt: string): Promise<string> {
         Agent.prompt(prompt, {
           apiKey: env.ai.cursorApiKey,
           model: { id: env.ai.lightModel },
-          local: { cwd: process.cwd() },
         }),
         AI_TIMEOUT_MS,
         "Cursor import"
