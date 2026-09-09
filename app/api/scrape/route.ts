@@ -106,7 +106,9 @@ export async function POST(req: Request) {
     const sameSource = Boolean(
       brand && prevBrand && normalizeHttpUrl(brand.sourceUrl) === normalizeHttpUrl(prevBrand.sourceUrl)
     );
-    const nextBrand = mergeImportedBrand(brand, prevBrand, sameSource);
+    const nextBrand = normalizeImportedBrandNotes(
+      mergeImportedBrand(brand, prevBrand, sameSource)
+    );
     const assetsChanged = importedAssetsChanged(prevBrand, nextBrand);
     const next = {
       ...defaultQuestionnaire,
@@ -172,6 +174,18 @@ function mergeImportedBrand(
     logoUrl: next.logoUrl ?? previous.logoUrl,
     images: next.images.length ? next.images : previous.images,
   };
+}
+
+function normalizeImportedBrandNotes(brand: ImportedBrand | null): ImportedBrand | null {
+  if (!brand) return null;
+  const notes = brand.notes.filter((note) => {
+    if (brand.logoUrl && /no logo image was found/i.test(note)) return false;
+    if (brand.images.length > 0 && /no photos large enough to reuse were found/i.test(note)) {
+      return false;
+    }
+    return true;
+  });
+  return { ...brand, notes };
 }
 
 function importedAssetsChanged(
