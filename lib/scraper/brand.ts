@@ -339,13 +339,18 @@ function detectFont($: CheerioAPI, site: SiteCss): FontMatch | null {
 
 // ---- logo ------------------------------------------------------------------
 
-type LogoCandidate = { score: number; url?: URL; inline?: string };
+type LogoCandidate = {
+  source: "onsite" | "favicon";
+  score: number;
+  url?: URL;
+  inline?: string;
+};
 
 const LOGO_HINT = /logo|wordmark|brandmark|site-?brand|site-?title/i;
 
 /**
- * Favicon first. Header wordmarks and JSON-LD logos are fallbacks only.
- * Among icons: apple-touch (~180), then 32×32 PNG/SVG, then ICO.
+ * Prefer explicit brand marks (header/logo image, JSON-LD logo, logo SVG).
+ * Favicons are a fallback when no stronger brand mark is discoverable.
  */
 function declaredIconSize(sizes: string | undefined, href: string, rel: string): number {
   const raw = (sizes || "").toLowerCase().trim();
@@ -366,13 +371,13 @@ function declaredIconSize(sizes: string | undefined, href: string, rel: string):
 }
 
 function faviconScore(size: number, href: string): number {
-  // Every favicon outranks wordmarks (those sit at ≤ 90).
-  if (size >= 180) return 240;
-  if (/\.svg(\?|$)/i.test(href) || size >= 128) return 230;
-  if (size >= 32) return 220;
-  if (/\.png(\?|$)/i.test(href)) return 210;
-  if (/\.ico(\?|$)/i.test(href)) return 200;
-  return 205;
+  // Keep icons as a usable fallback, but do not outrank real logos.
+  if (size >= 180) return 72;
+  if (/\.svg(\?|$)/i.test(href) || size >= 128) return 68;
+  if (size >= 32) return 62;
+  if (/\.png(\?|$)/i.test(href)) return 58;
+  if (/\.ico(\?|$)/i.test(href)) return 52;
+  return 55;
 }
 
 function isFaviconRel(rel: string): boolean {
@@ -389,11 +394,11 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
   const found: LogoCandidate[] = [];
   const seen = new Set<string>();
 
-  const push = (score: number, href: string | undefined) => {
+  const push = (source: LogoCandidate["source"], score: number, href: string | undefined) => {
     const raw = (href || "").trim();
     if (!raw) return;
     if (raw.startsWith("data:")) {
-      found.push({ score, inline: raw });
+      found.push({ source, score, inline: raw });
       return;
     }
     const url = absolute(raw, base);
@@ -401,7 +406,7 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
     const key = url.toString();
     if (seen.has(key)) return;
     seen.add(key);
-    found.push({ score, url });
+    found.push({ source, score, url });
   };
 
   const imgSource = (el: Element): string | undefined => {
@@ -435,24 +440,24 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
     const rel = $el.attr("rel") || "";
     if (!isFaviconRel(rel)) return;
     const href = $el.attr("href") || "";
-    push(faviconScore(declaredIconSize($el.attr("sizes"), href, rel), href), href);
+    push("favicon", faviconScore(declaredIconSize($el.attr("sizes"), href, rel), href), href);
   });
 
-  // Implicit well-known paths — many sites only ship `/favicon.ico`.
-  push(195, new URL("/favicon.svg", base).toString());
-  push(193, new URL("/apple-touch-icon.png", base).toString());
-  push(192, new URL("/apple-touch-icon-precomposed.png", base).toString());
-  push(190, new URL("/favicon.png", base).toString());
-  push(185, new URL("/favicon.ico", base).toString());
+  // Implicit well-known icon paths are fallback hints only.
+  push("favicon", 45, new URL("/favicon.svg", base).toString());
+  push("favicon", 44, new URL("/apple-touch-icon.png", base).toString());
+  push("favicon", 43, new URL("/apple-touch-icon-precomposed.png", base).toString());
+  push("favicon", 42, new URL("/favicon.png", base).toString());
+  push("favicon", 40, new URL("/favicon.ico", base).toString());
 
   $("header img, nav img, [class*='header'] img, [id*='header'] img, [class*='navbar'] img").each(
     (_, el) => {
-      push(looksLikeLogo(el) ? 90 : 40, imgSource(el));
+      push("onsite", looksLikeLogo(el) ? 145 : 60, imgSource(el));
     }
   );
 
   $("img").each((_, el) => {
-    if (looksLikeLogo(el)) push(70, imgSource(el));
+    if (looksLikeLogo(el)) push("onsite", 125, imgSource(el));
   });
 
   $('script[type="application/ld+json"]').each((_, el) => {
@@ -466,10 +471,10 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
         for (const entry of [record, ...graph]) {
           if (!entry || typeof entry !== "object") continue;
           const logo = (entry as Record<string, unknown>).logo;
-          if (typeof logo === "string") push(85, logo);
+          if (typeof logo === "string") push("onsite", 135, logo);
           else if (logo && typeof logo === "object") {
             const url = (logo as Record<string, unknown>).url;
-            if (typeof url === "string") push(85, url);
+            if (typeof url === "string") push("onsite", 135, url);
           }
         }
       }
@@ -480,12 +485,20 @@ export function logoCandidates($: CheerioAPI, base: URL): LogoCandidate[] {
 
   $("header svg, nav svg, [class*='logo'] svg").each((_, el) => {
     const markup = $.html(el);
-    if (markup && markup.length < 200_000) found.push({ score: 60, inline: markup });
+    if (markup && markup.length < 200_000) found.push({ source: "onsite", score: 115, inline: markup });
   });
 
-  push(20, $('meta[property="og:logo"]').attr("content"));
+  push("onsite", 120, $('meta[property="og:logo"]').attr("content"));
 
-  return found.sort((a, b) => b.score - a.score).slice(0, LOGO_CANDIDATE_LIMIT);
+  const onsite = found
+    .filter((candidate) => candidate.source === "onsite")
+    .sort((a, b) => b.score - a.score)
+    .slice(0, LOGO_CANDIDATE_LIMIT);
+  const fallback = found
+    .filter((candidate) => candidate.source === "favicon")
+    .sort((a, b) => b.score - a.score)
+    .slice(0, LOGO_CANDIDATE_LIMIT);
+  return [...onsite, ...fallback];
 }
 
 async function importLogo(
@@ -493,7 +506,13 @@ async function importLogo(
   base: URL,
   projectId: string
 ): Promise<{ url: string } | null> {
-  for (const candidate of logoCandidates($, base)) {
+  const candidates = logoCandidates($, base);
+  const onsite = candidates.filter((candidate) => candidate.source === "onsite");
+  const favicon = candidates.filter((candidate) => candidate.source === "favicon");
+
+  for (const phase of [onsite, favicon]) {
+    if (!phase.length) continue;
+    for (const candidate of phase) {
     let bytes: Buffer | null = null;
     let type: StoredImageType | null = null;
 
@@ -554,8 +573,9 @@ async function importLogo(
       });
       return { url: stored.url };
     } catch {
-      return null;
+      continue;
     }
+  }
   }
   return null;
 }
