@@ -1,103 +1,154 @@
 # Agency Partner Interactive — AI Website Builder
 
-Generate a complete business website from a short questionnaire, preview and edit it, get an automated quote, pay with Stripe, and either download the source as a ZIP or deploy it live on a subdomain. Built with Next.js (App Router), TypeScript, Tailwind, ShadCN, Prisma + Supabase Postgres, and Better Auth.
+A self-service platform that turns a short business questionnaire into a finished website: preview it, edit it, get an automated quote, pay with Stripe, then download a ZIP or go live on a subdomain.
 
-## How it works
+This README is the working picture of the project: **what it was built to do**, **what is already in place**, and **what still has to be achieved**.
 
-1. **Sign up** — every account gets a one-time starter credit bonus.
-2. **Questionnaire** — describe the business, audience, services, tone, style, pages, and package.
-3. **Generate** — the AI produces a structured `WebsiteBlueprint` (JSON only). The app maps it onto approved ShadCN sections — the model never writes raw frontend code.
-4. **Preview & edit** — a live preview with a manual editor (text, reorder, add/remove sections, theme). Optional lightweight AI rewrites per section.
-5. **Persist & back up** — the project is always saved to Supabase Postgres and pushed to a private GitHub repo, regardless of payment.
-6. **Quote & pay** — a deterministic quote engine prices the site; Stripe Checkout handles website packages and credit packs.
-7. **Deliver** — self-hosting unlocks a ZIP download; managed hosting deploys to `{slug}.{PLATFORM_DOMAIN}`.
+---
 
-Credits gate AI work (generation, section rewrites). Delivery (ZIP / live deploy) is gated by the Stripe package payment — never the existence of the project.
+## What this project set out to do
 
-## Prerequisites
+The original goal was an automated website studio for agencies and businesses — not a chatbot that dumps HTML.
 
-- Node.js 18.18+ (or 20+)
-- npm
+A user signs up, describes their business, and receives a professional site. The first generation uses a **heavy AI model API** for planning, copy, SEO, and structured output. Later edits use a **lightweight model API** so small rewrites stay cheap. There is **no local AI**. Models never write unrestricted frontend code. They produce a `WebsiteBlueprint` JSON; the app maps that onto approved ShadCN / Tailwind / Next.js sections.
+
+The rest of the product was meant to run without a human in the loop:
+
+| Area | Original intent |
+|---|---|
+| Images | Licensed stock, in order: Shutterstock → Pexels → Unsplash, then a placeholder |
+| Pricing | A deterministic quote engine — never an AI guess |
+| Payment | Stripe: one-time ZIP (self-hosting) or creation fee + monthly (managed hosting) |
+| Credits | Credits gate AI work; Stripe package payment gates delivery |
+| Backup | Every generated project saved to GitHub, paid or not |
+| Delivery | ZIP download, or automatic deploy to `{slug}.{PLATFORM_DOMAIN}` |
+| CRM | After a website-package payment, upsert the paying customer in HubSpot |
+| Notify | Email the owner when the ZIP is ready or the site goes live |
+| Database | Prisma as the only data layer (originally SQLite, now Supabase Postgres) |
+
+The architecture is a set of named agents (orchestrator, planner, validator, assembler, quote, payment, GitHub, deploy, export, QA, security). They can stay as server functions; the names exist so responsibilities stay clean. Full agent contracts live in `AGENTS.md`. System design lives in `architecture.md`. Template authoring lives in `TEMPLATES.md`.
+
+---
+
+## What is currently in place
+
+The core product loop works end to end in this repo.
+
+### Product flow
+
+1. **Auth** — Better Auth email signup/login. New accounts receive a starter credit bonus.
+2. **Template library** — Users pick a complete, locked design (bespoke renderers such as ForgeTech, Techvantage, CraftedSpaces, plus standard-section designs). The AI fills content slots; it cannot invent layout.
+3. **Questionnaire** — Structured answers (business, audience, services, tone, style, pages, package). Optional **existing-website import** scrapes brand assets (logo, colors, images) with consent tracking.
+4. **Generate** — Heavy model (Cursor, then Gemini, then a deterministic template fallback). Output is Zod-validated, sanitized, and forced onto the chosen template's slots.
+5. **Preview & editor** — Live preview (desktop / tablet / mobile), manual edits (text, images, theme, fonts, icons), and optional lightweight AI section rewrites.
+6. **Credits** — Wallet + ledger with atomic spend, refund on failed generation, and Stripe credit packs. Admin usage page records real token metering separately from credit prices.
+7. **Quote & pay** — Deterministic quote page; Stripe Checkout for website packages and credit packs; webhook + reconcile path.
+8. **Deliver** — ZIP export for self-hosting; GitHub sync after generation/saves; Vercel deploy + subdomain assignment for managed hosting; HubSpot and Resend hooks when configured.
+
+### Platform work already done
+
+- **Supabase Postgres** replaced SQLite. Prisma uses `DATABASE_URL` (pooler) and `DIRECT_URL` (migrations). The Prisma client appends `pgbouncer=true` on port `6543` so prepared-statement errors do not appear on the transaction pooler.
+- **Supabase Storage** (`scraped-assets`) holds scraped and uploaded images. RLS is applied as defense-in-depth; the app talks to Postgres only through Prisma.
+- **Historical data** from the old SQLite databases (`prisma/dev.db` and the earlier templates-folder copy) has been imported: accounts, passwords, projects, questionnaires, quotes, payments, credit wallets/ledgers, and AI usage. Images from `public/uploads` were uploaded to the storage bucket.
+- **15 published templates** are seeded in the new database (10 from the original library plus later designs such as ForgeLime, Mainfile, SaaS LDG, Sports, and Whiter).
+
+### Stack
+
+Next.js 15 (App Router), TypeScript, Tailwind, ShadCN, Prisma + Supabase Postgres, Better Auth, Stripe, Cursor + Gemini APIs.
+
+Agents live as functions under `lib/agents/`. AI providers, blueprint schemas, the section registry, credits, quote, Stripe, GitHub, deploy, and ZIP export sit beside them under `lib/`.
+
+---
+
+## Goals still to achieve
+
+These are the remaining product and production goals — not a dump of every possible improvement.
+
+### Make delivery production-ready
+
+- Run GitHub backup, Vercel subdomain deploys, HubSpot customer sync, and owner emails against **live keys**, not just local stubs.
+- Confirm Stripe webhooks, website-package checkout, and credit-pack checkout in a real Stripe environment (test, then live).
+- Prove the ZIP and live-site paths on paid projects: self-hosting download, managed hosting going live on `{slug}.{PLATFORM_DOMAIN}`.
+
+### Finish the generation quality bar
+
+- Keep the heavy model as the default first generation; keep Gemini as fallback; keep the template fallback **unbilled** when every real model fails.
+- Tighten QA so empty sections, missing CTAs, broken images, and weak SEO do not ship to preview.
+- Grow the template library with more locked, industry-ready designs without letting the AI invent unsupported sections.
+
+### Operate it as a real service
+
+- One-project-per-user is still the product rule. If agencies need several sites, that is a deliberate schema and UX change — not a silent exception.
+- Replace the in-memory rate limiter with a shared store before running more than one app instance.
+- Clean leftover test accounts and expired sessions from the migrated database when they are no longer useful.
+- Keep `.env` under Stripe Projects CLI (`stripe projects env --pull`). Do not hand-edit CLI-managed files.
+
+### Guardrails that must never regress
+
+- AI output stays untrusted: validate, sanitize, render only approved section variants.
+- Credits stay transactional (no negative balances, no double-charges, refunds on failed generations).
+- Payment gates **delivery only**. Projects, previews, and GitHub backups exist before anyone pays.
+- Never deploy an unpaid managed-hosting site. Never expose server secrets in generated files.
+
+---
+
+## How it works (short)
+
+```
+Sign up → pick a template → questionnaire (+ optional brand import)
+    → heavy-model blueprint → validate → assemble ShadCN sections → stock images
+    → preview / editor / light AI rewrites
+    → quote → Stripe
+    → ZIP  or  GitHub + subdomain deploy
+```
+
+Credits gate AI. Stripe package payment gates ZIP and live hosting.
+
+---
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env       # then edit values (see below)
+cp .env.example .env       # then fill values (see below)
 npm run db:push            # create/update the Postgres schema
 npm run dev                # http://localhost:3000
 ```
 
-The app runs out of the box with no external keys: AI falls back to a deterministic template blueprint, images fall back to placeholders, and payments/GitHub/deploy degrade gracefully.
+The app runs without external keys: AI falls back to a deterministic template blueprint, images fall back to placeholders, and payments / GitHub / deploy degrade gracefully.
 
-## Environment variables
+### Environment variables
 
 See `.env.example` for the full list. Highlights:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Supabase Postgres runtime URL (pooler transaction mode, `:6543`, usually with `pgbouncer=true`) |
-| `DIRECT_URL` | Supabase Postgres direct/session URL for Prisma migrations (`:5432`) |
+| `DATABASE_URL` | Supabase Postgres runtime URL (pooler, `:6543`; `pgbouncer=true` is applied in code if missing) |
+| `DIRECT_URL` | Supabase Postgres direct URL for Prisma migrations (`:5432`) |
 | `BETTER_AUTH_SECRET` | Auth session signing secret |
 | `CURSOR_API_KEY` | Cursor SDK key (primary AI) |
 | `HEAVY_MODEL_NAME` / `LIGHT_MODEL_NAME` | Cursor models for generation vs. edits |
 | `GEMINI_API_KEY` / `GEMINI_MODEL_NAME` | Gemini fallback when Cursor fails |
 | `AI_USE_MOCK` | `true` to skip APIs and use the local template |
 | `SIGNUP_CREDIT_BONUS`, `CREDIT_COST_HEAVY_GENERATE`, `CREDIT_COST_LIGHT_EDIT` | Credit economics |
-| `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers (fallback chain) |
+| `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price IDs | Payments |
-| `HUBSPOT_ACCESS_TOKEN` | Optional. Upsert paying customers as HubSpot contacts |
-| `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Optional. Email the account owner when a site goes live or the ZIP is ready |
+| `HUBSPOT_ACCESS_TOKEN` | Upsert paying customers as HubSpot contacts |
+| `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG`, `GITHUB_REPO_VISIBILITY` | GitHub backup |
 | `DEPLOYMENT_TOKEN`, `PLATFORM_DOMAIN` | Managed subdomain deploys (Vercel) |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase Storage uploads for scraped/editor images |
-| `SUPABASE_STORAGE_BUCKET` | Storage bucket name for uploaded assets (default `scraped-assets`) |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Storage uploads for scraped/editor images |
+| `SUPABASE_STORAGE_BUCKET` | Bucket name (default `scraped-assets`) |
 
-### Supabase setup notes
-
-- **Prisma + Postgres:** keep Prisma as the ORM; set both `DATABASE_URL` and `DIRECT_URL`.
-- **Migrations:** run `prisma migrate deploy` in deploy pipelines using `DIRECT_URL`.
-- **Storage bucket:** create `scraped-assets` as a **public** bucket so generated image URLs work directly in `<img>` tags.
-- **Storage CORS:** in Supabase Storage settings, allow at least `GET`, `HEAD`, `OPTIONS` from your app domain (or `*` for simpler setup).
-- **Data API hardening:** if Prisma is your only database client, disable Supabase Data API and apply `prisma/sql/rls_and_storage.sql`.
-
-### Stripe webhook (local)
+### Local Stripe webhook
 
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`. Without a secret, the webhook accepts unverified events only in development.
+Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`.
 
-## Architecture
-
-Agents are plain server functions in `lib/agents/*`, coordinated by the Orchestrator. The pipeline is **validate → assemble → render**: AI JSON is never rendered until it passes Zod validation and sanitization.
-
-```
-lib/
-  agents/       orchestrator, requirement-analyst, theme, image-sourcing,
-                section-assembly, security, qa, editor
-  ai/           Cursor provider + prompt builder (swappable interface)
-  blueprint/    Zod schemas + types for WebsiteBlueprint
-  sections/     section registry (single source of truth for allowed UI)
-  images/       provider fallback chain
-  quote/        deterministic pricing + quote engine
-  credits/      wallet, ledger, atomic spend/refund/grant
-  stripe/       client + package/credit checkout helpers
-  github/       repository agent (Octokit)
-  deployment/   Vercel deploy agent
-  export/       static HTML renderer + project file generator + ZIP
-```
-
-### Key guarantees
-
-- **One project per user** — enforced by a unique constraint on `Project.userId`.
-- **Credits are transactional** — `assertAndSpend` reads, writes the ledger, and updates the wallet atomically; balances never go negative; idempotency keys prevent double-charges. Failed generations refund automatically.
-- **GitHub is always-on** — private repo created/updated after generation and on saves, independent of payment.
-- **Payment gates delivery only** — ZIP export requires a package payment; live deploy requires the managed-hosting package.
-- **AI output is untrusted** — sanitized and Zod-validated; only approved section variants render. AI routes are rate-limited.
-
-## Scripts
+### Scripts
 
 | Command | Description |
 |---|---|
@@ -106,8 +157,12 @@ lib/
 | `npm run start` | Start the production server |
 | `npm run db:push` | Sync the Prisma schema to Postgres |
 | `npm run db:studio` | Open Prisma Studio |
+| `npm run validate` | Template, icon, and lock checks |
+
+---
 
 ## Notes
 
-- The generated client site is a static HTML bundle (Tailwind via CDN), so it deploys to any static host with zero build step.
-- The in-memory rate limiter suits a single instance; use a shared store (e.g. Redis) before scaling horizontally.
+- Generated client sites are a static HTML bundle (Tailwind via CDN), so they deploy to any static host with no build step.
+- The generated client must never contain server secrets.
+- Further reading: `AGENTS.md` (agent contracts), `architecture.md` (system design), `TEMPLATES.md` (how to add a design).

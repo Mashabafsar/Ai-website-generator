@@ -100,6 +100,17 @@ export function classifyAiFailure(
     return failure("quota");
   }
 
+  // The Cursor SDK wraps a failed mkdir of its agent store as ConfigurationError
+  // with isRetryable=false. That is a host/sandbox filesystem problem, not a
+  // bad model id — treating it as permanent took Cursor out of the chain.
+  if (
+    /\bENOENT\b|\bEACCES\b|\bEPERM\b|no such file or directory|mkdir ['"]/i.test(
+      message
+    )
+  ) {
+    return failure("unavailable");
+  }
+
   // Error classes the Cursor SDK exports. Checked by name so classification
   // does not pull the SDK into every module that handles a failure.
   switch (name) {

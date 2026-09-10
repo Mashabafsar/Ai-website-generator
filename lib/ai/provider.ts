@@ -9,6 +9,7 @@ import {
   noteProviderFailure,
   providerBlock,
 } from "@/lib/ai/provider-health";
+import { cursorPromptOptions } from "@/lib/ai/cursor-runtime";
 import {
   type SectionContent,
   buildMockBlueprint,
@@ -70,10 +71,7 @@ export class CursorAiProvider implements AiProvider {
 
   private async runPrompt(prompt: string, model: string): Promise<string> {
     const { Agent } = await import("@cursor/sdk");
-    const result = await Agent.prompt(prompt, {
-      apiKey: env.ai.cursorApiKey,
-      model: { id: model },
-    });
+    const result = await Agent.prompt(prompt, cursorPromptOptions(env.ai.cursorApiKey, model));
     if (result.status === "error") {
       throw new Error("Cursor agent run failed");
     }
