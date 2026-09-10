@@ -1,6 +1,7 @@
 import type { CSSProperties, HTMLAttributes } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, LayoutTemplate, Sparkles, Wand2 } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type HeroSectionProps = HTMLAttributes<HTMLElement> & {
@@ -56,50 +57,15 @@ function ProductPreview() {
           <span className="size-2.5 rounded-full bg-success-main/60" />
           <div className="mx-auto h-6 w-2/5 rounded-md bg-neutral-5" />
         </div>
-
-        <div className="grid min-h-72 md:grid-cols-[220px_1fr]">
-          <aside className="hidden border-r border-line bg-neutral-5/50 p-5 md:block">
-            <div className="mb-6 h-7 w-28 rounded-md bg-primary" />
-            <div className="flex flex-col gap-3">
-              {["Hero", "Services", "About", "Testimonials", "Contact"].map((item, index) => (
-                <div
-                  key={item}
-                  className={cn(
-                    "flex items-center gap-3 rounded px-3 py-2 text-xs font-medium",
-                    index === 0 ? "bg-primary-surface text-primary" : "text-muted-foreground"
-                  )}
-                >
-                  <span className="size-2 rounded-full bg-current opacity-60" />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </aside>
-
-          <div className="p-5 sm:p-8">
-            <div className="relative overflow-hidden rounded-none border border-line bg-primary-surface px-6 py-10 text-center">
-              <div className="relative mx-auto max-w-lg">
-                <div className="mx-auto mb-4 h-3 w-24 rounded-full bg-primary/30" />
-                <div className="mx-auto h-6 w-4/5 rounded-md bg-ink/80 sm:h-8" />
-                <div className="mx-auto mt-3 h-3 w-3/5 rounded bg-ink/25" />
-                <div className="mx-auto mt-6 h-9 w-32 rounded-none bg-primary" />
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {[
-                { icon: LayoutTemplate, label: "Curated sections" },
-                { icon: Sparkles, label: "AI-written copy" },
-                { icon: Wand2, label: "Live editing" },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="rounded-none border border-line bg-card p-4">
-                  <Icon className="mb-3 size-5 text-primary" />
-                  <div className="h-2.5 w-3/4 rounded bg-foreground/15" />
-                  <p className="mt-2 text-xs text-muted-foreground">{label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="relative aspect-[16/10] w-full bg-neutral-5">
+          <Image
+            src="/marketing/hero-dashboard.png"
+            alt="The Agency Partner Interactive dashboard, with templates and your project in one place"
+            fill
+            priority
+            sizes="(min-width: 1024px) 1024px, 100vw"
+            className="object-cover object-top"
+          />
         </div>
       </div>
     </div>
@@ -111,7 +77,7 @@ export function HeroSection({
   eyebrow = "AI Website Builder by Agency Partner Interactive",
   title = "A launch-ready website,",
   gradientTitle = " generated in minutes.",
-  description = "Answer a short questionnaire and our AI assembles a complete single-page website from a curated component system — copy, layout, and images included.",
+  description = "Pick a template, answer a short questionnaire, and our AI fills that design with your copy and images — a curated component system, never raw frontend code.",
   ctaText = "Start building free",
   ctaHref = "/signup",
   gridOptions,

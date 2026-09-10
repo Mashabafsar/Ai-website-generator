@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   ArrowRight,
+  CreditCard,
   FlaskConical,
+  Github,
   Image as ImageIcon,
   LayoutTemplate,
   MousePointerClick,
@@ -30,29 +32,39 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 const STEPS = [
   {
-    icon: Target,
-    title: "Define",
-    desc: "Define your objectives & business goals or analyze your current site using our agent.",
-  },
-  {
     icon: LayoutTemplate,
     title: "Template",
-    desc: "Select an existing template that matches your industry and design preference.",
+    desc: "Pick a finished website design. The layout stays locked — AI only fills its content slots.",
+  },
+  {
+    icon: Target,
+    title: "Define",
+    desc: "Answer the questionnaire — business, audience, and goals — or import an existing site.",
   },
   {
     icon: PenLine,
     title: "Content",
-    desc: "Bring your own content, images & videos or generate it using AI Tokens.",
+    desc: "AI writes copy, SEO, and images into your template. Edit anything by hand.",
   },
   {
-    icon: Wrench,
-    title: "Tech Stack & Maintenance",
-    desc: "Select the right tech stack for your site and maintenance plan with experts.",
+    icon: CreditCard,
+    title: "Payment",
+    desc: "Review the automated quote, then pay with Stripe to unlock ZIP export or live hosting.",
+  },
+  {
+    icon: Github,
+    title: "Saved to GitHub",
+    desc: "Your project is versioned automatically after generation, whether you have paid or not.",
   },
   {
     icon: Rocket,
     title: "Deploy",
-    desc: "Host the website on Vercel or on our AWS Cloud server with 99.9% uptime.",
+    desc: "Download a ZIP to self-host, or we deploy to a live subdomain for you.",
+  },
+  {
+    icon: Wrench,
+    title: "Maintenance",
+    desc: "Managed hosting keeps the site live with updates and 99.9% uptime.",
   },
 ];
 
@@ -118,7 +130,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Welcome banner + 5 steps */}
+      {/* Welcome banner + pipeline steps */}
       <section className="overflow-clip border border-line shell-gradient-border">
         <div className="flex flex-col gap-6 p-6">
           <div className="flex flex-col gap-6">
@@ -127,7 +139,7 @@ export default async function DashboardPage() {
               <p className="text-sm leading-[1.5]">
                 It’s easier than ever before to create a new website or revamp an existing website.
                 <br />
-                Go from existing website to a new website in 5 easy steps.
+                Go from template to a live site in these steps.
               </p>
             </div>
             <div className="flex gap-4">
@@ -146,9 +158,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-6 bg-[rgba(214,221,255,0.2)] p-6">
+          <div className="grid grid-cols-2 gap-6 bg-[rgba(214,221,255,0.2)] p-6 sm:grid-cols-3 xl:grid-cols-7">
             {STEPS.map((step) => (
-              <div key={step.title} className="flex min-w-[180px] flex-1 flex-col gap-3">
+              <div key={step.title} className="flex flex-col gap-3">
                 <span className="shell-accent-chip grid size-[37px] place-items-center rounded">
                   <step.icon className="size-5 text-brand-blue" />
                 </span>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Sparkles,
@@ -36,19 +37,19 @@ export default async function LandingPage() {
 
 const steps = [
   {
+    icon: LayoutTemplate,
+    title: "Pick a template",
+    body: "Choose a finished website design. The layout stays locked — AI only fills its content slots.",
+  },
+  {
     icon: FileQuestion,
     title: "Answer the questionnaire",
     body: "Tell us your business, audience, services, and style. Structured questions, not a blank prompt.",
   },
   {
     icon: Wand2,
-    title: "AI drafts a blueprint",
-    body: "A heavy model plans pages, sections, SEO, and copy — returned as validated structured data.",
-  },
-  {
-    icon: LayoutTemplate,
-    title: "Assembled from real sections",
-    body: "The blueprint maps to a curated ShadCN component library, so the output is clean and consistent.",
+    title: "AI fills the design",
+    body: "A heavy model writes copy, SEO, and image keywords into the template you picked — validated structured data, never raw code.",
   },
   {
     icon: Github,
@@ -64,7 +65,7 @@ function HowItWorks() {
         <div className="max-w-2xl">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">How it works</span>
           <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground">
-            From questionnaire to code in four steps
+            From template to live site in four steps
           </h2>
         </div>
         <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -128,15 +129,14 @@ function SectionsShowcase() {
                 <span className="h-3 w-3 rounded-full bg-secondary-main/70" />
                 <span className="h-3 w-3 rounded-full bg-success-main/60" />
               </div>
-              <div className="space-y-4 p-6">
-                <div className="h-40 rounded-none bg-primary" />
-                <div className="h-4 w-2/3 rounded bg-neutral-5" />
-                <div className="h-4 w-1/2 rounded bg-neutral-5" />
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className="h-20 rounded-none bg-primary-surface" />
-                  <div className="h-20 rounded-none bg-primary-surface" />
-                  <div className="h-20 rounded-none bg-primary-surface" />
-                </div>
+              <div className="relative aspect-[16/10] w-full bg-neutral-5">
+                <Image
+                  src="/marketing/editor-panel.png"
+                  alt="The editor panel with brand controls on the left and a live website preview on the right"
+                  fill
+                  sizes="(min-width: 1024px) 560px, 100vw"
+                  className="object-cover object-top"
+                />
               </div>
             </div>
           </div>
@@ -206,8 +206,8 @@ function FinalCta() {
           Build your website today
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-lg text-white/80">
-          Sign up, answer a few questions, and watch Agency Partner Interactive's AI
-          assemble your site — free credits included.
+          Sign up, pick a template, answer a few questions, and watch Agency Partner
+          Interactive's AI fill that design — free credits included.
         </p>
         <div className="mt-9">
           <Button asChild size="lg" className="group bg-white text-ink hover:bg-neutral-5">
