@@ -9,7 +9,7 @@ import {
   noteProviderFailure,
   providerBlock,
 } from "@/lib/ai/provider-health";
-import { cursorPromptOptions } from "@/lib/ai/cursor-runtime";
+import { runCursorPrompt } from "@/lib/ai/cursor-runtime";
 import {
   type SectionContent,
   buildMockBlueprint,
@@ -21,6 +21,9 @@ import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteBlueprint, WebsiteSection } from "@/lib/blueprint/types";
 
 export type { SectionContent };
+
+/** Section rewrites stay short even when generation waits up to ten minutes. */
+const CURSOR_EDIT_TIMEOUT_MS = 20_000;
 
 export interface AiProvider {
   readonly name: string;
@@ -70,8 +73,7 @@ export class CursorAiProvider implements AiProvider {
   readonly name = "cursor";
 
   private async runPrompt(prompt: string, model: string): Promise<string> {
-    const { Agent } = await import("@cursor/sdk");
-    const result = await Agent.prompt(prompt, cursorPromptOptions(env.ai.cursorApiKey, model));
+    const result = await runCursorPrompt(env.ai.cursorApiKey, model, prompt);
     if (result.status === "error") {
       throw new Error("Cursor agent run failed");
     }
@@ -202,6 +204,7 @@ export class FallbackAiProvider implements AiProvider {
         recordAiFailure(check.failure);
       } else {
         try {
+          console.log("[ai] Generating with Cursor…");
           return await withTimeout(
             this.cursor.generateBlueprint(req),
             env.ai.cursorTimeoutMs,
@@ -243,7 +246,7 @@ export class FallbackAiProvider implements AiProvider {
       try {
         return await withTimeout(
           this.cursor.reviseSection(params),
-          Math.min(env.ai.cursorTimeoutMs, 20_000),
+          Math.min(env.ai.cursorTimeoutMs, CURSOR_EDIT_TIMEOUT_MS),
           "Cursor edit"
         );
       } catch (err) {

@@ -21,10 +21,10 @@ export const env = {
     // Gemini is the fallback when Cursor fails (or when Cursor isn't configured).
     geminiApiKey: process.env.GEMINI_API_KEY ?? "",
     geminiModel: process.env.GEMINI_MODEL_NAME ?? "gemini-2.5-flash",
-    // How long to wait on Cursor before falling through to Gemini (ms). Set high
-    // so website generation prefers the primary Cursor model; users may wait
-    // longer before content appears. Edits keep a shorter cap (see provider.ts).
-    cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 60_000),
+    // How long to wait on Cursor before falling through to Gemini (ms). Opus
+    // blueprints are large (~50k tokens); 3 minutes still cut some runs off and
+    // the chain then billed Gemini instead. Edits keep a shorter cap in provider.ts.
+    cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 600_000),
     // Explicit mock mode only. When false, the FallbackAiProvider chain runs:
     // Cursor → Gemini → deterministic template.
     useMock: bool(process.env.AI_USE_MOCK, false),

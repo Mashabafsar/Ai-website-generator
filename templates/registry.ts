@@ -14,6 +14,39 @@ import { mainfileMeta } from "./mainfile/metadata";
 import { saasldgMeta } from "./saasldg/metadata";
 import { sportsMeta } from "./sports/metadata";
 import { forgelimeMeta } from "./forgelime/metadata";
+import { astraMeta } from "./astra/metadata";
+import { azurioMeta } from "./azurio/metadata";
+import { oliviaMeta } from "./olivia/metadata";
+import { elektraMeta } from "./elektra/metadata";
+import { flowmintMeta } from "./flowmint/metadata";
+import { foksMeta } from "./foks/metadata";
+import { fusionMeta } from "./fusion/metadata";
+import { healiaMeta } from "./healia/metadata";
+import { healspaceMeta } from "./healspace/metadata";
+import { healthdocMeta } from "./healthdoc/metadata";
+import { clinicallyMeta } from "./clinically/metadata";
+import { medhealthMeta } from "./medhealth/metadata";
+import { carewebMeta } from "./careweb/metadata";
+import { kaelMeta } from "./kael/metadata";
+import { lukaszMeta } from "./lukasz/metadata";
+import { luxeframeMeta } from "./luxeframe/metadata";
+import { gritMeta } from "./grit/metadata";
+import { omegaMeta } from "./omega/metadata";
+import { onixMeta } from "./onix/metadata";
+import { portraMeta } from "./portra/metadata";
+import { rebelMeta } from "./rebel/metadata";
+import { ricardoMeta } from "./ricardo/metadata";
+import { timelessMeta } from "./timeless/metadata";
+import { levynaMeta } from "./levyna/metadata";
+import { levynablushMeta } from "./levynablush/metadata";
+import { levynagoldMeta } from "./levynagold/metadata";
+import { veilMeta } from "./veil/metadata";
+import { webcanvasMeta } from "./webcanvas/metadata";
+import { willjacksMeta } from "./willjacks/metadata";
+import { teaserMeta } from "./teaser/metadata";
+import { atelierpfMeta } from "./atelierpf/metadata";
+import { resumeMeta } from "./resume/metadata";
+import { reboMeta } from "./rebo/metadata";
 
 /** Every bespoke design. Add a new module's metadata here to register it. */
 export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
@@ -25,6 +58,39 @@ export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
   saasldgMeta,
   sportsMeta,
   forgelimeMeta,
+  astraMeta,
+  azurioMeta,
+  oliviaMeta,
+  elektraMeta,
+  flowmintMeta,
+  foksMeta,
+  fusionMeta,
+  healiaMeta,
+  healspaceMeta,
+  healthdocMeta,
+  clinicallyMeta,
+  medhealthMeta,
+  carewebMeta,
+  kaelMeta,
+  lukaszMeta,
+  luxeframeMeta,
+  gritMeta,
+  omegaMeta,
+  onixMeta,
+  portraMeta,
+  rebelMeta,
+  ricardoMeta,
+  timelessMeta,
+  levynaMeta,
+  levynablushMeta,
+  levynagoldMeta,
+  veilMeta,
+  webcanvasMeta,
+  willjacksMeta,
+  teaserMeta,
+  atelierpfMeta,
+  resumeMeta,
+  reboMeta,
 ];
 
 const BY_RENDERER = new Map(TEMPLATE_MODULES.map((m) => [m.renderer, m]));

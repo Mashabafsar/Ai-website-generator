@@ -20,10 +20,13 @@ import {
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth/session";
-import { getUserProjectWithRelations } from "@/lib/projects/projects";
+import {
+  canChangeProjectDesign,
+  getUserProjectWithRelations,
+  nextProjectStep,
+} from "@/lib/projects/projects";
 import { listPublishedTemplates } from "@/lib/templates/store";
 import { StatusBadge } from "@/components/app/status-badge";
-import { ProjectStatus } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -126,7 +129,8 @@ export default async function DashboardPage() {
   ]);
 
   const firstName = session.user.name.split(" ")[0];
-  const start = project ? nextStep(project) : { label: "Get Started", href: "/app/templates" };
+  const start = project ? nextProjectStep(project) : { label: "Get Started", href: "/app/templates" };
+  const canPickDesign = !project || canChangeProjectDesign(project.status);
 
   return (
     <div className="flex flex-col gap-8">
@@ -204,11 +208,15 @@ export default async function DashboardPage() {
                   <p className="truncate text-xs text-ink-muted">{t.bestFor}</p>
                 </div>
                 <Link
-                  href={`/app/new-project?templateId=${t.slug}`}
+                  href={
+                    canPickDesign
+                      ? `/app/new-project?templateId=${t.slug}`
+                      : start.href
+                  }
                   className="shell-accent-chip flex h-8 shrink-0 items-center gap-1 rounded-[240px] px-3 text-[13px] leading-[22.5px] text-ink transition-colors hover:bg-primary-surface"
                 >
                   <Wand2 className="size-[17px] text-brand-blue" />
-                  Remix
+                  {canPickDesign ? "Remix" : "Continue"}
                 </Link>
               </div>
             </article>
@@ -278,7 +286,7 @@ function ProjectPanel({
 }: {
   project: NonNullable<Awaited<ReturnType<typeof getUserProjectWithRelations>>>;
 }) {
-  const { label, href } = nextStep(project);
+  const { label, href } = nextProjectStep(project);
   const hasGenerated = ["GENERATED", "QUOTED", "PAID", "EXPORTED", "DEPLOYING", "LIVE"].includes(
     project.status
   );
@@ -333,22 +341,3 @@ function ProjectPanel({
   );
 }
 
-function nextStep(project: {
-  id: string;
-  status: string;
-  templateId: string | null;
-  questionnaire: unknown;
-}): { label: string; href: string } {
-  const base = `/app/project/${project.id}`;
-  switch (project.status) {
-    case ProjectStatus.DRAFT:
-      if (!project.templateId) return { label: "Choose a design", href: "/app/templates" };
-      return project.questionnaire
-        ? { label: "Generate website", href: `${base}/questionnaire` }
-        : { label: "Continue questionnaire", href: `${base}/questionnaire` };
-    case ProjectStatus.GENERATING:
-      return { label: "View progress", href: `${base}/preview` };
-    default:
-      return { label: "Open preview", href: `${base}/preview` };
-  }
-}

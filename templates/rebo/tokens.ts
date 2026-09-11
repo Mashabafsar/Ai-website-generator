@@ -1,0 +1,25 @@
+// Rebo design tokens. Theme variables take over when a custom theme is
+// chosen; original hexes stay as fallbacks so the default look is unchanged.
+export const RB = {
+  brand: "var(--brand, #E44F39)",
+  brandDeep: "var(--brand-strong, #C93D2A)",
+  brandSoft: "var(--brand-soft, #F8D4CE)",
+  ink: "var(--theme-fg, #121212)",
+  body: "var(--theme-muted, #121212)",
+  muted: "var(--theme-muted, #5A5A5A)",
+  line: "var(--theme-line, #000000)",
+  surface: "var(--theme-surface, #FFFFF5)",
+  card: "var(--theme-card, #FFFFF5)",
+  bg: "var(--theme-bg, #FFFFF5)",
+  innerBg: "var(--theme-bg, #FFF7EA)",
+  inverse: "var(--theme-inverse, #000000)",
+  inverseFg: "var(--theme-inverse-fg, #FFFFF5)",
+  header: "#161616",
+  white: "#FFFFFF",
+  cream: "#FFFFF5",
+  coral: "#E44F39",
+  gray: "#545454",
+  graySoft: "#A5ACBA",
+  radius: "20px",
+  pill: "33px",
+} as const;

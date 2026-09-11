@@ -15,6 +15,39 @@ import { renderMainfilePage } from "./mainfile/export";
 import { renderSaasLandingPage } from "./saasldg/export";
 import { renderSportsPage } from "./sports/export";
 import { renderForgeLimePage } from "./forgelime/export";
+import { renderAstraPage } from "./astra/export";
+import { renderAzurioPage } from "./azurio/export";
+import { renderOliviaPage } from "./olivia/export";
+import { renderElektraPage } from "./elektra/export";
+import { renderFlowmintPage } from "./flowmint/export";
+import { renderFoksPage } from "./foks/export";
+import { renderFusionPage } from "./fusion/export";
+import { renderHealiaPage } from "./healia/export";
+import { renderHealspacePage } from "./healspace/export";
+import { renderHealthdocPage } from "./healthdoc/export";
+import { renderClinicallyPage } from "./clinically/export";
+import { renderMedhealthPage } from "./medhealth/export";
+import { renderCarewebPage } from "./careweb/export";
+import { renderKaelPage } from "./kael/export";
+import { renderLukaszPage } from "./lukasz/export";
+import { renderLuxeframePage } from "./luxeframe/export";
+import { renderGritPage } from "./grit/export";
+import { renderOmegaPage } from "./omega/export";
+import { renderOnixPage } from "./onix/export";
+import { renderPortraPage } from "./portra/export";
+import { renderRebelPage } from "./rebel/export";
+import { renderRicardoPage } from "./ricardo/export";
+import { renderTimelessPage } from "./timeless/export";
+import { renderLevynaPage } from "./levyna/export";
+import { renderLevynablushPage } from "./levynablush/export";
+import { renderLevynagoldPage } from "./levynagold/export";
+import { renderVeilPage } from "./veil/export";
+import { renderWebcanvasPage } from "./webcanvas/export";
+import { renderWilljacksPage } from "./willjacks/export";
+import { renderTeaserPage } from "./teaser/export";
+import { renderAtelierpfPage } from "./atelierpf/export";
+import { renderResumePage } from "./resume/export";
+import { renderReboPage } from "./rebo/export";
 
 const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   forgetech: renderForgeTechPage,
@@ -25,6 +58,39 @@ const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   saasldg: renderSaasLandingPage,
   sports: renderSportsPage,
   forgelime: renderForgeLimePage,
+  astra: renderAstraPage,
+  azurio: renderAzurioPage,
+  olivia: renderOliviaPage,
+  elektra: renderElektraPage,
+  flowmint: renderFlowmintPage,
+  foks: renderFoksPage,
+  fusion: renderFusionPage,
+  healia: renderHealiaPage,
+  healspace: renderHealspacePage,
+  healthdoc: renderHealthdocPage,
+  clinically: renderClinicallyPage,
+  medhealth: renderMedhealthPage,
+  careweb: renderCarewebPage,
+  kael: renderKaelPage,
+  lukasz: renderLukaszPage,
+  luxeframe: renderLuxeframePage,
+  grit: renderGritPage,
+  omega: renderOmegaPage,
+  onix: renderOnixPage,
+  portra: renderPortraPage,
+  rebel: renderRebelPage,
+  ricardo: renderRicardoPage,
+  timeless: renderTimelessPage,
+  levyna: renderLevynaPage,
+  levynablush: renderLevynablushPage,
+  levynagold: renderLevynagoldPage,
+  veil: renderVeilPage,
+  webcanvas: renderWebcanvasPage,
+  willjacks: renderWilljacksPage,
+  teaser: renderTeaserPage,
+  atelierpf: renderAtelierpfPage,
+  resume: renderResumePage,
+  rebo: renderReboPage,
 };
 
 function rendererKey(site: AssembledSite): string | null {

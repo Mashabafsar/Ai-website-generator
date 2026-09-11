@@ -17,6 +17,51 @@ fills its locked content slots. They never assemble a site from loose sections.
 
 ---
 
+
+## Published designs
+
+- `forgetech` — **ForgeTech**
+- `techvantage` — **Techvantage**
+- `craftedspaces` — **CraftedSpaces**
+- `whiter` — **Whiter**
+- `mainfile` — **Mraval**
+- `saasldg` — **Stratus**
+- `sports` — **Athlo**
+- `forgelime` — **Forge Lime**
+- `astra` — **Astra Dental**: Calm clinical blue, serif headlines, built for modern dental practices.
+- `azurio` — **Azurio**: Electric indigo on warm paper — a digital-agency layout with huge type.
+- `olivia` — **Olivia**: Soft paper portfolio with peach pricing tiles and highlighter FAQ cards.
+- `elektra` — **Elektra**: Midnight EV showroom: charcoal canvas, electric blue, precision type.
+- `flowmint` — **FlowMint**: Dark editorial portfolio with generous type and a mint-quiet surface.
+- `foks` — **Foks**: Creative magazine masthead: Bricolage headlines, DM Sans body, editorial columns.
+- `fusion` — **Fusion**: Lavender-and-cyan SaaS landing for product and NFT-adjacent launches.
+- `healia` — **Healia**: Warm terracotta healthcare on cream paper — high-definition care, human tone.
+- `healspace` — **Healspace**: Forest-and-coral wellness studio: earthy ink, blush tiles, quiet luxury.
+- `healthdoc` — **Health Doc**: Dark AI-health product: violet accent on near-black, assistant-first layout.
+- `clinically` — **Clinically**: Trust-blue medical system: Inter, ice surfaces, appointment-led home.
+- `medhealth` — **MedHealth**: Clean clinical marketing site with navy trust marks and soft informational cards.
+- `careweb` — **Careweb**: Soft informational healthcare kit: airy cards, teal cues, family-clinic tone.
+- `kael` — **Kael Donovan**: Personal studio site: oversized name, project trail, service cards.
+- `lukasz` — **Lukasz**: Quiet personal studio: generous whitespace, project grid, conversational about.
+- `luxeframe` — **LuxeFrame**: High-end photography house: charcoal, acid-lime marks, cinematic frames.
+- `grit` — **Grit**: Resume-forward portfolio: Playfair display, IBM Plex Mono labels, coral strike marks.
+- `omega` — **Omega**: Bright dual-blue SaaS marketing: sky-to-indigo gradient energy, conversion home.
+- `onix` — **Onix**: Violet agency system with warm gold asides and multi-layout energy.
+- `portra` — **Portra**: Designer portfolio with icy cyan marks on near-black type.
+- `rebel` — **Rebel Grace**: Huge-type personal portfolio: cinematic intro, editorial bio, project reel.
+- `ricardo` — **Ricardo Rowen**: Romantic personal atelier: Cormorant serif, rose ink, script asides.
+- `timeless` — **Timeless**: Creative-agency home with cool mist surfaces and a long-form case grid.
+- `levyna` — **Levyna**: Interior studio on charcoal with a lime architectural mark.
+- `levynablush` — **Levyna Blush**: Navy interior house with a candy-pink signature on pale marble grounds.
+- `levynagold` — **Levyna Gold**: Midnight interiors with a champagne-gold rule — hospitality calm.
+- `veil` — **Veil**: Signal-layer dark UI: Syne + DM Mono, acid-lime ticks, terminal calm.
+- `webcanvas` — **WebCanvas**: Warm-stone agency: cream type on charcoal, looping wordmarks, studio grit.
+- `willjacks` — **Will Jacks**: Personal site with mint, blush, and lemon tiles on charcoal ink.
+- `teaser` — **Teaser**: Grid-rail SaaS landing: mist gray, ink headlines, product-screenshot gravity.
+- `atelierpf` — **Atelier**: UI-kit portfolio: graphite type on cool gray, work-first grid.
+- `resume` — **Resume**: A simple portfolio template for designers — huge type, a resume, and the work.
+- `rebo` — **Rebo**: Coral-on-cream digital agency with a dark home header, Clash Display inner pages, and a full multi-page site.
+
 ## Concepts
 
 Two kinds of design exist:

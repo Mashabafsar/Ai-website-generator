@@ -3,7 +3,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { extractJson } from "@/lib/blueprint/schema";
 import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
-import { cursorPromptOptions } from "@/lib/ai/cursor-runtime";
+import { runCursorPrompt } from "@/lib/ai/cursor-runtime";
 import { withTimeout } from "@/lib/ai/timeout";
 import { fetchGuarded, readCappedText, ScrapeError } from "@/lib/scraper/fetch-guard";
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
@@ -392,9 +392,8 @@ function buildExtractPrompt(site: ScrapedSite): string {
 async function runLightPrompt(prompt: string): Promise<string> {
   if (env.ai.cursorApiKey) {
     try {
-      const { Agent } = await import("@cursor/sdk");
       const result = await withTimeout(
-        Agent.prompt(prompt, cursorPromptOptions(env.ai.cursorApiKey, env.ai.lightModel)),
+        runCursorPrompt(env.ai.cursorApiKey, env.ai.lightModel, prompt),
         AI_TIMEOUT_MS,
         "Cursor import"
       );

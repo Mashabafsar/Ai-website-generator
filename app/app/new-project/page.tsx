@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation";
+import type { Project } from "@prisma/client";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { createProjectForUser, getUserProject, ProjectLimitError } from "@/lib/projects/projects";
+import {
+  canChangeProjectDesign,
+  createProjectForUser,
+  getUserProject,
+  isProjectLimitError,
+  nextProjectStep,
+} from "@/lib/projects/projects";
 import { getTemplateById, getTemplateBySlug } from "@/lib/templates/store";
-import { ProjectStatus } from "@/lib/constants";
 
 /**
  * Selecting a design lands here. It attaches the chosen template to the user's
@@ -26,33 +32,36 @@ export default async function NewProjectPage({
   if (!template || !template.published) redirect("/app/templates");
 
   const existing = await getUserProject(userId);
-
   if (existing) {
-    const canChangeDesign =
-      existing.status === ProjectStatus.DRAFT || existing.status === ProjectStatus.FAILED;
-
-    if (canChangeDesign && existing.templateId !== template.id) {
-      await prisma.project.update({
-        where: { id: existing.id },
-        data: { templateId: template.id },
-      });
-    }
-
-    redirect(
-      canChangeDesign
-        ? `/app/project/${existing.id}/questionnaire`
-        : `/app/project/${existing.id}/preview`
-    );
+    redirect(await continueExistingProject(existing, template.id));
   }
 
   // Keep redirect() out of try/catch (it signals via a thrown control-flow error).
   const project = await createProjectForUser(userId, "My Website", template.id).catch(
     async (err) => {
-      if (err instanceof ProjectLimitError) return getUserProject(userId);
-      throw err;
+      if (!isProjectLimitError(err)) throw err;
+      return getUserProject(userId);
     }
   );
 
   if (!project) redirect("/app/templates");
-  redirect(`/app/project/${project.id}/questionnaire`);
+  redirect(await continueExistingProject(project, template.id));
+}
+
+/**
+ * Reuse the one project per user. Draft/failed sites can still adopt this
+ * design; generated sites continue at the same step as the dashboard.
+ */
+async function continueExistingProject(project: Project, templateId: string): Promise<string> {
+  if (canChangeProjectDesign(project.status)) {
+    if (project.templateId !== templateId) {
+      await prisma.project.update({
+        where: { id: project.id },
+        data: { templateId },
+      });
+    }
+    return `/app/project/${project.id}/questionnaire`;
+  }
+
+  return nextProjectStep(project).href;
 }

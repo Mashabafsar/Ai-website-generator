@@ -1,4 +1,4 @@
-import type { Project } from "@prisma/client";
+import { Prisma, type Project } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { ProjectStatus } from "@/lib/constants";
@@ -8,6 +8,64 @@ export class ProjectLimitError extends Error {
   constructor() {
     super("You can only create one website per account.");
     this.name = "ProjectLimitError";
+  }
+}
+
+/** True when the user already has their one project (lookup hit or unique-constraint race). */
+export function isProjectLimitError(error: unknown): boolean {
+  if (error instanceof ProjectLimitError) return true;
+  if (error instanceof Error && error.name === "ProjectLimitError") return true;
+  return isUniqueUserIdConstraint(error);
+}
+
+function isUniqueUserIdConstraint(error: unknown): boolean {
+  const code =
+    error instanceof Prisma.PrismaClientKnownRequestError
+      ? error.code
+      : error && typeof error === "object" && "code" in error
+        ? String((error as { code: unknown }).code)
+        : null;
+  if (code !== "P2002") return false;
+
+  const target =
+    error instanceof Prisma.PrismaClientKnownRequestError
+      ? error.meta?.target
+      : error && typeof error === "object" && "meta" in error
+        ? (error as { meta?: { target?: unknown } }).meta?.target
+        : undefined;
+  if (target == null) return true;
+  if (Array.isArray(target)) return target.includes("userId");
+  if (typeof target === "string") return target === "userId" || target.includes("userId");
+  return true;
+}
+
+/** Draft and failed sites can still swap designs for free before generation. */
+export function canChangeProjectDesign(status: string): boolean {
+  return status === ProjectStatus.DRAFT || status === ProjectStatus.FAILED;
+}
+
+/**
+ * Where an existing project should continue — same destinations as the dashboard CTA.
+ */
+export function nextProjectStep(project: {
+  id: string;
+  status: string;
+  templateId: string | null;
+  questionnaire?: unknown;
+}): { label: string; href: string } {
+  const base = `/app/project/${project.id}`;
+  switch (project.status) {
+    case ProjectStatus.DRAFT:
+      if (!project.templateId) return { label: "Choose a design", href: "/app/templates" };
+      return project.questionnaire
+        ? { label: "Generate website", href: `${base}/questionnaire` }
+        : { label: "Continue questionnaire", href: `${base}/questionnaire` };
+    case ProjectStatus.FAILED:
+      return { label: "Continue questionnaire", href: `${base}/questionnaire` };
+    case ProjectStatus.GENERATING:
+      return { label: "View progress", href: `${base}/preview` };
+    default:
+      return { label: "Open preview", href: `${base}/preview` };
   }
 }
 
@@ -41,15 +99,21 @@ export async function createProjectForUser(
   if (existing) throw new ProjectLimitError();
 
   const name = businessName.trim() || "My Website";
-  return prisma.project.create({
-    data: {
-      userId,
-      businessName: name,
-      slug: slugify(name),
-      status: ProjectStatus.DRAFT,
-      templateId,
-    },
-  });
+  try {
+    return await prisma.project.create({
+      data: {
+        userId,
+        businessName: name,
+        slug: slugify(name),
+        status: ProjectStatus.DRAFT,
+        templateId,
+      },
+    });
+  } catch (error) {
+    // Two tabs can both pass the lookup and then collide on Project.userId.
+    if (isUniqueUserIdConstraint(error)) throw new ProjectLimitError();
+    throw error;
+  }
 }
 
 /** Parsed project view with typed JSON fields. */
