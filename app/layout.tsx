@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, Space_Grotesk, Onest } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );
