@@ -673,7 +673,7 @@ Mark project as EXPORTED
 ```text
 Stripe creation fee + subscription success
       ↓
-Save project to GitHub
+Commit site to AI-WEBSITE-BUILDER-WEBSITE
       ↓
 Deploy to subdomain
       ↓
@@ -686,34 +686,32 @@ Mark project as LIVE
 
 ### Purpose
 
-Save generated website files to GitHub.
+Save paid website files to the shared GitHub repo **AI-WEBSITE-BUILDER-WEBSITE**.
 
 ### Responsibilities
 
-- Create new repository or project folder
-- Generate project source code
-- Commit files
-- Save repository URL to database
-- Manage version history
+- Resolve `GITHUB_SITES_REPO` or `${GITHUB_ORG}/AI-WEBSITE-BUILDER-WEBSITE`
+- Generate the static export
+- Commit into `clients/<slug>/` (do not create a repo per project)
+- Save the folder URL and commit SHA to the database
+- Run after website-package payment, and on later saves while the project is paid
 
 ### Files to Commit
 
 ```text
-package.json
-next.config.js
-tailwind.config.ts
-app/
-components/
-public/
-README.md
-.env.example
+clients/<slug>/index.html
+clients/<slug>/*.html
+clients/<slug>/public/
+clients/<slug>/site.json
+clients/<slug>/blueprint.json
+clients/<slug>/package.json
 ```
 
 ### Output
 
 ```json
 {
-  "githubRepoUrl": "https://github.com/org/project-repo",
+  "githubRepoUrl": "https://github.com/org/AI-WEBSITE-BUILDER-WEBSITE/tree/main/clients/acme-ab12cd",
   "commitSha": "abc123"
 }
 ```
@@ -908,11 +906,13 @@ Stripe Webhook Success
       ↓
 HubSpot customer sync
       ↓
+GitHub Repository Agent (clients/<slug>/ in AI-WEBSITE-BUILDER-WEBSITE)
+      ↓
 Package Decision
       ↓
 Self Hosting: Export Agent → notify owner
       ↓
-Managed Hosting: GitHub Repository Agent → Deployment Agent → notify owner
+Managed Hosting: Deployment Agent → notify owner
 ```
 
 ---

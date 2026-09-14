@@ -1,8 +1,9 @@
 import { getStripe } from "@/lib/stripe/stripe";
 import { grantPurchase } from "@/lib/credits/credits";
 import { prisma } from "@/lib/prisma";
-import { PaymentType, PaymentStatus, ProjectStatus } from "@/lib/constants";
+import { PaymentType, PaymentStatus, ProjectStatus, GithubSyncStatus } from "@/lib/constants";
 import { syncPaidCustomerToHubSpot } from "@/lib/crm/hubspot";
+import { trySyncProjectToGitHub } from "@/lib/github/github";
 
 /**
  * Reconciles a credit-pack checkout directly with Stripe on the success redirect.
@@ -107,6 +108,9 @@ export async function reconcileWebsiteCheckout(params: {
   }
 
   await syncPaidCustomerToHubSpot(params.projectId);
+  if (project?.githubSyncStatus !== GithubSyncStatus.SYNCED) {
+    await trySyncProjectToGitHub(params.projectId);
+  }
 
   return { paid: true };
 }

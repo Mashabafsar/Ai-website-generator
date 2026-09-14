@@ -1,0 +1,28 @@
+// Sarahfolio design tokens. Theme variables take over when a custom theme is
+// chosen; original hexes stay as fallbacks so the default look is unchanged.
+export const SF = {
+  brand: "var(--brand, #FFBF38)",
+  brandDeep: "var(--brand-strong, #FDA712)",
+  brandSoft: "var(--brand-soft, #FFF4D6)",
+  ink: "var(--theme-fg, #0F0F0F)",
+  body: "var(--theme-muted, #404040)",
+  muted: "var(--theme-muted, #525252)",
+  quiet: "#737373",
+  line: "var(--theme-line, #E5E5E5)",
+  surface: "var(--theme-surface, #FAFAFA)",
+  card: "var(--theme-card, #FFFFFF)",
+  bg: "var(--theme-bg, #FAFAFA)",
+  inverse: "var(--theme-inverse, #222420)",
+  inverseFg: "var(--theme-inverse-fg, #E5E5E5)",
+  lime: "#C9D69B",
+  limeInk: "#434734",
+  pink: "#E8A7D1",
+  pinkInk: "#4D3846",
+  pinkMuted: "#745369",
+  amber: "#FDA712",
+  gray: "#A3A3A3",
+  wash: "#F5F5F5",
+  white: "#FFFFFF",
+  radius: "32px",
+  pill: "32px",
+} as const;

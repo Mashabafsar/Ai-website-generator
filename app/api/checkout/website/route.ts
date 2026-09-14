@@ -4,15 +4,16 @@ import { getOwnedProject } from "@/lib/projects/projects";
 import { getStripe } from "@/lib/stripe/stripe";
 import { buildPackageCheckout } from "@/lib/stripe/packages";
 import { generateAndSaveQuote } from "@/lib/quote/quote";
-import { PaymentType, PaymentStatus } from "@/lib/constants";
+import { isPackageType, PaymentType, PaymentStatus } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const { user, response } = await requireUser();
   if (!user) return response;
 
-  const body = await readJson<{ projectId: string }>(req);
+  const body = await readJson<{ projectId: string; packageType?: unknown }>(req);
   if (!body?.projectId) return jsonError("Missing projectId", 400);
+  const packageType = isPackageType(body.packageType) ? body.packageType : undefined;
 
   const project = await getOwnedProject(user.id, body.projectId);
   if (!project) return jsonError("Project not found", 404);
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   }
 
   // Recompute the quote server-side so the charged amount is always authoritative.
-  const quote = await generateAndSaveQuote(project.id);
+  const quote = await generateAndSaveQuote(project.id, packageType);
   const { mode, lineItems } = buildPackageCheckout(quote);
 
   // {CHECKOUT_SESSION_ID} lets the delivery page confirm the payment on return,

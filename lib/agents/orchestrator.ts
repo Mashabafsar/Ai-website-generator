@@ -33,7 +33,7 @@ import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { newFailureLog, withAiDiagnostics } from "@/lib/ai/diagnostics";
 import { recordAiIncidents } from "@/lib/ai/incidents";
 import type { AiFailure } from "@/lib/ai/failure";
-import { trySyncProjectToGitHub } from "@/lib/github/github";
+import { trySyncPaidProjectToGitHub } from "@/lib/github/github";
 import { slugify } from "@/lib/utils";
 
 export class AlreadyGeneratedError extends Error {
@@ -332,15 +332,15 @@ async function runGeneration(params: {
         assembledPages: JSON.stringify(site),
         theme: JSON.stringify(theme),
         status: keepPaidStatus ? ProjectStatus.PAID : ProjectStatus.GENERATED,
-        githubSyncStatus: GithubSyncStatus.PENDING,
         generationDegraded: fromTemplate,
+        ...(keepPaidStatus ? { githubSyncStatus: GithubSyncStatus.PENDING } : {}),
       },
     });
 
     if (designVersion) await settleAfterRedesign(projectId, Boolean(keepPaidStatus));
 
-    // Always back up to GitHub (payment-independent). Best-effort; won't throw.
-    await trySyncProjectToGitHub(projectId);
+    // Paid sites are committed into AI-WEBSITE-BUILDER-WEBSITE. Unpaid drafts stay local.
+    if (keepPaidStatus) await trySyncPaidProjectToGitHub(projectId);
 
     return {
       status: "GENERATED",

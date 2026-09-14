@@ -48,6 +48,7 @@ import { renderTeaserPage } from "./teaser/export";
 import { renderAtelierpfPage } from "./atelierpf/export";
 import { renderResumePage } from "./resume/export";
 import { renderReboPage } from "./rebo/export";
+import { renderSarahfolioPage } from "./sarahfolio/export";
 
 const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   forgetech: renderForgeTechPage,
@@ -91,6 +92,7 @@ const RENDERERS: Record<string, TemplateHtmlRenderer> = {
   atelierpf: renderAtelierpfPage,
   resume: renderResumePage,
   rebo: renderReboPage,
+  sarahfolio: renderSarahfolioPage,
 };
 
 function rendererKey(site: AssembledSite): string | null {

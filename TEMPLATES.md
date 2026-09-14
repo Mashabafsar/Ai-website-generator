@@ -61,6 +61,7 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `atelierpf` — **Atelier**: UI-kit portfolio: graphite type on cool gray, work-first grid.
 - `resume` — **Resume**: A simple portfolio template for designers — huge type, a resume, and the work.
 - `rebo` — **Rebo**: Coral-on-cream digital agency with a dark home header, Clash Display inner pages, and a full multi-page site.
+- `sarahfolio` — **Sarah**: Personal copywriter portfolio — Anton display, yellow offset CTAs, multi-page.
 
 ## Concepts
 

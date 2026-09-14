@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { PackageType } from "@/lib/constants";
+import { isPackageType, PackageType } from "@/lib/constants";
 import { PRICING, PACKAGE_LABELS } from "@/lib/quote/pricing";
 import { featuresFromVariants } from "@/lib/quote/features";
+import { defaultQuestionnaire, parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { WebsiteBlueprint } from "@/lib/blueprint/types";
 
 export type QuoteLineItem = { name: string; amount: number };
@@ -91,8 +92,12 @@ export function computeQuote(input: {
 /**
  * Compute and persist the quote for a project. Reads the stored blueprint and
  * questionnaire (for features + selected package). Upserts the single Quote row.
+ * `packageTypeOverride` is the hosting choice from the pre-payment dialog.
  */
-export async function generateAndSaveQuote(projectId: string): Promise<QuoteResult> {
+export async function generateAndSaveQuote(
+  projectId: string,
+  packageTypeOverride?: PackageType
+): Promise<QuoteResult> {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: { questionnaire: true },
@@ -101,15 +106,24 @@ export async function generateAndSaveQuote(projectId: string): Promise<QuoteResu
 
   const blueprint = JSON.parse(project.blueprint) as WebsiteBlueprint;
   const answers = project.questionnaire?.answers
-    ? (JSON.parse(project.questionnaire.answers) as { packageType?: PackageType })
-    : {};
+    ? parseQuestionnaireAnswers(project.questionnaire.answers)
+    : defaultQuestionnaire;
 
   // Features come from the template's locked section list, materialized in the
   // blueprint — never from user checkboxes.
   const features = featuresFromVariants(
     blueprint.pages.flatMap((page) => page.sections.map((section) => section.variant))
   );
-  const packageType = answers.packageType ?? PackageType.SELF_HOSTING;
+  const packageType =
+    packageTypeOverride ??
+    (isPackageType(answers.packageType) ? answers.packageType : PackageType.SELF_HOSTING);
+
+  if (packageTypeOverride && project.questionnaire) {
+    await prisma.questionnaire.update({
+      where: { projectId },
+      data: { answers: JSON.stringify({ ...answers, packageType: packageTypeOverride }) },
+    });
+  }
 
   const quote = computeQuote({ blueprint, features, packageType });
 

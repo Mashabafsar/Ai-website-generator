@@ -83,9 +83,22 @@ export const env = {
   github: {
     token: process.env.GITHUB_TOKEN ?? "",
     org: process.env.GITHUB_ORG ?? "",
+    /** Optional `owner/repo`. Defaults to `${GITHUB_ORG}/AI-WEBSITE-BUILDER-WEBSITE`. */
+    sitesRepo: process.env.GITHUB_SITES_REPO ?? "",
     visibility: (process.env.GITHUB_REPO_VISIBILITY ?? "private") as "private" | "public",
     get enabled() {
       return Boolean(process.env.GITHUB_TOKEN);
+    },
+    /** Paid sites are committed here. Null when owner/repo cannot be resolved. */
+    get sitesTarget(): { owner: string; repo: string } | null {
+      const explicit = (process.env.GITHUB_SITES_REPO ?? "").trim();
+      if (explicit.includes("/")) {
+        const [owner, repo, extra] = explicit.split("/");
+        if (owner && repo && !extra) return { owner, repo };
+      }
+      const org = process.env.GITHUB_ORG ?? "";
+      if (org) return { owner: org, repo: "AI-WEBSITE-BUILDER-WEBSITE" };
+      return null;
     },
   },
 

@@ -17,7 +17,7 @@ import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { newFailureLog, withAiDiagnostics } from "@/lib/ai/diagnostics";
 import { recordAiIncidents } from "@/lib/ai/incidents";
 import { sourceImages } from "@/lib/agents/image-sourcing";
-import { trySyncProjectToGitHub } from "@/lib/github/github";
+import { trySyncPaidProjectToGitHub } from "@/lib/github/github";
 import { getTemplateById } from "@/lib/templates/store";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
@@ -78,8 +78,8 @@ async function persistAndSync(
       theme: JSON.stringify(theme),
     },
   });
-  // Keep the GitHub backup in sync on every save (best-effort).
-  await trySyncProjectToGitHub(projectId);
+  // Paid sites stay in sync in AI-WEBSITE-BUILDER-WEBSITE. Unpaid drafts stay local.
+  await trySyncPaidProjectToGitHub(projectId);
 }
 
 /**

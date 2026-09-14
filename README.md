@@ -20,7 +20,7 @@ The rest of the product was meant to run without a human in the loop:
 | Pricing | A deterministic quote engine — never an AI guess |
 | Payment | Stripe: one-time ZIP (self-hosting) or creation fee + monthly (managed hosting) |
 | Credits | Credits gate AI work; Stripe package payment gates delivery |
-| Backup | Every generated project saved to GitHub, paid or not |
+| Backup | Paid websites committed to the **AI-WEBSITE-BUILDER-WEBSITE** GitHub repo under `clients/<slug>/` |
 | Delivery | ZIP download, or automatic deploy to `{slug}.{PLATFORM_DOMAIN}` |
 | CRM | After a website-package payment, upsert the paying customer in HubSpot |
 | Notify | Email the owner when the ZIP is ready or the site goes live |
@@ -43,7 +43,7 @@ The core product loop works end to end in this repo.
 5. **Preview & editor** — Live preview (desktop / tablet / mobile), manual edits (text, images, theme, fonts, icons), and optional lightweight AI section rewrites.
 6. **Credits** — Wallet + ledger with atomic spend, refund on failed generation, and Stripe credit packs. Admin usage page records real token metering separately from credit prices.
 7. **Quote & pay** — Deterministic quote page; Stripe Checkout for website packages and credit packs; webhook + reconcile path.
-8. **Deliver** — ZIP export for self-hosting; GitHub sync after generation/saves; Vercel deploy + subdomain assignment for managed hosting; HubSpot and Resend hooks when configured.
+8. **Deliver** — ZIP export for self-hosting; after website-package payment, the static site is committed into **AI-WEBSITE-BUILDER-WEBSITE** at `clients/<slug>/`; Vercel deploy + subdomain assignment for managed hosting; HubSpot and Resend hooks when configured.
 
 ### Platform work already done
 
@@ -87,7 +87,7 @@ These are the remaining product and production goals — not a dump of every pos
 
 - AI output stays untrusted: validate, sanitize, render only approved section variants.
 - Credits stay transactional (no negative balances, no double-charges, refunds on failed generations).
-- Payment gates **delivery only**. Projects, previews, and GitHub backups exist before anyone pays.
+- Payment gates **delivery only**. Projects and previews exist before anyone pays. GitHub (the shared sites repo) and live hosting wait until the website package is paid.
 - Never deploy an unpaid managed-hosting site. Never expose server secrets in generated files.
 
 ---
@@ -99,10 +99,10 @@ Sign up → pick a template → questionnaire (+ optional brand import)
     → heavy-model blueprint → validate → assemble ShadCN sections → stock images
     → preview / editor / light AI rewrites
     → quote → Stripe
-    → ZIP  or  GitHub + subdomain deploy
+    → ZIP  and/or  paid site committed to AI-WEBSITE-BUILDER-WEBSITE  and/or  subdomain deploy
 ```
 
-Credits gate AI. Stripe package payment gates ZIP and live hosting.
+Credits gate AI. Stripe package payment gates ZIP, the shared GitHub sites repo, and live hosting.
 
 ---
 
@@ -135,7 +135,9 @@ See `.env.example` for the full list. Highlights:
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price IDs | Payments |
 | `HUBSPOT_ACCESS_TOKEN` | Upsert paying customers as HubSpot contacts |
 | `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
-| `GITHUB_TOKEN`, `GITHUB_ORG`, `GITHUB_REPO_VISIBILITY` | GitHub backup |
+| `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
+| `GITHUB_SITES_REPO` | Optional `owner/AI-WEBSITE-BUILDER-WEBSITE` override |
+| `GITHUB_REPO_VISIBILITY` | Unused for the shared sites repo (that repo already exists) |
 | `DEPLOYMENT_TOKEN`, `PLATFORM_DOMAIN` | Managed subdomain deploys (Vercel) |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Storage uploads for scraped/editor images |
 | `SUPABASE_STORAGE_BUCKET` | Bucket name (default `scraped-assets`) |
@@ -147,6 +149,12 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
 Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+### Paid sites repo
+
+Create the GitHub repository **AI-WEBSITE-BUILDER-WEBSITE** (already done in this setup). Grant `GITHUB_TOKEN` write access. Set `GITHUB_ORG` to the owner, or set `GITHUB_SITES_REPO` to `owner/AI-WEBSITE-BUILDER-WEBSITE`.
+
+After a website-package payment succeeds (Stripe webhook or checkout reconcile), the generated static files are committed to `clients/<business-slug>-<id>/` on `main`. Later editor saves and regenerations update that folder only while the project is paid. Unpaid drafts stay in this app’s database.
 
 ### Scripts
 

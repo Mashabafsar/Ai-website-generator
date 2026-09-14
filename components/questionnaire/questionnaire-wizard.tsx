@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, X } from "lucide-react";
@@ -17,7 +17,7 @@ import {
 } from "@/lib/questionnaire/schema";
 import { ColorField } from "@/components/theme/color-field";
 import { parseUserColor } from "@/lib/theme/parse-color";
-import { PackageType } from "@/lib/constants";
+import { BrandImportChoice } from "@/components/questionnaire/brand-import-choice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { BrandImportChoice } from "@/components/questionnaire/brand-import-choice";
 import { hasImportedBrand, hasImportedTheme, parseImportedBrand } from "@/lib/branding/imported-brand";
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
@@ -44,7 +43,7 @@ const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   1: ["businessName", "industry", "description", "location"],
   2: ["targetAudience", "demographics", "goals", "services"],
   3: ["tone", "colorPreference", "customPrimary", "customSecondary", "customAccent", "visualStyle", "brandingNotes", "fontFamily"],
-  4: ["contactEmail", "contactPhone", "packageType"],
+  4: ["contactEmail", "contactPhone"],
 };
 
 // Fields the website import can prefill — mapped onto the form one at a time.
@@ -633,28 +632,9 @@ export function QuestionnaireWizard({
                     <Input placeholder="(555) 123-4567" {...register("contactPhone")} />
                   </Field>
                 </div>
-                <Field label="Hosting package">
-                  <Controller
-                    control={control}
-                    name="packageType"
-                    render={({ field }) => (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <PackageOption
-                          active={field.value === PackageType.SELF_HOSTING}
-                          onClick={() => field.onChange(PackageType.SELF_HOSTING)}
-                          title="Self-hosting"
-                          desc="Download the code ZIP and host it yourself."
-                        />
-                        <PackageOption
-                          active={field.value === PackageType.MANAGED_HOSTING}
-                          onClick={() => field.onChange(PackageType.MANAGED_HOSTING)}
-                          title="Managed hosting"
-                          desc="We deploy it to a live subdomain for you."
-                        />
-                      </div>
-                    )}
-                  />
-                </Field>
+                <p className="text-sm text-muted-foreground">
+                  Self-hosting vs managed hosting is chosen on the quote page, just before payment.
+                </p>
               </>
             )}
 
@@ -815,28 +795,3 @@ function WebsiteChoice({
   );
 }
 
-function PackageOption({
-  active,
-  onClick,
-  title,
-  desc,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-xl border p-4 text-left transition-colors",
-        active ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "hover:bg-secondary"
-      )}
-    >
-      <div className="font-semibold">{title}</div>
-      <div className="mt-1 text-sm text-muted-foreground">{desc}</div>
-    </button>
-  );
-}

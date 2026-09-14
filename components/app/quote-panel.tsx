@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { HostingChoiceDialog } from "@/components/app/hosting-choice-dialog";
 import { formatCurrency } from "@/lib/utils";
-import { PackageType } from "@/lib/constants";
+import { PackageType, type PackageType as PackageTypeValue } from "@/lib/constants";
 
 type QuoteLineItem = { name: string; amount: number };
 type Quote = {
@@ -30,41 +31,61 @@ export function QuotePanel({
   const [quote, setQuote] = useState<Quote | null>(initialQuote);
   const [calculating, setCalculating] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [hostingOpen, setHostingOpen] = useState(false);
+  const [hostingIntent, setHostingIntent] = useState<"quote" | "checkout">("checkout");
+
+  async function applyPackage(packageType: PackageTypeValue): Promise<Quote | null> {
+    const res = await fetch(`/api/projects/${projectId}/quote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ packageType }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Could not calculate quote");
+    setQuote(data);
+    router.refresh();
+    return data as Quote;
+  }
 
   async function recalc() {
-    setCalculating(true);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/quote`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not calculate quote");
-      setQuote(data);
-      toast.success("Quote updated");
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Quote failed");
-    } finally {
-      setCalculating(false);
-    }
+    setHostingIntent("quote");
+    setHostingOpen(true);
   }
 
   async function checkout() {
-    setCheckingOut(true);
+    setHostingIntent("checkout");
+    setHostingOpen(true);
+  }
+
+  async function confirmHosting(packageType: PackageTypeValue) {
+    const paying = hostingIntent === "checkout";
+    if (paying) setCheckingOut(true);
+    else setCalculating(true);
     try {
+      await applyPackage(packageType);
+      if (!paying) {
+        toast.success("Quote updated");
+        setHostingOpen(false);
+        return;
+      }
       const res = await fetch("/api/checkout/website", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({ projectId, packageType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not start checkout");
       if (data.url) window.location.href = data.url;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Checkout failed");
+      toast.error(err instanceof Error ? err.message : paying ? "Checkout failed" : "Quote failed");
       setCheckingOut(false);
+    } finally {
+      setCalculating(false);
     }
   }
 
   const isManaged = quote?.packageType === PackageType.MANAGED_HOSTING;
+  const submitting = calculating || checkingOut;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -73,13 +94,19 @@ export function QuotePanel({
           <div>
             <h2 className="font-display text-lg font-semibold">Your quote</h2>
             <p className="text-sm text-muted-foreground">
-              {isManaged ? "Managed hosting + subdomain" : "Self-hosting (ZIP export)"}
+              {quote
+                ? isManaged
+                  ? "Managed hosting + subdomain"
+                  : "Self-hosting (ZIP export)"
+                : "Choose hosting to calculate your quote"}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={recalc} disabled={calculating}>
-            {calculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            Recalculate
-          </Button>
+          {!isPaid && (
+            <Button variant="outline" size="sm" onClick={recalc} disabled={submitting}>
+              {calculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {quote ? "Change package" : "Calculate"}
+            </Button>
+          )}
         </div>
 
         {quote ? (
@@ -96,7 +123,7 @@ export function QuotePanel({
           </ul>
         ) : (
           <div className="px-6 py-10 text-center text-sm text-muted-foreground">
-            No quote yet. Click “Recalculate” to generate one from your website.
+            Choose self-hosting or managed hosting to generate a quote.
           </div>
         )}
       </div>
@@ -120,9 +147,9 @@ export function QuotePanel({
           ) : (
             <Button
               variant="brand"
-              className="mt-5 w-full"
+              className="mt-5 w-full active:scale-[0.98]"
               onClick={checkout}
-              disabled={checkingOut || !quote}
+              disabled={checkingOut}
             >
               {checkingOut && <Loader2 className="h-4 w-4 animate-spin" />}
               Continue to payment
@@ -134,9 +161,18 @@ export function QuotePanel({
           {isManaged
             ? "Payment unlocks a live deployment on your subdomain."
             : "Payment unlocks a downloadable ZIP of your full source code."}{" "}
-          Your project and GitHub backup are always saved regardless of payment.
+          Pick hosting just before checkout — the quote updates to match.
         </p>
       </div>
+
+      <HostingChoiceDialog
+        open={hostingOpen}
+        onOpenChange={setHostingOpen}
+        initialPackage={quote?.packageType}
+        submitting={submitting}
+        confirmLabel={hostingIntent === "checkout" ? "Continue to payment" : "Update quote"}
+        onConfirm={confirmHosting}
+      />
     </div>
   );
 }

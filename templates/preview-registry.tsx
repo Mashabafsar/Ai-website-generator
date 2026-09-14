@@ -49,6 +49,7 @@ import { TeaserSite } from "./teaser/site";
 import { AtelierpfSite } from "./atelierpf/site";
 import { ResumeSite } from "./resume/site";
 import { ReboSite } from "./rebo/site";
+import { SarahfolioSite } from "./sarahfolio/site";
 
 import { forgetechMotion } from "./forgetech/motion";
 import { techvantageMotion } from "./techvantage/motion";
@@ -91,6 +92,7 @@ import { teaserMotion } from "./teaser/motion";
 import { atelierpfMotion } from "./atelierpf/motion";
 import { resumeMotion } from "./resume/motion";
 import { reboMotion } from "./rebo/motion";
+import { sarahfolioMotion } from "./sarahfolio/motion";
 
 type PreviewEntry = { Component: TemplatePreview; motion: MotionProfile };
 
@@ -136,6 +138,7 @@ const PREVIEWS: Record<string, PreviewEntry> = {
   atelierpf: { Component: AtelierpfSite, motion: atelierpfMotion },
   resume: { Component: ResumeSite, motion: resumeMotion },
   rebo: { Component: ReboSite, motion: reboMotion },
+  sarahfolio: { Component: SarahfolioSite, motion: sarahfolioMotion },
 };
 
 /** True when a design has a dedicated bespoke React renderer. */

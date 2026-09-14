@@ -1498,6 +1498,78 @@ export const REBO_SEED: TemplateSeed = {
   ],
 };
 
+/**
+ * Sarahfolio — personal copywriter portfolio from the Figma Personal Portfolio
+ * Web UI Kit. Anton display, cream canvas, yellow offset CTAs, lime sunburst
+ * heroes. Pages: home, about, services (process), blog, contact.
+ */
+export const SARAHFOLIO_SEED: TemplateSeed = {
+  slug: "sarahfolio",
+  name: "Sarah",
+  tagline: "Personal copywriter portfolio — Anton display, yellow offset CTAs, multi-page.",
+  bestFor: "Copywriters, writers & personal brand sites",
+  thumbnailUrl: "/templates/sarahfolio/preview.png",
+  previewImageUrl: "/templates/sarahfolio/preview.png",
+  accent: "#FFBF38",
+  colorPreference: "Warning yellow",
+  visualStyle: "Bold",
+  tone: "Bold & energetic",
+  renderer: "sarahfolio",
+  published: true,
+  sortOrder: 41,
+  sections: [
+    "hero-split-with-image",
+    "about-with-image",
+    "services-cards",
+    "portfolio-case-studies",
+    "testimonials-grid",
+    "cta-banner",
+    "footer-simple",
+  ],
+  pages: [
+    {
+      slug: "home",
+      title: "Home",
+      sections: [
+        "hero-split-with-image",
+        "about-with-image",
+        "services-cards",
+        "portfolio-case-studies",
+        "testimonials-grid",
+        "cta-banner",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "about",
+      title: "About",
+      sections: [
+        "hero-centered",
+        "about-with-image",
+        "features-grid",
+        "testimonials-grid",
+        "cta-banner",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "services",
+      title: "Process",
+      sections: ["hero-centered", "process-steps", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "blog",
+      title: "Blog",
+      sections: ["hero-centered", "features-grid", "cta-banner", "footer-simple"],
+    },
+    {
+      slug: "contact",
+      title: "Contact",
+      sections: ["hero-centered", "contact-split", "footer-simple"],
+    },
+  ],
+};
+
 export const ALL_SEEDS: TemplateSeed[] = [
   FORGETECH_SEED,
   TECHVANTAGE_SEED,
@@ -1540,6 +1612,7 @@ export const ALL_SEEDS: TemplateSeed[] = [
   ATELIERPF_SEED,
   RESUME_SEED,
   REBO_SEED,
+  SARAHFOLIO_SEED,
   ...STANDARD_SEEDS,
 ];
 

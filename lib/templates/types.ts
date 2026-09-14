@@ -44,6 +44,7 @@ export const TEMPLATE_RENDERERS = [
   "atelierpf",
   "resume",
   "rebo",
+  "sarahfolio",
 ] as const;
 export type TemplateRenderer = (typeof TEMPLATE_RENDERERS)[number];
 

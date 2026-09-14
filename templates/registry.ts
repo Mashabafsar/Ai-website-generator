@@ -47,6 +47,7 @@ import { teaserMeta } from "./teaser/metadata";
 import { atelierpfMeta } from "./atelierpf/metadata";
 import { resumeMeta } from "./resume/metadata";
 import { reboMeta } from "./rebo/metadata";
+import { sarahfolioMeta } from "./sarahfolio/metadata";
 
 /** Every bespoke design. Add a new module's metadata here to register it. */
 export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
@@ -91,6 +92,7 @@ export const TEMPLATE_MODULES: TemplateModuleMeta[] = [
   atelierpfMeta,
   resumeMeta,
   reboMeta,
+  sarahfolioMeta,
 ];
 
 const BY_RENDERER = new Map(TEMPLATE_MODULES.map((m) => [m.renderer, m]));

@@ -28,6 +28,10 @@ export const PackageType = {
 } as const;
 export type PackageType = (typeof PackageType)[keyof typeof PackageType];
 
+export function isPackageType(value: unknown): value is PackageType {
+  return value === PackageType.SELF_HOSTING || value === PackageType.MANAGED_HOSTING;
+}
+
 export const PaymentStatus = {
   PENDING: "PENDING",
   PAID: "PAID",
