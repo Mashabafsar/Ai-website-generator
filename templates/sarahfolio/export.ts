@@ -58,7 +58,7 @@ function cta(href: string, label: string, small = false): string {
   return `<a href="${esc(href)}" class="sf-cta inline-flex items-center justify-center rounded-[32px] border-2 border-[#0f0f0f] font-semibold text-[#0f0f0f] ${pad}" style="background-color:${SF.brand}">${esc(label)}</a>`;
 }
 
-function logo(businessName: string, customLogo: string, ink = SF.limeInk): string {
+function logo(businessName: string, customLogo: string, ink: string = SF.limeInk): string {
   const mark = customLogo
     ? `<img src="${esc(customLogo)}" alt="" width="32" height="32" class="size-8 object-contain" />`
     : `<img src="${A}/logo.svg" alt="" width="32" height="32" class="size-8" />`;
@@ -73,7 +73,7 @@ function header(
   active: string,
   businessName: string,
   customLogo: string,
-  ink = SF.limeInk
+  ink: string = SF.limeInk
 ): string {
   const links = pages
     .map(
