@@ -1335,6 +1335,33 @@ export const WILLJACKS_SEED: TemplateSeed = {
     "contact-split",
     "footer-simple",
   ],
+  pages: [
+    {
+      slug: "home",
+      title: "Index",
+      sections: [
+        "hero-split-with-image",
+        "about-with-image",
+        "services-cards",
+        "portfolio-case-studies",
+        "testimonials-grid",
+        "contact-split",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "about",
+      title: "Approach",
+      sections: [
+        "hero-centered",
+        "services-cards",
+        "about-with-image",
+        "process-steps",
+        "contact-split",
+        "footer-simple",
+      ],
+    },
+  ],
 };
 
 export const TEASER_SEED: TemplateSeed = {

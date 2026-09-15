@@ -1,5 +1,9 @@
 import type { TemplateSlotRegion } from "../contracts";
 
+/**
+ * Maps the Will Jacks HOME page's visual bands to the locked blueprint slots
+ * they read. Approach lives on the about catalog page.
+ */
 export const willjacksSlots: TemplateSlotRegion[] = [
   { region: "hero", type: "hero", occurrence: 0 },
   { region: "about", type: "about", occurrence: 0 },

@@ -1,180 +1,448 @@
-import { Outfit, Inter } from "next/font/google";
+import type { CSSProperties, ReactNode } from "react";
+import { Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { WJ } from "./tokens";
-import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandStyle, sectionBandStyle } from "../shared/brand";
+import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
+import { brandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 
-const display = Outfit({
+const sans = Inter({
   subsets: ["latin"],
-  variable: "--wj-display",
-  weight: ["500","600","700"],
+  variable: "--wj-sans",
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--wj-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+const A = "/templates/willjacks";
+const HERO = `${A}/hero.jpg`;
+const ARROW = `${A}/arrow.svg`;
+const WORK = [`${A}/work-1.jpg`, `${A}/work-2.png`, `${A}/work-3.jpg`, `${A}/work-4.png`] as const;
 
-const HERO = "/templates/willjacks/hero.jpg";
-const NAV = [
-  { label: "Work", href: "#wj-main" },
-  { label: "About", href: "#wj-about" },
-  { label: "Contact", href: "#wj-end" },
-];
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "WJ";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
+/**
+ * Will Jacks — personal designer-developer portfolio from the Figma file.
+ * Inter stands in for TT Hoves. `pageSlug` switches Index (home) / Approach (about).
+ */
 export function WilljacksSite({
   blueprint,
   site,
   contact,
+  pageSlug,
 }: {
   blueprint?: WebsiteBlueprint | null;
   site?: AssembledSite | null;
   contact?: SiteContact | null;
+  pageSlug?: string;
 }) {
-  const slots = toSlots(blueprint, site);
+  const pages = pageSlugsOf(blueprint, site);
+  const active =
+    (pageSlug && pages.find((p) => p.slug === pageSlug)?.slug) ||
+    pages.find((p) => p.slug === "home")?.slug ||
+    pages[0]?.slug ||
+    "home";
+  const slots = toSlots(blueprint, site, active);
+  const footer = slotAt(slots, "footer");
+  const businessName =
+    text(footer.content, "businessName") || site?.businessName || blueprint?.business.name || "Will Jacks";
+  const customLogo = site?.theme?.logoUrl?.trim() || "";
+  const details = contact ?? site?.contact;
+  const contactEmail = details?.email?.trim() || "";
+  const location = text(footer.content, "location", blueprint?.business.location ? `Based in ${blueprint.business.location}` : "Based in London, UK");
+
+  return (
+    <div
+      className={`${sans.variable} overflow-x-hidden scroll-smooth antialiased`}
+      style={{
+        ...brandStyle(site?.theme, "#181818"),
+        fontFamily: "var(--wj-sans), Inter, ui-sans-serif, system-ui, sans-serif",
+        color: WJ.ink,
+        backgroundColor: WJ.bg,
+        ...themeFontStyle(site?.theme, ["--wj-sans"]),
+      }}
+    >
+      {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
+      <style>{WJ_CSS}</style>
+      <SiteNav pages={pages} active={active} businessName={businessName} customLogo={customLogo} location={location} />
+      <main>{renderPageBody(active, slots, { businessName, contactEmail, location })}</main>
+      <SiteFooter slots={slots} businessName={businessName} contactEmail={contactEmail} location={location} />
+    </div>
+  );
+}
+
+type PageMeta = { businessName: string; contactEmail: string; location: string };
+
+function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta) {
+  if (active === "about") return <AboutBody slots={slots} />;
+  return <HomeBody slots={slots} meta={meta} />;
+}
+
+function pageHref(slug: string): string {
+  return `?page=${slug}`;
+}
+
+function displayFont(): CSSProperties {
+  return { fontFamily: "var(--wj-sans), Inter, ui-sans-serif, sans-serif" };
+}
+
+function SiteNav({
+  pages,
+  active,
+  businessName,
+  customLogo,
+  location,
+}: {
+  pages: { slug: string; title: string }[];
+  active: string;
+  businessName: string;
+  customLogo: string;
+  location: string;
+}) {
+  const links = pages.length
+    ? pages
+    : [
+        { slug: "home", title: "Index" },
+        { slug: "about", title: "Approach" },
+      ];
+  return (
+    <nav className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-between px-[35px] py-[35px] max-md:flex-col max-md:gap-[2vw] max-md:px-[15px] max-md:py-[25px]">
+      <div className="pointer-events-auto flex gap-[15vw] max-md:gap-[30vw]">
+        <a href={pageHref("home")} className="text-[36px] font-semibold tracking-[-1.5px] max-md:text-[24px] max-md:tracking-[-0.5px]" style={displayFont()}>
+          {customLogo ? (
+            <img src={customLogo} alt={businessName} width={36} height={36} className="h-9 w-9 object-contain" />
+          ) : (
+            businessName
+          )}
+        </a>
+        <div className="flex flex-col">
+          {links.map((p) => (
+            <a
+              key={p.slug}
+              href={pageHref(p.slug)}
+              className="wj-under text-[24px] font-semibold tracking-[-1.5px] max-md:pb-1 max-md:text-[20px] max-md:tracking-[-0.5px]"
+              style={{ ...displayFont(), opacity: p.slug === active ? 1 : 0.85 }}
+            >
+              {p.title}
+            </a>
+          ))}
+        </div>
+      </div>
+      <p className="pointer-events-auto w-[120px] whitespace-pre-line text-[16px] tracking-[-0.3px]">{location.replace(/^(Based in)\s+/i, "$1\n")}</p>
+    </nav>
+  );
+}
+
+function HomeBody({ slots, meta }: { slots: TemplateSlot[]; meta: PageMeta }) {
   const hero = slotAt(slots, "hero");
   const about = slotAt(slots, "about");
   const services = slotAt(slots, "services");
   const work = slotAt(slots, "portfolio");
-  const testimonials = slotAt(slots, "testimonials");
-  const contactSlot = slotAt(slots, "contact");
-  const footer = slotAt(slots, "footer");
-  const businessName =
-    text(footer.content, "businessName") ||
-    site?.businessName ||
-    blueprint?.business.name ||
-    "Will Jacks";
-  const customLogo = site?.theme.logoUrl?.trim() || "";
-  const details = contact ?? site?.contact;
-  const contactEmail = details?.email?.trim() || "";
   const heroImage = hero.image || HERO;
+  const marquee = text(hero.content, "ctaSecondary", "UIUX Designer — Frontend Developer —");
+  const marqueeLine = `${marquee} ${marquee} ${marquee} ${marquee}`;
 
   return (
+    <>
+      <section className="relative flex h-screen items-end overflow-hidden px-[35px] max-md:h-auto max-md:px-[15px] max-md:pt-[200px] max-[560px]:pt-[200px]">
+        <div className="flex w-full gap-[6vw] max-md:flex-col-reverse">
+          <img
+            src={heroImage}
+            alt=""
+            width={2000}
+            height={2668}
+            className="h-[80vh] w-[60%] object-cover max-md:h-auto max-md:w-full max-[560px]:h-[60vh] max-[560px]:object-cover"
+          />
+          <div className="mt-[6vw] flex w-full flex-col gap-[6vw] max-md:gap-[2vw] max-[560px]:gap-[8vw]">
+            <p className="w-full max-w-[200px] text-[16px] tracking-[-0.3px]">{text(hero.content, "eyebrow", "Currently available for freelance projects")}</p>
+            <p className="w-full max-w-[400px] text-[16px] tracking-[-0.3px]">{text(hero.content, "subheadline")}</p>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[10vw] w-full overflow-hidden max-md:bottom-[30vw] max-md:h-[17vw] max-[560px]:bottom-[20vw] max-[560px]:h-[25vw]">
+          <p className="wj-marquee absolute whitespace-nowrap text-[9vw] font-normal leading-none tracking-[-0.4vw] text-white mix-blend-difference" style={displayFont()}>
+            {marqueeLine}&nbsp;{marqueeLine}
+          </p>
+        </div>
+      </section>
+
+      <section className="px-[35px] py-[10vw] max-md:px-[15px] max-[560px]:py-[20vw]">
+        <div className="overflow-hidden">
+          <h2 className="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw] max-[560px]:tracking-[-1vw]" style={displayFont()}>
+            {text(about.content, "heading", "About")}
+          </h2>
+        </div>
+        <div className="flex items-end gap-[6vw] py-[10vw] pr-[4vw] max-[1068px]:flex-col max-[1068px]:items-start max-[1068px]:gap-[5vw] max-[1068px]:py-[5vw] max-[1068px]:pb-[20vw] max-[1068px]:pr-0 max-[560px]:gap-[10vw] max-[560px]:py-[10vw] max-[560px]:pb-[30vw]">
+          <p className="w-1/4 text-[16px] tracking-[-0.3px] max-[1068px]:w-full">{text(about.content, "body")}</p>
+          <h3 className="w-3/4 text-[5vw] font-normal leading-[0.95] tracking-[-0.15vw] max-md:text-[7vw] max-[1068px]:w-full max-[560px]:text-[12vw]" style={displayFont()}>
+            {text(about.content, "subheadline")}
+          </h3>
+        </div>
+        <ToolsBand heading={text(services.content, "heading", "Core Tools")} titles={list(services.content, "itemTitles", ["Javascript", "WebGL", "NodeJs", "Framer"])} bodies={list(services.content, "itemBodies")} />
+      </section>
+
+      <section className="wj-works overflow-hidden">
+        <div className="px-[35px] pb-[10vw] pt-[10vw] max-md:px-[15px] max-[560px]:pb-[20vw] max-[560px]:pt-[20vw]">
+          <div className="text-right">
+            <h2 className="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style={displayFont()}>
+              {text(work.content, "heading", "Selected")}
+            </h2>
+            <h2 className="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style={displayFont()}>
+              {text(work.content, "subheading", "Works")}
+            </h2>
+          </div>
+          <p className="mt-[5vw] max-w-[600px] text-[16px] tracking-[-0.3px] max-[560px]:mt-[10vw]">{text(work.content, "body")}</p>
+        </div>
+        <WorkList work={work} />
+      </section>
+      <span className="sr-only">{meta.businessName}</span>
+    </>
+  );
+}
+
+function AboutBody({ slots }: { slots: TemplateSlot[] }) {
+  const hero = slotAt(slots, "hero");
+  const services = slotAt(slots, "services");
+  const about = slotAt(slots, "about");
+  const process = slotAt(slots, "process");
+  const serviceTitles = list(services.content, "itemTitles", ["Web Design", "Motion Design", "Web Development", "No Code Development"]);
+  const disciplineTitles = list(about.content, "itemTitles", ["Creative Developer", "Modern Designer"]);
+
+  return (
+    <>
+      <section className="flex h-screen w-full items-end px-[35px] pb-[35px] max-md:px-[15px] max-md:pb-5">
+        <h2 className="w-[70%] text-[5vw] font-normal leading-[0.95] tracking-[-0.15vw] max-md:w-full max-md:text-[7vw] max-[560px]:text-[12vw]" style={displayFont()}>
+          {text(hero.content, "headline")}
+        </h2>
+      </section>
+      <section className="flex gap-[5vw] px-[35px] py-[10vw] max-md:gap-[10vw] max-md:px-[15px] max-md:py-[20vw] max-[560px]:flex-col max-[560px]:gap-0">
+        <div className="flex w-full flex-col gap-[300px] max-md:gap-[200px] max-[560px]:gap-[100px]">
+          <div>
+            <p className="mb-5 text-[16px] tracking-[-0.3px] opacity-50">{text(services.content, "heading", "Services")}</p>
+            {serviceTitles.map((title) => (
+              <p key={title} className="text-[16px] tracking-[-0.3px]">
+                {title}
+              </p>
+            ))}
+          </div>
+          <p className="max-w-[500px] text-[16px] tracking-[-0.3px]">{text(services.content, "subheading")}</p>
+        </div>
+        <div className="mt-[300px] flex w-full flex-col gap-[300px] max-md:mt-[200px] max-md:gap-[200px] max-[560px]:mt-[100px] max-[560px]:gap-[100px]">
+          <div>
+            <p className="mb-5 text-[16px] tracking-[-0.3px] opacity-50">{text(about.content, "heading", "Disciplines")}</p>
+            {disciplineTitles.map((title) => (
+              <p key={title} className="text-[16px] tracking-[-0.3px]">
+                {title}
+              </p>
+            ))}
+          </div>
+          <p className="max-w-[500px] text-[16px] tracking-[-0.3px]">{text(about.content, "body")}</p>
+        </div>
+      </section>
+      <section className="px-[35px] pb-[10vw] max-md:px-[15px]">
+        <ToolsBand heading={text(process.content, "heading", "Process")} titles={list(process.content, "itemTitles", ["Art Direction", "Design", "Development", "No - Code"])} bodies={list(process.content, "itemBodies")} />
+      </section>
+    </>
+  );
+}
+
+function ToolsBand({ heading, titles, bodies }: { heading: string; titles: string[]; bodies: string[] }) {
+  return (
     <div
-      id="wj-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
-      style={{
-        ...brandStyle(site?.theme, "#181818"),
-        fontFamily: "var(--wj-body), ui-sans-serif, system-ui, sans-serif",
-        color: WJ.ink,
-        backgroundColor: WJ.bg,
-        ...themeFontStyle(site?.theme, ["--wj-display", "--wj-body"]),
-      }}
+      className="relative left-1/2 flex w-screen -translate-x-1/2 gap-[6vw] overflow-hidden px-[35px] py-[10vw] max-md:px-[15px] max-[560px]:flex-col max-[560px]:gap-[10vw]"
+      style={{ backgroundColor: WJ.inverse, color: WJ.inverseFg }}
     >
-      {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
-      <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: WJ.line, backgroundColor: WJ.bg }}>
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">
-          <a href="#wj-top" className="mr-auto flex items-center gap-2">
-            {customLogo ? (
-              <img src={customLogo} alt="" className="h-9 w-9 object-contain" />
-            ) : (
-              <span
-                className="grid h-9 w-9 place-items-center text-xs font-bold rounded-xl"
-                style={{ backgroundColor: WJ.brand, color: WJ.inverseFg, fontFamily: "var(--wj-display)" }}
-              >
-                {initials(businessName)}
-              </span>
-            )}
-            <span className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--wj-display)", color: WJ.ink }}>
-              {businessName}
-            </span>
-          </a>
-          <nav className="hidden items-center gap-6 text-sm md:flex" style={{ color: WJ.body }}>
-            {NAV.map((item) => (
-              <a key={item.label} href={item.href} className="hover:opacity-70">{item.label}</a>
-            ))}
-          </nav>
-          <a
-            href={contactEmail ? `mailto:${contactEmail}` : "#wj-end"}
-            className="rounded-xl px-4 py-2 text-sm font-semibold"
-            style={{ backgroundColor: WJ.brand, color: WJ.inverseFg, fontFamily: "var(--wj-display)" }}
-          >
-            {text(hero.content, "ctaPrimary", "Say hello")}
-          </a>
-        </div>
-      </header>
-      <section className="px-6 py-24">
-        <div className="mx-auto grid max-w-6xl items-end gap-12 lg:grid-cols-2">
-          <div>
-            <p className="text-sm" style={{ color: WJ.brand }}>{text(hero.content, "eyebrow", "Will Jacks")}</p>
-            <h1 className="mt-4 text-5xl leading-[0.95] sm:text-7xl" style={{ fontFamily: "var(--wj-display)" }}>
-              {text(hero.content, "headline", "Maker. Editor. Always mid-project.")}
-            </h1>
-            <p className="mt-6 max-w-md text-lg" style={{ color: WJ.body }}>{text(hero.content, "subheadline", "Selected work and a simple way to say hello.")}</p>
+      <p className="w-[23.5%] text-[16px] tracking-[-0.3px] max-[560px]:w-full">{heading}</p>
+      <div className="flex w-[75%] flex-col gap-[4vw] overflow-hidden max-[560px]:w-full max-[560px]:gap-[12vw]">
+        {titles.map((title, i) => (
+          <div key={title}>
+            <h3 className="text-[5vw] font-normal leading-[0.95] tracking-[-0.15vw] max-md:text-[7vw] max-[560px]:text-[12vw]" style={displayFont()}>
+              {title}
+            </h3>
+            <p className="mt-5 max-w-[650px] text-[16px] tracking-[-0.3px]" style={{ color: WJ.body }}>
+              {bodies[i] || ""}
+            </p>
           </div>
-          <img src={heroImage} alt="" className="h-[28rem] w-full object-cover rounded-xl" />
-        </div>
-      </section>
-      <section id="wj-about" className="px-6 py-20" style={{ backgroundColor: WJ.surface }}>
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-3xl" style={{ fontFamily: "var(--wj-display)" }}>{text(about.content, "heading", "About")}</h2>
-          <p className="mt-4 text-lg leading-relaxed" style={{ color: WJ.body }}>{text(about.content, "body", text(about.content, "subheadline", "A personal website with room for work, notes, and the next thing."))}</p>
-        </div>
-      </section>
-      <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
-          {list(services.content, "itemTitles", ["Brand", "Product", "Campaign"]).map((title, i) => (
-            <article key={i} className="p-6 rounded-xl" style={{ backgroundColor: WJ.card, border: `1px solid ${WJ.line}` }}>
-              <h3 className="text-xl" style={{ fontFamily: "var(--wj-display)" }}>{title}</h3>
-              <p className="mt-2 text-sm" style={{ color: WJ.body }}>{list(services.content, "itemBodies")[i] || ""}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section id="wj-main" className="px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          {list(work.content, "itemTitles", ["One", "Two", "Three"]).map((title, i) => (
-            <article key={i} className="mb-10">
-              <img src={work.itemImages[i] || heroImage} alt="" className="h-80 w-full object-cover rounded-xl" />
-              <div className="mt-4 flex items-baseline justify-between">
-                <h3 className="text-2xl" style={{ fontFamily: "var(--wj-display)" }}>{title}</h3>
-                <p className="text-sm" style={{ color: WJ.body }}>{list(work.content, "itemBodies")[i] || ""}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="px-6 py-12">
-        <div className="mx-auto max-w-3xl space-y-8">
-          {list(testimonials.content, "quotes").map((quote, i) => (
-            <blockquote key={i} className="text-2xl" style={{ fontFamily: "var(--wj-display)" }}>
-              “{quote}”
-              <footer className="mt-2 text-sm" style={{ color: WJ.body, fontFamily: "var(--wj-body)" }}>{list(testimonials.content, "authors")[i]}</footer>
-            </blockquote>
-          ))}
-        </div>
-      </section>
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="text-3xl" style={{ fontFamily: "var(--wj-display)" }}>{text(contactSlot.content, "heading", "Contact")}</h2>
-          <p className="mt-3 max-w-xl" style={{ color: WJ.body }}>{text(contactSlot.content, "subheading", "")}</p>
-          {contactEmail ? <a className="mt-4 inline-block" href={`mailto:${contactEmail}`}>{contactEmail}</a> : null}
-        </div>
-      </section>
-      <footer id="wj-end" className="border-t px-6 py-12" style={{ borderColor: WJ.line, backgroundColor: WJ.inverse, color: WJ.inverseFg, ...sectionBandStyle(footer.theme) }}>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-8">
-          <div>
-            <div className="text-lg font-semibold" style={{ fontFamily: "var(--wj-display)" }}>{businessName}</div>
-            <p className="mt-2 max-w-sm text-sm opacity-70">{text(footer.content, "tagline", "Personal site with mint, blush, and lemon tiles on charcoal ink.")}</p>
-          </div>
-          <nav className="flex flex-wrap gap-6 text-sm opacity-80">
-            {list(footer.content, "linkLabels", NAV.map((n) => n.label)).map((label) => (
-              <span key={label}>{label}</span>
-            ))}
-          </nav>
-        </div>
-      </footer>
+        ))}
+      </div>
     </div>
   );
 }
+
+function WorkList({ work }: { work: TemplateSlot }) {
+  const titles = list(work.content, "itemTitles", ["Banking", "Financilux", "Stride", "Wine & Donuts"]);
+  const indexes = list(work.content, "itemBodies", ["(01)", "(02)", "(03)", "(04)"]);
+  return (
+    <div className="wj-work relative w-full overflow-hidden px-[35px] py-[10vw] max-md:px-[15px] max-[560px]:py-[20vw]">
+      <div className="wj-overlay pointer-events-none absolute left-[15.25%] top-0 flex h-full w-full items-center justify-center gap-[1em] opacity-0 transition-opacity duration-1000">
+        {titles.map((_, i) => (
+          <div key={i} className={`wj-prev wj-prev-${i} relative w-[500px]`} style={{ top: `${-500 + i * 500}px`, transform: "rotate(10deg)" }}>
+            <img
+              src={work.itemImages[i] || WORK[i] || HERO}
+              alt=""
+              width={i === 3 ? 752 : 1024}
+              height={i === 3 ? 564 : 768}
+              className="h-auto w-[500px] object-cover"
+            />
+          </div>
+        ))}
+      </div>
+      {titles.map((title, i) => (
+        <a
+          key={title}
+          href="#wj-end"
+          className={`wj-item wj-item-${i} relative flex w-full items-center gap-8 border-b border-[rgba(198,198,198,0.5)] py-8 max-md:gap-8 max-md:py-4 ${i === titles.length - 1 ? "border-b-0" : ""}`}
+        >
+          <div className="flex gap-5">
+            <span className="text-[14px]">{indexes[i] || `(${String(i + 1).padStart(2, "0")})`}</span>
+            <h3 className="text-[4vw] font-normal max-md:text-[7vw] max-md:tracking-[-0.2vw] max-[560px]:text-[10vw]" style={displayFont()}>
+              {title}
+            </h3>
+          </div>
+          <span className="wj-icon relative left-[-20px] size-[70px] overflow-hidden rounded-full opacity-0 max-md:scale-90" style={{ backgroundColor: WJ.icon }}>
+            <span className="wj-icon-a absolute left-[-70px] flex size-[70px] items-center justify-center">
+              <img src={ARROW} alt="" width={24} height={24} className="size-6" />
+            </span>
+            <span className="wj-icon-b absolute left-0 flex size-[70px] items-center justify-center">
+              <img src={ARROW} alt="" width={24} height={24} className="size-6" />
+            </span>
+          </span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function SiteFooter({
+  slots,
+  businessName,
+  contactEmail,
+  location,
+}: {
+  slots: TemplateSlot[];
+  businessName: string;
+  contactEmail: string;
+  location: string;
+}) {
+  const contact = slotAt(slots, "contact");
+  const footer = slotAt(slots, "footer");
+  const socials = list(footer.content, "itemTitles", ["Instagram", "Facebook", "Twitter", "LinkedIn"]);
+  const links = list(footer.content, "linkLabels", ["Behance", "Dribbble", "Contra", "Pinterest"]);
+  return (
+    <footer id="wj-end">
+      <div className="px-[35px] py-[10vw] max-md:px-[15px] max-md:py-[20vw] max-[560px]:pb-[10vw]">
+        <div className="w-full text-right">
+          <h2 className="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style={displayFont()}>
+            {text(contact.content, "heading", "Reach")}
+          </h2>
+          <h2 className="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style={displayFont()}>
+            {text(contact.content, "subheading", "Out")}
+          </h2>
+        </div>
+        <p className="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">{text(footer.content, "tagline", "Currently available for freelance projects").replace(" for ", "\nfor ")}</p>
+        <div className="flex gap-[6vw] py-[10vw] max-md:flex-col max-md:gap-[10vw] max-md:py-[20vw]">
+          <p className="w-1/4 whitespace-pre-line text-[16px] tracking-[-0.3px] max-md:w-full">{location.replace(/^(Based in)\s+/i, "$1\n")}</p>
+          <div className="w-3/4 max-w-[750px] max-md:w-full">
+            <p className="text-[3vw] font-normal leading-[0.95] tracking-[-0.09vw] max-md:text-[5vw] max-[560px]:text-[8vw]" style={displayFont()}>
+              {text(contact.content, "body", text(footer.content, "body"))}
+            </p>
+            {contactEmail ? (
+              <a href={`mailto:${contactEmail}`} className="wj-under mt-[5vw] inline-block text-[3vw] max-md:mt-[10vw] max-md:text-[5vw]" style={displayFont()}>
+                {contactEmail}
+              </a>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex gap-[6vw] max-md:flex-col-reverse max-md:gap-[4vw]">
+          <p className="w-[27%] text-[16px] tracking-[-0.3px] max-md:w-full">© {businessName}. All rights reserved.</p>
+          <div className="flex w-3/4 flex-wrap items-center gap-5 max-md:w-full">
+            {links.map((label) => (
+              <span key={label} className="wj-under text-[20px] max-md:text-[18px]">
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <SocialBand socials={socials} />
+    </footer>
+  );
+}
+
+function SocialBand({ socials }: { socials: string[] }) {
+  const row1 = socials.slice(0, 1);
+  const row2 = socials.slice(1, 3);
+  const row3 = socials.slice(3, 4);
+  return (
+    <div className="relative z-10 flex h-screen flex-col justify-between" style={{ backgroundColor: WJ.inverse, color: WJ.inverseFg }}>
+      <div className="flex h-full items-center justify-center">
+        <svg viewBox="0 0 1000 1000" width={1000} height={1000} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+          <g>
+            <circle cx="400" cy="500" r="100" stroke="#181818" strokeWidth="2" fill="#e9e9e9" />
+            <circle cx="480" cy="500" r="20" fill="#181818" />
+          </g>
+          <g>
+            <circle cx="600" cy="500" r="100" stroke="#181818" strokeWidth="2" fill="#e9e9e9" />
+            <circle cx="680" cy="500" r="20" fill="#181818" />
+          </g>
+        </svg>
+        <div className="flex w-full flex-col items-center justify-between">
+          <div className="flex gap-[5vw] max-md:flex-col max-md:items-center max-md:gap-[10vw] max-[560px]:gap-[15vw]">
+            {row1.map((label) => (
+              <SocialLink key={label}>{label}</SocialLink>
+            ))}
+          </div>
+          <div className="flex gap-[5vw] max-md:flex-col max-md:items-center max-md:gap-[10vw]">
+            {row2.map((label) => (
+              <SocialLink key={label}>{label}</SocialLink>
+            ))}
+          </div>
+          <div className="flex gap-[5vw] max-md:flex-col max-md:items-center max-md:gap-[10vw]">
+            {row3.map((label) => (
+              <SocialLink key={label}>{label}</SocialLink>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SocialLink({ children }: { children: ReactNode }) {
+  return (
+    <span className="wj-social relative block h-[11vw] text-[11vw] tracking-[-0.5vw] max-md:h-[18vw] max-md:text-[18vw] max-md:tracking-[-0.8vw] max-[560px]:h-[21vw] max-[560px]:text-[21vw]" style={{ color: WJ.inverseFg }}>
+      {children}
+    </span>
+  );
+}
+
+const WJ_CSS = `
+  .wj-under { position: relative; width: fit-content; }
+  .wj-under::before { content: ""; background: ${WJ.ink}; width: 0; height: 1px; position: absolute; bottom: 0; left: 0; transition: width 280ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .wj-under:hover::before { width: 100%; }
+  .wj-marquee { animation: wj-marquee 64s linear infinite; will-change: transform; }
+  @keyframes wj-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .wj-item { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms ease; }
+  .wj-item:active { transform: scale(0.97); }
+  .wj-icon { transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1), left 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .wj-icon-a, .wj-icon-b { transition: left 500ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .wj-icon-a { transition-delay: 200ms; }
+  @media (hover: hover) and (pointer: fine) {
+    .wj-item:hover .wj-icon { opacity: 1; left: 0; }
+    .wj-item:hover .wj-icon-a { left: 0; }
+    .wj-item:hover .wj-icon-b { left: 70px; }
+    .wj-works:hover .wj-overlay { opacity: 0.5; }
+    .wj-works:has(.wj-item-0:hover) { background-color: ${WJ.mint}; }
+    .wj-works:has(.wj-item-1:hover) { background-color: ${WJ.blush}; }
+    .wj-works:has(.wj-item-2:hover) { background-color: ${WJ.lemon}; }
+    .wj-works:has(.wj-item-3:hover) { background-color: ${WJ.sage}; }
+    .wj-works:has(.wj-item-0:hover) .wj-prev-0,
+    .wj-works:has(.wj-item-1:hover) .wj-prev-1,
+    .wj-works:has(.wj-item-2:hover) .wj-prev-2,
+    .wj-works:has(.wj-item-3:hover) .wj-prev-3 { transform: rotate(12.5deg); }
+  }
+  .wj-prev { transition: transform 500ms ease; }
+  .wj-social::before { content: ""; background: #e9e9e9; width: 0; height: 2px; position: absolute; bottom: 0; left: 0; transition: width 280ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .wj-social:hover::before { width: 100%; }
+  @media (prefers-reduced-motion: reduce) {
+    .wj-marquee { animation: none; }
+    .wj-item:active { transform: none; }
+    .wj-under::before, .wj-icon, .wj-icon-a, .wj-icon-b, .wj-social::before { transition: none; }
+  }
+`;
