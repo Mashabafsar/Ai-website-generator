@@ -1607,6 +1607,7 @@ const GALLERY_LEAD_SLUGS = [
   "resume",
   "rebo",
   "sarahfolio",
+  "willjacks",
 ] as const;
 
 function orderGallerySeeds(seeds: TemplateSeed[]): TemplateSeed[] {
@@ -1634,6 +1635,7 @@ export const ALL_SEEDS: TemplateSeed[] = orderGallerySeeds([
   RESUME_SEED,
   REBO_SEED,
   SARAHFOLIO_SEED,
+  WILLJACKS_SEED,
   WHITER_SEED,
   MAINFILE_SEED,
   SAASLDG_SEED,
@@ -1665,7 +1667,6 @@ export const ALL_SEEDS: TemplateSeed[] = orderGallerySeeds([
   LEVYNAGOLD_SEED,
   VEIL_SEED,
   WEBCANVAS_SEED,
-  WILLJACKS_SEED,
   TEASER_SEED,
   ATELIERPF_SEED,
   ...STANDARD_SEEDS,

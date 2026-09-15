@@ -28,6 +28,7 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `resume` — **Resume**: A simple portfolio template for designers — huge type, a resume, and the work.
 - `rebo` — **Rebo**: Coral-on-cream digital agency with a dark home header, Clash Display inner pages, and a full multi-page site.
 - `sarahfolio` — **Sarah**: Personal copywriter portfolio — Anton display, yellow offset CTAs, multi-page.
+- `willjacks` — **Will Jacks**: Personal designer-developer portfolio — huge type, mint/blush/lemon work tiles, Index + Approach.
 - `whiter` — **Whiter**
 - `mainfile` — **Mraval**
 - `saasldg` — **Stratus**
@@ -59,7 +60,6 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `levynagold` — **Levyna Gold**: Midnight interiors with a champagne-gold rule — hospitality calm.
 - `veil` — **Veil**: Signal-layer dark UI: Syne + DM Mono, acid-lime ticks, terminal calm.
 - `webcanvas` — **WebCanvas**: Warm-stone agency: cream type on charcoal, looping wordmarks, studio grit.
-- `willjacks` — **Will Jacks**: Personal designer-developer portfolio — huge type, mint/blush/lemon work tiles, Index + Approach.
 - `teaser` — **Teaser**: Grid-rail SaaS landing: mist gray, ink headlines, product-screenshot gravity.
 - `atelierpf` — **Atelier**: UI-kit portfolio: graphite type on cool gray, work-first grid.
 
