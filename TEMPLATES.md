@@ -23,11 +23,14 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `forgetech` — **ForgeTech**
 - `techvantage` — **Techvantage**
 - `craftedspaces` — **CraftedSpaces**
+- `sports` — **Athlo**
+- `forgelime` — **Forge Lime**
+- `resume` — **Resume**: A simple portfolio template for designers — huge type, a resume, and the work.
+- `rebo` — **Rebo**: Coral-on-cream digital agency with a dark home header, Clash Display inner pages, and a full multi-page site.
+- `sarahfolio` — **Sarah**: Personal copywriter portfolio — Anton display, yellow offset CTAs, multi-page.
 - `whiter` — **Whiter**
 - `mainfile` — **Mraval**
 - `saasldg` — **Stratus**
-- `sports` — **Athlo**
-- `forgelime` — **Forge Lime**
 - `astra` — **Astra Dental**: Calm clinical blue, serif headlines, built for modern dental practices.
 - `azurio` — **Azurio**: Electric indigo on warm paper — a digital-agency layout with huge type.
 - `olivia` — **Olivia**: Soft paper portfolio with peach pricing tiles and highlighter FAQ cards.
@@ -59,9 +62,6 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `willjacks` — **Will Jacks**: Personal site with mint, blush, and lemon tiles on charcoal ink.
 - `teaser` — **Teaser**: Grid-rail SaaS landing: mist gray, ink headlines, product-screenshot gravity.
 - `atelierpf` — **Atelier**: UI-kit portfolio: graphite type on cool gray, work-first grid.
-- `resume` — **Resume**: A simple portfolio template for designers — huge type, a resume, and the work.
-- `rebo` — **Rebo**: Coral-on-cream digital agency with a dark home header, Clash Display inner pages, and a full multi-page site.
-- `sarahfolio` — **Sarah**: Personal copywriter portfolio — Anton display, yellow offset CTAs, multi-page.
 
 ## Concepts
 

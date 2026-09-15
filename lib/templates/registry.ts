@@ -1570,15 +1570,46 @@ export const SARAHFOLIO_SEED: TemplateSeed = {
   ],
 };
 
-export const ALL_SEEDS: TemplateSeed[] = [
+/** Gallery pin order. Everything else follows in seed-declaration order. */
+const GALLERY_LEAD_SLUGS = [
+  "forgetech",
+  "techvantage",
+  "craftedspaces",
+  "sports",
+  "forgelime",
+  "resume",
+  "rebo",
+  "sarahfolio",
+] as const;
+
+function orderGallerySeeds(seeds: TemplateSeed[]): TemplateSeed[] {
+  const bySlug = new Map(seeds.map((seed) => [seed.slug, seed]));
+  const seen = new Set<string>();
+  const ordered: TemplateSeed[] = [];
+  for (const slug of GALLERY_LEAD_SLUGS) {
+    const seed = bySlug.get(slug);
+    if (!seed) continue;
+    ordered.push(seed);
+    seen.add(slug);
+  }
+  for (const seed of seeds) {
+    if (!seen.has(seed.slug)) ordered.push(seed);
+  }
+  return ordered.map((seed, sortOrder) => ({ ...seed, sortOrder }));
+}
+
+export const ALL_SEEDS: TemplateSeed[] = orderGallerySeeds([
   FORGETECH_SEED,
   TECHVANTAGE_SEED,
   CRAFTEDSPACES_SEED,
+  SPORTS_SEED,
+  FORGELIME_SEED,
+  RESUME_SEED,
+  REBO_SEED,
+  SARAHFOLIO_SEED,
   WHITER_SEED,
   MAINFILE_SEED,
   SAASLDG_SEED,
-  SPORTS_SEED,
-  FORGELIME_SEED,
   ASTRA_SEED,
   AZURIO_SEED,
   OLIVIA_SEED,
@@ -1610,11 +1641,8 @@ export const ALL_SEEDS: TemplateSeed[] = [
   WILLJACKS_SEED,
   TEASER_SEED,
   ATELIERPF_SEED,
-  RESUME_SEED,
-  REBO_SEED,
-  SARAHFOLIO_SEED,
   ...STANDARD_SEEDS,
-];
+]);
 
 export const DEFAULT_TEMPLATE_SLUG = FORGETECH_SEED.slug;
 
