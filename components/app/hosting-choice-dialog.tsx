@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { Cloud, FolderDown, Loader2 } from "lucide-react";
 import { PackageType } from "@/lib/constants";
-import { PACKAGE_LABELS, PRICING } from "@/lib/quote/pricing";
-import { formatCurrency, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -73,7 +72,6 @@ export function HostingChoiceDialog({
 
         <div className="grid gap-3 sm:grid-cols-2">
           {OPTIONS.map((option) => {
-            const price = PRICING.basePackage[option.type];
             const active = selected === option.type;
             const Icon = option.icon;
             return (
@@ -91,15 +89,6 @@ export function HostingChoiceDialog({
                 <Icon className="size-5 text-primary" />
                 <p className="mt-3 font-semibold">{option.title}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{option.desc}</p>
-                <p className="mt-4 font-display text-2xl font-bold tabular-nums">
-                  {formatCurrency(price.oneTime, PRICING.currency)}
-                </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {price.monthly > 0
-                    ? `+ ${formatCurrency(price.monthly, PRICING.currency)}/mo hosting`
-                    : "One-time · ZIP export"}
-                </p>
-                <p className="sr-only">{PACKAGE_LABELS[option.type]}</p>
               </button>
             );
           })}

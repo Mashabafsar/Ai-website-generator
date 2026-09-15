@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { isPackageType, PackageType } from "@/lib/constants";
-import { PRICING, PACKAGE_LABELS } from "@/lib/quote/pricing";
+import { PRICING } from "@/lib/quote/pricing";
 import { featuresFromVariants } from "@/lib/quote/features";
 import { defaultQuestionnaire, parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { WebsiteBlueprint } from "@/lib/blueprint/types";
@@ -16,8 +16,8 @@ export type QuoteResult = {
 };
 
 /**
- * Deterministic quote calculation. Counts pages, sections, complexity, and
- * features from the validated blueprint. No AI, no human estimation.
+ * Deterministic quote calculation. Counts pages, sections, and features from
+ * the validated blueprint. No AI, no human estimation, no complexity uplift.
  */
 export function computeQuote(input: {
   blueprint: WebsiteBlueprint;
@@ -25,17 +25,22 @@ export function computeQuote(input: {
   packageType: PackageType;
 }): QuoteResult {
   const { blueprint, features, packageType } = input;
-  const base = PRICING.basePackage[packageType] ?? PRICING.basePackage[PackageType.SELF_HOSTING];
+  const isManaged = packageType === PackageType.MANAGED_HOSTING;
 
   const lineItems: QuoteLineItem[] = [];
 
-  // 1. Base creation fee.
   lineItems.push({
-    name: `Website creation — ${PACKAGE_LABELS[packageType] ?? packageType}`,
-    amount: base.oneTime,
+    name: "Website creation",
+    amount: PRICING.websiteCreation,
   });
 
-  // 2. Additional pages.
+  if (isManaged) {
+    lineItems.push({
+      name: "Subdomain",
+      amount: PRICING.subdomain,
+    });
+  }
+
   const pageCount = blueprint.pages.length;
   const extraPages = Math.max(0, pageCount - PRICING.includedPages);
   if (extraPages > 0) {
@@ -45,7 +50,6 @@ export function computeQuote(input: {
     });
   }
 
-  // 3. Extra sections beyond the included baseline.
   const sectionCount = blueprint.pages.reduce((sum, p) => sum + p.sections.length, 0);
   const extraSections = Math.max(0, sectionCount - PRICING.includedSections);
   if (extraSections > 0) {
@@ -55,14 +59,6 @@ export function computeQuote(input: {
     });
   }
 
-  // 4. Complexity uplift.
-  const level = blueprint.complexity?.level ?? "medium";
-  const complexityAmount = PRICING.complexity[level] ?? 0;
-  if (complexityAmount > 0) {
-    lineItems.push({ name: `Complexity — ${level}`, amount: complexityAmount });
-  }
-
-  // 5. Feature add-ons.
   for (const feature of features) {
     const amount = PRICING.features[feature] ?? 0;
     if (amount > 0) {
@@ -74,7 +70,7 @@ export function computeQuote(input: {
   }
 
   const oneTimeTotal = lineItems.reduce((sum, li) => sum + li.amount, 0);
-  const monthlyTotal = base.monthly;
+  const monthlyTotal = isManaged ? PRICING.managedHostingMonthly : 0;
 
   if (monthlyTotal > 0) {
     lineItems.push({ name: "Managed hosting (monthly)", amount: monthlyTotal });

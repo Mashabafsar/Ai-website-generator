@@ -6,11 +6,12 @@ import { PackageType } from "@/lib/constants";
 export const PRICING = {
   currency: "USD",
 
-  // Base package prices.
-  basePackage: {
-    [PackageType.SELF_HOSTING]: { oneTime: 499, monthly: 0 },
-    [PackageType.MANAGED_HOSTING]: { oneTime: 699, monthly: 29 },
-  } as Record<string, { oneTime: number; monthly: number }>,
+  /** One-time site build, charged on both packages. */
+  websiteCreation: 499,
+  /** One-time subdomain assignment, managed hosting only. */
+  subdomain: 200,
+  /** Recurring hosting, managed hosting only. */
+  managedHostingMonthly: 29,
 
   includedPages: 1,
   perAdditionalPage: 75,
@@ -18,21 +19,18 @@ export const PRICING = {
   includedSections: 6,
   perExtraSection: 20,
 
-  complexity: { simple: 0, medium: 150, complex: 400 } as Record<string, number>,
-
-  // Feature add-ons (one-time). Features not listed are included at no charge.
+  // Feature add-ons (one-time). Features not listed, or listed at 0, are free.
   features: {
     contact_form: 0,
-    gallery: 120,
+    gallery: 20,
     testimonials: 0,
     faq: 0,
-    pricing_table: 80,
+    pricing_table: 0,
     newsletter: 60,
   } as Record<string, number>,
 
   featureLabels: {
     gallery: "Image gallery",
-    pricing_table: "Pricing table",
     newsletter: "Newsletter signup",
   } as Record<string, string>,
 } as const;
