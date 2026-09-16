@@ -29,6 +29,7 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `rebo` — **Rebo**: Coral-on-cream digital agency with a dark home header, Clash Display inner pages, and a full multi-page site.
 - `sarahfolio` — **Sarah**: Personal copywriter portfolio — Anton display, yellow offset CTAs, multi-page.
 - `willjacks` — **Will Jacks**: Personal designer-developer portfolio — huge type, mint/blush/lemon work tiles, Index + Approach.
+- `luxeframe` — **LuxeFrame**: High-end photography house: charcoal, acid-lime marks, cinematic frames.
 - `whiter` — **Whiter**
 - `mainfile` — **Mraval**
 - `saasldg` — **Stratus**
@@ -47,7 +48,6 @@ fills its locked content slots. They never assemble a site from loose sections.
 - `careweb` — **Careweb**: Soft informational healthcare kit: airy cards, teal cues, family-clinic tone.
 - `kael` — **Kael Donovan**: Personal studio site: oversized name, project trail, service cards.
 - `lukasz` — **Lukasz**: Quiet personal studio: generous whitespace, project grid, conversational about.
-- `luxeframe` — **LuxeFrame**: High-end photography house: charcoal, acid-lime marks, cinematic frames.
 - `grit` — **Grit**: Resume-forward portfolio: Playfair display, IBM Plex Mono labels, coral strike marks.
 - `omega` — **Omega**: Bright dual-blue SaaS marketing: sky-to-indigo gradient energy, conversion home.
 - `onix` — **Onix**: Violet agency system with warm gold asides and multi-layout energy.

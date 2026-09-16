@@ -1,189 +1,563 @@
-import { Syne, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
-import { LX } from "./tokens";
-import { list, slotAt, text, toSlots } from "../shared/content";
-import { brandStyle, sectionBandStyle } from "../shared/brand";
+import { LX_CSS } from "./css";
+import {
+  ABOUT_IMGS,
+  ARROW,
+  CLIENT_LOGOS,
+  CONTACT_IMG,
+  MORE_IMGS,
+  NAV_IMG,
+  PROJECTS,
+  SERVICES,
+  TEAM,
+  TRAIL,
+} from "./defaults";
+import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
+import { brandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 
-const display = Syne({
-  subsets: ["latin"],
-  variable: "--lx-display",
-  weight: ["600","700","800"],
-  display: "swap",
-});
+type PageRef = { slug: string; title: string };
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--lx-body",
-  weight: ["400","500"],
-  display: "swap",
-});
-
-const HERO = "/templates/luxeframe/hero.jpg";
-const NAV = [
-  { label: "Work", href: "#lx-main" },
-  { label: "About", href: "#lx-about" },
-  { label: "Contact", href: "#lx-end" },
-];
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "LX";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
+/**
+ * LuxeFrame — high-end photography house from the coded kit.
+ * Charcoal canvas, acid-lime marks, Matter type. Pages: Home, Projects, About, Contact.
+ */
 export function LuxeframeSite({
   blueprint,
   site,
   contact,
+  pageSlug,
 }: {
   blueprint?: WebsiteBlueprint | null;
   site?: AssembledSite | null;
   contact?: SiteContact | null;
+  pageSlug?: string;
 }) {
-  const slots = toSlots(blueprint, site);
-  const hero = slotAt(slots, "hero");
-  const about = slotAt(slots, "about");
-  const services = slotAt(slots, "services");
-  const work = slotAt(slots, "portfolio");
-  const testimonials = slotAt(slots, "testimonials");
-  const faq = slotAt(slots, "faq");
-  const cta = slotAt(slots, "cta");
+  const pages = pageSlugsOf(blueprint, site);
+  const navPages = pages.length
+    ? pages
+    : [
+        { slug: "home", title: "Home" },
+        { slug: "portfolio", title: "Projects" },
+        { slug: "about", title: "About" },
+        { slug: "contact", title: "Contact Us" },
+      ];
+  const active =
+    (pageSlug && navPages.find((p) => p.slug === pageSlug)?.slug) ||
+    navPages.find((p) => p.slug === "home")?.slug ||
+    navPages[0]?.slug ||
+    "home";
+  const slots = toSlots(blueprint, site, active);
   const footer = slotAt(slots, "footer");
   const businessName =
-    text(footer.content, "businessName") ||
-    site?.businessName ||
-    blueprint?.business.name ||
-    "LuxeFrame";
-  const customLogo = site?.theme.logoUrl?.trim() || "";
+    text(footer.content, "businessName") || site?.businessName || blueprint?.business.name || "LuxeFrame";
+  const customLogo = site?.theme?.logoUrl?.trim() || "";
   const details = contact ?? site?.contact;
   const contactEmail = details?.email?.trim() || "";
-  const heroImage = hero.image || HERO;
+  const contactPhone = details?.phone?.trim() || "";
+  const socials = list(footer.content, "itemTitles", ["Instagram", "Facebook", "X (Twitter)", "LinkedIn"]);
 
   return (
     <div
-      id="lx-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className="lx-root scroll-smooth antialiased"
       style={{
         ...brandStyle(site?.theme, "#E0FD60"),
-        fontFamily: "var(--lx-body), ui-sans-serif, system-ui, sans-serif",
-        color: LX.ink,
-        backgroundColor: LX.bg,
         ...themeFontStyle(site?.theme, ["--lx-display", "--lx-body"]),
       }}
     >
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
-      <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: LX.line, backgroundColor: LX.inverse }}>
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">
-          <a href="#lx-top" className="mr-auto flex items-center gap-2">
-            {customLogo ? (
-              <img src={customLogo} alt="" className="h-9 w-9 object-contain" />
-            ) : (
-              <span
-                className="grid h-9 w-9 place-items-center text-xs font-bold rounded-xl"
-                style={{ backgroundColor: LX.brand, color: LX.inverseFg, fontFamily: "var(--lx-display)" }}
-              >
-                {initials(businessName)}
-              </span>
-            )}
-            <span className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--lx-display)", color: LX.inverseFg }}>
-              {businessName}
-            </span>
-          </a>
-          <nav className="hidden items-center gap-6 text-sm md:flex" style={{ color: LX.body }}>
-            {NAV.map((item) => (
-              <a key={item.label} href={item.href} className="hover:opacity-70">{item.label}</a>
-            ))}
-          </nav>
-          <a
-            href={contactEmail ? `mailto:${contactEmail}` : "#lx-end"}
-            className="rounded-xl px-4 py-2 text-sm font-semibold"
-            style={{ backgroundColor: LX.brand, color: LX.inverseFg, fontFamily: "var(--lx-display)" }}
-          >
-            {text(hero.content, "ctaPrimary", "Request a treatment")}
-          </a>
-        </div>
-      </header>
-      <section className="relative min-h-[80vh] overflow-hidden" style={{ ...sectionBandStyle(hero.theme) }}>
-        <img src={heroImage} alt="" data-parallax="0.12" className="absolute inset-0 h-full w-full object-cover opacity-40" />
-        <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${LX.bg}cc, ${LX.bg})` }} />
-        <div className="relative mx-auto flex min-h-[80vh] max-w-6xl flex-col justify-end px-6 pb-20">
-          <p className="text-xs uppercase tracking-[0.25em]" style={{ color: LX.brand }}>{text(hero.content, "eyebrow", "LuxeFrame")}</p>
-          <h1 className="mt-4 max-w-4xl text-5xl uppercase leading-[0.95] sm:text-7xl" style={{ fontFamily: "var(--lx-display)" }}>
-            {text(hero.content, "headline", "High-end visual for exclusive moments")}
-          </h1>
-          <p className="mt-6 max-w-xl text-lg" style={{ color: LX.body }}>{text(hero.content, "subheadline", "Campaign, editorial, and private commissions with cinematic finish.")}</p>
-        </div>
-      </section>
-      <section id="lx-about" className="px-6 py-24">
-        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
-          <h2 className="text-4xl" style={{ fontFamily: "var(--lx-display)" }}>{text(about.content, "heading", "About")}</h2>
-          <p className="text-lg leading-relaxed" style={{ color: LX.body }}>{text(about.content, "body", text(about.content, "subheadline", "High-end visual for exclusive, exquisite moments."))}</p>
-        </div>
-      </section>
-      <section id="lx-main" className="px-6 py-20" style={{ backgroundColor: LX.surface }}>
-        <div className="mx-auto max-w-6xl">
-          {list(services.content, "itemTitles", ["Direction", "Craft", "Delivery"]).map((title, i) => (
-            <div key={i} className="flex items-baseline justify-between border-b py-8" style={{ borderColor: LX.line }}>
-              <h3 className="text-2xl" style={{ fontFamily: "var(--lx-display)" }}>{title}</h3>
-              <p className="max-w-md text-sm" style={{ color: LX.body }}>{list(services.content, "itemBodies")[i] || ""}</p>
+      <style>{LX_CSS}</style>
+      <input id="lx-nav-toggle" type="checkbox" />
+      <SiteNav businessName={businessName} customLogo={customLogo} />
+      <Overlay pages={navPages} socials={socials} />
+      <main className="lx-main">{renderPage(active, slots, { businessName, contactEmail, contactPhone })}</main>
+      <SiteFooter
+        slots={slots}
+        pages={navPages}
+        businessName={businessName}
+        socials={socials}
+        year={new Date().getFullYear()}
+      />
+    </div>
+  );
+}
+
+type Meta = { businessName: string; contactEmail: string; contactPhone: string };
+
+function renderPage(active: string, slots: TemplateSlot[], meta: Meta) {
+  if (active === "about") return <AboutBody slots={slots} businessName={meta.businessName} />;
+  if (active === "portfolio") return <PortfolioBody slots={slots} />;
+  if (active === "contact") return <ContactBody slots={slots} meta={meta} />;
+  return <HomeBody slots={slots} />;
+}
+
+function pageHref(slug: string) {
+  return `?page=${slug}`;
+}
+
+function Heading({ label }: { label: string }) {
+  return (
+    <div className="lx-heading">
+      <div className="lx-tag">
+        <span className="lx-dot" />
+        <h4 className="lx-font20">{label}</h4>
+      </div>
+      <div className="lx-rule" />
+    </div>
+  );
+}
+
+function SiteNav({ businessName, customLogo }: { businessName: string; customLogo: string }) {
+  return (
+    <nav className="lx-bar">
+      <a href={pageHref("home")} className="lx-logo">
+        {customLogo ? <img src={customLogo} alt={businessName} style={{ width: 36, height: 36, objectFit: "contain" }} /> : <span>{businessName}</span>}
+      </a>
+      <label htmlFor="lx-nav-toggle" className="lx-ham">
+        <p>Menu</p>
+        <span className="lx-circle">
+          <span className="lx-line" />
+          <span className="lx-line" />
+        </span>
+      </label>
+    </nav>
+  );
+}
+
+function Overlay({ pages, socials }: { pages: PageRef[]; socials: string[] }) {
+  return (
+    <div className="lx-menu">
+      <label htmlFor="lx-nav-toggle" style={{ position: "absolute", inset: 0, zIndex: 0 }} aria-label="Close menu" />
+      <div className="lx-menu-img">
+        <img src={NAV_IMG} alt="" />
+        <img src={NAV_IMG} alt="" />
+        <img src={NAV_IMG} alt="" />
+        <img src={NAV_IMG} alt="" />
+      </div>
+      <div className="lx-menu-links">
+        <div className="lx-menu-top">
+          {pages.map((p) => (
+            <div key={p.slug} className="menu_link_block">
+              <a href={pageHref(p.slug)} className="lx-under">
+                {p.title}
+              </a>
             </div>
           ))}
         </div>
-      </section>
-      <section className="px-6 py-20">
-        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-3">
-          {list(work.content, "itemTitles", ["One", "Two", "Three"]).map((title, i) => (
-            <article key={i} className="overflow-hidden rounded-xl" style={{ backgroundColor: LX.card }}>
-              <img src={work.itemImages[i] || heroImage} alt="" className="h-56 w-full object-cover" />
-              <div className="p-5">
-                <h3 style={{ fontFamily: "var(--lx-display)" }}>{title}</h3>
-                <p className="mt-2 text-sm" style={{ color: LX.body }}>{list(work.content, "itemBodies")[i] || ""}</p>
-              </div>
-            </article>
+        <div className="lx-menu-bottom">
+          {socials.map((label) => (
+            <a key={label} href="#lx-end" className="lx-under">
+              {label}
+            </a>
           ))}
         </div>
-      </section>
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl grid gap-6 md:grid-cols-3">
-          {list(testimonials.content, "quotes").map((quote, i) => (
-            <blockquote key={i} className="p-6" style={{ borderLeft: `2px solid ${LX.brand}` }}>
-              <p>{quote}</p>
-              <footer className="mt-3 text-sm" style={{ color: LX.body }}>{list(testimonials.content, "authors")[i]}</footer>
-            </blockquote>
-          ))}
-        </div>
-      </section>
-      <section className="px-6 py-12">
-        <div className="mx-auto max-w-3xl">
-          {list(faq.content, "questions").map((q, i) => (
-            <details key={i} className="border-b py-4" style={{ borderColor: LX.line }}>
-              <summary className="cursor-pointer">{q}</summary>
-              <p className="mt-2 text-sm" style={{ color: LX.body }}>{list(faq.content, "answers")[i]}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-      <section className="px-6 py-20 text-center">
-        <h2 className="text-4xl" style={{ fontFamily: "var(--lx-display)" }}>{text(cta.content, "headline", "Ready")}</h2>
-        <a href={contactEmail ? `mailto:${contactEmail}` : "#lx-end"} className="mt-8 inline-flex rounded-xl px-8 py-3 font-semibold" style={{ backgroundColor: LX.brand, color: LX.inverseFg }}>
-          {text(cta.content, "ctaPrimary", "Request a treatment")}
-        </a>
-      </section>
-      <footer id="lx-end" className="border-t px-6 py-12" style={{ borderColor: LX.line, backgroundColor: LX.inverse, color: LX.inverseFg, ...sectionBandStyle(footer.theme) }}>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-8">
-          <div>
-            <div className="text-lg font-semibold" style={{ fontFamily: "var(--lx-display)" }}>{businessName}</div>
-            <p className="mt-2 max-w-sm text-sm opacity-70">{text(footer.content, "tagline", "High-end photography house: charcoal, acid-lime marks, cinematic frames.")}</p>
-          </div>
-          <nav className="flex flex-wrap gap-6 text-sm opacity-80">
-            {list(footer.content, "linkLabels", NAV.map((n) => n.label)).map((label) => (
-              <span key={label}>{label}</span>
-            ))}
-          </nav>
-        </div>
-      </footer>
+      </div>
     </div>
+  );
+}
+
+function pickProjects(work: TemplateSlot, count: number, offset = 0) {
+  const titles = list(
+    work.content,
+    "itemTitles",
+    PROJECTS.slice(offset, offset + count).map((p) => p.title)
+  );
+  const places = list(
+    work.content,
+    "itemBodies",
+    PROJECTS.slice(offset, offset + count).map((p) => p.place)
+  );
+  return titles.slice(0, count).map((title, i) => ({
+    title,
+    place: places[i] || PROJECTS[offset + i]?.place || "",
+    img: work.itemImages[i] || PROJECTS[offset + i]?.img || TRAIL[0],
+  }));
+}
+
+function ProjectRows({ items, rows }: { items: { title: string; place: string; img: string }[]; rows: number[] }) {
+  const classes = ["lx-r1", "lx-r2", "lx-r3", "lx-r4", "lx-r5"];
+  let cursor = 0;
+  return (
+    <>
+      {rows.map((count, rowIndex) => {
+        const slice = items.slice(cursor, cursor + count);
+        cursor += count;
+        if (!slice.length) return null;
+        return (
+          <div key={rowIndex} className={`lx-proj-row ${classes[rowIndex] || "lx-r1"}`}>
+            {slice.map((item) => (
+              <a key={item.title} href={pageHref("portfolio")}>
+                <div className="lx-shot">
+                  <img src={item.img} alt={item.title} />
+                </div>
+                <div>
+                  <h5 className="lx-font24">{item.title}</h5>
+                  <p className="lx-font16">{item.place}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function Clients({ slots }: { slots: TemplateSlot[] }) {
+  const quotes = slotAt(slots, "testimonials");
+  const heading = text(quotes.content, "heading", "Selected Clients");
+  const copy = text(
+    quotes.content,
+    "body",
+    "Our clients had an amazing experience collaborating with us, praising our dedication, creativity, and professionalism every step of the way. We're confident you'll feel the same and enjoy a seamless, rewarding partnership with us!"
+  );
+  const quoteList = list(quotes.content, "quotes");
+  const authors = list(quotes.content, "authors");
+  const roles = list(quotes.content, "roles");
+  return (
+    <section className="lx-clients">
+      <div className="lx-wrap">
+        <Heading label={heading} />
+        <div className="lx-logos">
+          {CLIENT_LOGOS.map((src) => (
+            <div key={src} className="lx-logo-cell">
+              <img src={src} alt="" />
+            </div>
+          ))}
+        </div>
+        <div className="lx-client-copy">
+          <h3 className="lx-font36">{copy}</h3>
+        </div>
+        {quoteList.length ? (
+          <div className="lx-quotes">
+            {quoteList.slice(0, 3).map((quote, i) => (
+              <blockquote key={i} className="lx-quote">
+                <div className="lx-quote-mark">“</div>
+                <p className="lx-font16" style={{ marginTop: 20 }}>
+                  {quote}
+                </p>
+                <div style={{ marginTop: 50 }}>
+                  <p className="lx-font24">{authors[i]}</p>
+                  <p className="lx-font16">{roles[i]}</p>
+                </div>
+              </blockquote>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function HomeBody({ slots }: { slots: TemplateSlot[] }) {
+  const hero = slotAt(slots, "hero");
+  const about = slotAt(slots, "about");
+  const work = slotAt(slots, "portfolio");
+  const services = slotAt(slots, "services");
+  const cta = slotAt(slots, "cta");
+  const trail = (hero.itemImages.filter(Boolean) as string[]).length ? (hero.itemImages.filter(Boolean) as string[]) : [...TRAIL];
+  const serviceTitles = list(services.content, "itemTitles", [...SERVICES]);
+  const moreImgs = [cta.image, ...(cta.itemImages || [])].filter(Boolean) as string[];
+  const more = moreImgs.length >= 4 ? moreImgs : [...MORE_IMGS];
+
+  return (
+    <>
+      <header className="lx-hero" data-lx-trail data-motion-skip>
+        <div className="lx-hero-text">
+          <h1>{text(hero.content, "headline", "High-end visual for exclusive exquisite moments")}</h1>
+        </div>
+        <div className="lx-scroll">
+          <h2 className="lx-font16">{text(hero.content, "ctaPrimary", "Scroll Down")}</h2>
+          <div className="lx-arrow">
+            <img src={ARROW} alt="" />
+          </div>
+        </div>
+        <div className="lx-trail">
+          {trail.slice(0, 10).map((src, i) => (
+            <div key={src + i} className="lx-trail-img">
+              <img src={src} alt="" />
+            </div>
+          ))}
+        </div>
+      </header>
+      <section className="lx-about">
+        <div className="lx-wrap">
+          <h3 className="lx-font36">
+            {text(
+              about.content,
+              "body",
+              "LuxeFrame is a visionary production company crafting captivating, awe-inspiring visual experiences through photography and videography for individuals, businesses, and organizations seeking timeless, high-end imagery."
+            )}
+          </h3>
+        </div>
+      </section>
+      <section>
+        <div className="lx-wrap">
+          <Heading label={text(work.content, "heading", "Selected Projects")} />
+          <ProjectRows items={pickProjects(work, 7)} rows={[2, 3, 2]} />
+        </div>
+      </section>
+      <section className="lx-services">
+        <div className="lx-wrap" style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Heading label={text(services.content, "heading", "Service Areas")} />
+          <div style={{ width: "100%", marginTop: 70 }}>
+            {serviceTitles.map((title, i) => (
+              <a key={title} href={pageHref("portfolio")} className="lx-svc">
+                <div>
+                  <p className="lx-font16">{`${String(i + 1).padStart(2, "0")}/`}</p>
+                  <h4 className="lx-font36">{title}</h4>
+                </div>
+                <span className="lx-svc-arrow">→</span>
+              </a>
+            ))}
+          </div>
+          <a href={pageHref("portfolio")} className="lx-btn">
+            <span className="lx-font16">View All Projects</span>
+          </a>
+        </div>
+      </section>
+      <section className="lx-more">
+        <div className="lx-wrap" style={{ height: "100%", position: "relative" }}>
+          <div className="lx-more-txt">
+            <h2>{text(cta.content, "headline", "We ignite the passion that compels your audience to book their next unforgettable stay.")}</h2>
+            <a href={pageHref("about")} className="lx-btn" style={{ marginTop: 50 }}>
+              <span className="lx-font16">{text(cta.content, "ctaPrimary", "More About us")}</span>
+            </a>
+          </div>
+          <div className="lx-more-row">
+            <img src={more[0]} alt="" />
+            <img src={more[1]} alt="" />
+          </div>
+          <div className="lx-more-row">
+            <img src={more[2]} alt="" />
+            <img src={more[3]} alt="" />
+          </div>
+        </div>
+      </section>
+      <Clients slots={slots} />
+    </>
+  );
+}
+
+function AboutBody({ slots, businessName }: { slots: TemplateSlot[]; businessName: string }) {
+  const hero = slotAt(slots, "hero");
+  const about = slotAt(slots, "about");
+  const benefits = slotAt(slots, "features");
+  const team = slotAt(slots, "services");
+  const stills = (about.itemImages.filter(Boolean) as string[]).length >= 2 ? (about.itemImages.filter(Boolean) as string[]) : [...ABOUT_IMGS];
+  const benefitTitles = list(benefits.content, "itemTitles", [
+    "Exceptional Quality and Creativity",
+    "Professional and Personalized Service",
+    "Versatile and Comprehensive Solutions",
+  ]);
+  const benefitBodies = list(benefits.content, "itemBodies");
+  const names = list(team.content, "itemTitles", TEAM.map((t) => t.name));
+  const roles = list(team.content, "itemBodies", TEAM.map((t) => t.role));
+  const marquee = Array.from({ length: 16 }, () => businessName).join(" - ");
+
+  return (
+    <>
+      <header className="lx-pagehead">
+        <div className="lx-wrap">
+          <h1 className="lx-font90">{text(hero.content, "headline", "Discover Our Studio and Vision")}</h1>
+        </div>
+      </header>
+      <section>
+        <div className="lx-wrap">
+          <Heading label={text(about.content, "heading", "About us")} />
+          <div className="lx-about-lead">
+            <h2 className="lx-font36">
+              {text(
+                about.content,
+                "headline",
+                "Welcome to LuxeFrame, where we transform moments into timeless visual narratives. Founded with a passion for capturing the essence of life's most cherished experiences, LuxeFrame is dedicated to crafting captivating photography and videography that resonates with authenticity and elegance."
+              )}
+            </h2>
+          </div>
+          <div className="lx-about-imgs">
+            <div className="lx-shot">
+              <img src={stills[0]} alt="" />
+            </div>
+            <div className="lx-shot">
+              <img src={stills[1]} alt="" />
+            </div>
+          </div>
+          <div className="lx-about-copy">
+            <p className="lx-font16">{text(about.content, "body")}</p>
+            <p className="lx-font16" style={{ marginTop: 70 }}>
+              {text(about.content, "subheadline")}
+            </p>
+          </div>
+        </div>
+      </section>
+      <section className="lx-benefits">
+        <div className="lx-wrap">
+          <Heading label={text(benefits.content, "heading", "Benefits")} />
+          <h3 className="lx-font36" style={{ marginTop: 70 }}>
+            {text(
+              benefits.content,
+              "subheading",
+              "At LuxeFrame, we pride ourselves on delivering unparalleled photography and videography services that capture the essence of your unique story. Here are the key benefits of choosing our studio:"
+            )}
+          </h3>
+          <div className="lx-ben-grid">
+            {benefitTitles.map((title, i) => (
+              <div key={title} className="lx-ben">
+                <h5 className="lx-font24">{title}</h5>
+                <p className="lx-font16" style={{ marginTop: 20 }}>
+                  {benefitBodies[i]}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      <div className="lx-marquee">
+        <div className="lx-marquee-track">
+          {marquee} - {marquee}
+        </div>
+      </div>
+      <section>
+        <div className="lx-wrap">
+          <Heading label={text(team.content, "heading", "Team Members")} />
+          <div className="lx-team">
+            {names.map((name, i) => (
+              <div key={name}>
+                <img src={team.itemImages[i] || TEAM[i]?.img || TRAIL[0]} alt={name} />
+                <h5 className="lx-font24" style={{ marginTop: 20 }}>
+                  {name}
+                </h5>
+                <p className="lx-font16">{roles[i]}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      <Clients slots={slots} />
+    </>
+  );
+}
+
+function PortfolioBody({ slots }: { slots: TemplateSlot[] }) {
+  const hero = slotAt(slots, "hero");
+  const work = slotAt(slots, "portfolio");
+  return (
+    <>
+      <header className="lx-pagehead">
+        <div className="lx-wrap">
+          <h1 className="lx-font90">{text(hero.content, "headline", "Discover our stunning global photography projects.")}</h1>
+        </div>
+      </header>
+      <section>
+        <div className="lx-wrap">
+          <Heading label={text(work.content, "heading", "All Projects")} />
+          <ProjectRows items={pickProjects(work, 12)} rows={[2, 3, 2, 2, 3]} />
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ContactBody({ slots, meta }: { slots: TemplateSlot[]; meta: Meta }) {
+  const hero = slotAt(slots, "hero");
+  const contact = slotAt(slots, "contact");
+  const footer = slotAt(slots, "footer");
+  const still = contact.image || CONTACT_IMG;
+  const socials = list(contact.content, "itemTitles", list(footer.content, "itemTitles", ["Instagram", "Facebook", "X (Twitter)", "LinkedIn"]));
+  const mail = meta.contactEmail;
+  const phone = meta.contactPhone;
+  return (
+    <>
+      <header className="lx-pagehead">
+        <div className="lx-wrap">
+          <h1 className="lx-font90">{text(hero.content, "headline", "Get in Touch with LuxeFrame")}</h1>
+        </div>
+      </header>
+      <section>
+        <div className="lx-wrap lx-contact">
+          <div className="lx-contact-visual">
+            <img src={still} alt="" />
+            <img src={still} alt="" />
+            <img src={still} alt="" />
+            <img src={still} alt="" />
+          </div>
+          <div className="lx-contact-details">
+            <div>
+              <Heading label={text(contact.content, "heading", "Studio")} />
+              <h2 className="lx-font24" style={{ marginTop: 30 }}>
+                {meta.businessName}
+              </h2>
+              <h2 className="lx-font24">{text(contact.content, "subheading", "A Visionary Production Company")}</h2>
+              <h2 className="lx-font24">{text(contact.content, "body", "73 Holburn Street, London, UK")}</h2>
+              {mail ? (
+                <a href={`mailto:${mail}`} className="lx-under">
+                  <h2 className="lx-font24">{mail}</h2>
+                </a>
+              ) : null}
+              {phone ? (
+                <a href={`tel:${phone}`} className="lx-under">
+                  <h2 className="lx-font24">{phone}</h2>
+                </a>
+              ) : null}
+            </div>
+            <div style={{ marginTop: 100 }}>
+              <Heading label="Socials" />
+              {socials.map((label) => (
+                <a key={label} href="#lx-end" className="lx-under" style={{ marginTop: 12 }}>
+                  <h2 className="lx-font24">{label}</h2>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function SiteFooter({
+  slots,
+  pages,
+  businessName,
+  socials,
+  year,
+}: {
+  slots: TemplateSlot[];
+  pages: PageRef[];
+  businessName: string;
+  socials: string[];
+  year: number;
+}) {
+  const footer = slotAt(slots, "footer");
+  const tagline = text(footer.content, "tagline", "LuxeFrame is a visionary production.");
+  const labels = list(footer.content, "linkLabels", pages.map((p) => p.title));
+  return (
+    <footer id="lx-end" className="lx-foot">
+      <div className="lx-wrap lx-foot-inner">
+        <div className="lx-foot-col">
+          <h5 className="lx-font24">{tagline}</h5>
+          <h5 className="lx-font24">
+            ©{year} {businessName}
+          </h5>
+        </div>
+        <div className="lx-foot-col">
+          <div className="lx-foot-links">
+            {pages.map((p, i) => (
+              <a key={p.slug} href={pageHref(p.slug)} className="lx-under">
+                {labels[i] || p.title}
+              </a>
+            ))}
+          </div>
+          <div className="lx-foot-links">
+            {socials.map((label) => (
+              <a key={label} href="#lx-end" className="lx-under">
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+      <h5 className="lx-giant">{businessName}</h5>
+    </footer>
   );
 }

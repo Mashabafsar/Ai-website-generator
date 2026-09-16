@@ -998,12 +998,48 @@ export const LUXEFRAME_SEED: TemplateSeed = {
   sections: [
     "hero-background-image",
     "about-with-image",
-    "services-cards",
     "portfolio-case-studies",
-    "testimonials-grid",
-    "faq-accordion",
+    "services-cards",
     "cta-banner",
+    "testimonials-grid",
     "footer-simple",
+  ],
+  pages: [
+    {
+      slug: "home",
+      title: "Home",
+      sections: [
+        "hero-background-image",
+        "about-with-image",
+        "portfolio-case-studies",
+        "services-cards",
+        "cta-banner",
+        "testimonials-grid",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "portfolio",
+      title: "Projects",
+      sections: ["hero-centered", "portfolio-case-studies", "footer-simple"],
+    },
+    {
+      slug: "about",
+      title: "About",
+      sections: [
+        "hero-centered",
+        "about-with-image",
+        "features-grid",
+        "services-cards",
+        "testimonials-grid",
+        "footer-simple",
+      ],
+    },
+    {
+      slug: "contact",
+      title: "Contact Us",
+      sections: ["hero-centered", "contact-split", "footer-simple"],
+    },
   ],
 };
 
@@ -1608,6 +1644,7 @@ const GALLERY_LEAD_SLUGS = [
   "rebo",
   "sarahfolio",
   "willjacks",
+  "luxeframe",
 ] as const;
 
 function orderGallerySeeds(seeds: TemplateSeed[]): TemplateSeed[] {
@@ -1636,6 +1673,7 @@ export const ALL_SEEDS: TemplateSeed[] = orderGallerySeeds([
   REBO_SEED,
   SARAHFOLIO_SEED,
   WILLJACKS_SEED,
+  LUXEFRAME_SEED,
   WHITER_SEED,
   MAINFILE_SEED,
   SAASLDG_SEED,
@@ -1654,7 +1692,6 @@ export const ALL_SEEDS: TemplateSeed[] = orderGallerySeeds([
   CAREWEB_SEED,
   KAEL_SEED,
   LUKASZ_SEED,
-  LUXEFRAME_SEED,
   GRIT_SEED,
   OMEGA_SEED,
   ONIX_SEED,
