@@ -317,9 +317,16 @@ export function motionScriptTag(): string {
   return [
     `<script>`,
     `(function(){var run=${initTemplateMotion.toString()};`,
-    `function boot(){try{run(document);}catch(e){}}`,
+    `function release(){`,
+    `var roots=document.querySelectorAll("[data-motion-arm]");`,
+    `for(var i=0;i<roots.length;i++){roots[i].removeAttribute("data-motion-arm");}`,
+    `var hidden=document.querySelectorAll('[data-motion-ready="out"]');`,
+    `for(var j=0;j<hidden.length;j++){hidden[j].setAttribute("data-motion-ready","in");}`,
+    `}`,
+    `function boot(){try{run(document);}catch(e){}release();}`,
     `if(document.readyState!=="loading"){boot();}`,
     `else{document.addEventListener("DOMContentLoaded",boot);}`,
+    `setTimeout(release,2500);`,
     `})();`,
     `</script>`,
   ].join("");

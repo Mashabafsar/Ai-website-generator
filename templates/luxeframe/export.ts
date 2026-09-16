@@ -179,7 +179,7 @@ function nav(businessName: string, customLogo: string, pages: { slug: string; ti
   const socialHtml = socials.map((label) => `<a href="#lx-end" class="lx-under">${esc(label)}</a>`).join("");
   return `<input id="lx-nav-toggle" type="checkbox" />
 <nav class="lx-bar"><a href="${pageHref("home")}" class="lx-logo">${mark}</a><label for="lx-nav-toggle" class="lx-ham"><p>Menu</p><span class="lx-circle"><span class="lx-line"></span><span class="lx-line"></span></span></label></nav>
-<div class="lx-menu"><label for="lx-nav-toggle" style="position:absolute;inset:0;z-index:0" aria-label="Close menu"></label><div class="lx-menu-img"><img src="${NAV_IMG}" alt="" /><img src="${NAV_IMG}" alt="" /><img src="${NAV_IMG}" alt="" /><img src="${NAV_IMG}" alt="" /></div><div class="lx-menu-links"><div class="lx-menu-top">${links}</div><div class="lx-menu-bottom">${socialHtml}</div></div></div>`;
+<div class="lx-menu" data-motion-skip><div class="lx-menu-img"><label for="lx-nav-toggle" class="lx-menu-close" aria-label="Close menu"></label><img src="${NAV_IMG}" alt="" /></div><div class="lx-menu-links"><div class="lx-menu-top">${links}</div><div class="lx-menu-bottom">${socialHtml}</div></div></div>`;
 }
 
 function footerBlock(

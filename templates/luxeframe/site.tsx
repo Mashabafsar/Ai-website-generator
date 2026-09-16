@@ -126,12 +126,9 @@ function SiteNav({ businessName, customLogo }: { businessName: string; customLog
 
 function Overlay({ pages, socials }: { pages: PageRef[]; socials: string[] }) {
   return (
-    <div className="lx-menu">
-      <label htmlFor="lx-nav-toggle" style={{ position: "absolute", inset: 0, zIndex: 0 }} aria-label="Close menu" />
+    <div className="lx-menu" data-motion-skip>
       <div className="lx-menu-img">
-        <img src={NAV_IMG} alt="" />
-        <img src={NAV_IMG} alt="" />
-        <img src={NAV_IMG} alt="" />
+        <label htmlFor="lx-nav-toggle" className="lx-menu-close" aria-label="Close menu" />
         <img src={NAV_IMG} alt="" />
       </div>
       <div className="lx-menu-links">

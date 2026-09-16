@@ -8,6 +8,7 @@ import { renderBespokeSite, hasBespokeExport } from "@/templates/export-registry
 import { brandCss, sectionBandCss } from "@/templates/shared/brand";
 import { resolveThemeFont, themeFontHref } from "@/templates/shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
+import { relativizeHtml } from "@/lib/export/relativize";
 
 // Renders an AssembledSite to a set of static, hostable HTML files. Tailwind is
 // loaded via the Play CDN and theme tokens are injected as CSS variables, so the

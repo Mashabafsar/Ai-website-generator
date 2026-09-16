@@ -57,18 +57,34 @@ export const LX_CSS = `
 #lx-nav-toggle:checked ~ .lx-bar .lx-line:last-child { transform: translateY(-4px) rotate(-45deg); }
 .lx-menu {
   width: 100%; height: 100%; position: fixed; inset: 0;
-  display: flex; align-items: center; z-index: 70;
+  z-index: 70;
   background: ${LX.card}; transform: translateY(-100%); visibility: hidden;
   transition: transform 0.8s cubic-bezier(0.19,1,0.22,1), visibility 0.8s;
   overflow: hidden; color: #fff;
 }
-.lx-menu-img { position: relative; width: 75%; height: 100%; }
-.lx-menu-img img { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(70%, 720px); height: auto; }
-.lx-menu-img img:nth-child(1) { opacity: 0.9; z-index: 1; }
-.lx-menu-img img:nth-child(2) { opacity: 0.7; z-index: 2; }
-.lx-menu-img img:nth-child(3) { opacity: 0.5; z-index: 3; }
-.lx-menu-img img:nth-child(4) { opacity: 0.3; z-index: 4; }
-.lx-menu-links { width: 25%; padding: 40px; position: relative; z-index: 2; }
+.lx-menu-img {
+  position: absolute; top: 0; left: 0; bottom: 0; right: 30%;
+  overflow: hidden; isolation: isolate; contain: paint;
+}
+.lx-menu-close {
+  position: absolute; inset: 0; z-index: 2; cursor: pointer;
+  background: none; border: 0;
+}
+.lx-menu-img img {
+  position: absolute !important; inset: 0 !important;
+  width: 100% !important; height: 100% !important;
+  max-width: none !important; max-height: none !important;
+  object-fit: cover !important; object-position: center;
+  transform: none !important; opacity: 1 !important; pointer-events: none;
+}
+.lx-menu-links {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 30%;
+  padding: 48px 40px 48px 32px;
+  z-index: 3;
+  background: ${LX.card};
+  display: flex; flex-direction: column; justify-content: center;
+  box-sizing: border-box;
+}
 .lx-menu-top a { font-size: 40px; font-family: MatterSemiBold, Inter, sans-serif; display: block; }
 .lx-menu-bottom { display: flex; flex-direction: column; gap: 5px; margin-top: 5vw; }
 .lx-under { position: relative; width: fit-content; overflow: hidden; text-transform: uppercase; display: block; }
@@ -259,7 +275,8 @@ export const LX_CSS = `
   .lx-more { height: 800px; }
   .lx-more-row { max-height: 400px; }
   .lx-about-lead { padding-left: 0; }
-  .lx-menu-img { width: 60%; }
+  .lx-menu-img { right: 36%; }
+  .lx-menu-links { width: 36%; padding: 24px; }
   .lx-contact-visual { max-height: 800px; }
   .lx-team { grid-template-columns: 1fr 1fr 1fr; }
   .lx-quotes { grid-template-columns: 1fr; }
@@ -296,7 +313,7 @@ export const LX_CSS = `
   .lx-logos { grid-template-columns: 1fr 1fr; }
   .lx-team { grid-template-columns: 1fr 1fr; }
   .lx-menu-img { display: none; }
-  .lx-menu-links { width: 100%; padding: 20px; }
+  .lx-menu-links { width: 100%; left: 0; right: 0; padding: 20px; }
   .lx-menu-top a { font-size: 11vw; }
   .lx-marquee { height: 15vw; font-size: 15vw; }
 }

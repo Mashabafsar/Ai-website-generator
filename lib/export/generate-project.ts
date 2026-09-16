@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import { renderSiteToFiles } from "@/lib/export/html-renderer";
+import { collectBundledAssetPaths } from "@/lib/export/relativize";
 import { bespokeAssetPaths } from "@/templates/export-registry";
 import type { AssembledSite, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { slugify } from "@/lib/utils";
