@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Github, Pencil, Repeat } from "lucide-react";
+import { Pencil, Repeat } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
 import { ProjectStatus, PAID_PROJECT_STATUSES } from "@/lib/constants";
@@ -48,13 +48,6 @@ export default async function PreviewPage({
               <Repeat className="h-4 w-4" /> Try another design
             </Link>
           </Button>
-          {project.githubRepoUrl && (
-            <Button asChild variant="outline" size="sm">
-              <a href={project.githubRepoUrl} target="_blank" rel="noreferrer">
-                <Github className="h-4 w-4" /> Repo
-              </a>
-            </Button>
-          )}
           <Button asChild variant="brand" size="sm">
             <Link href={`/app/project/${projectId}/editor`}>
               <Pencil className="h-4 w-4" /> Edit

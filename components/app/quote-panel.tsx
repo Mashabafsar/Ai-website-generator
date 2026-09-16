@@ -159,7 +159,7 @@ export function QuotePanel({
 
         <p className="px-1 text-xs text-muted-foreground">
           {isManaged
-            ? "Payment unlocks a live deployment on your subdomain."
+            ? "Payment unlocks Make it live — we publish and host the site for you."
             : "Payment unlocks a downloadable ZIP of your full source code."}{" "}
           Pick hosting just before checkout — the quote updates to match.
         </p>

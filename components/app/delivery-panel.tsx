@@ -36,17 +36,19 @@ export function DeliveryPanel({
   }, [searchParams]);
 
   const isManaged = packageType === PackageType.MANAGED_HOSTING;
+  const domainUrl = deployment?.liveUrl ?? null;
+  const isLive = Boolean(domainUrl) && deployment?.status === "DEPLOYED";
 
   async function deploy() {
     setDeploying(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/deploy`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Deployment failed");
-      toast.success("Deployment complete");
+      if (!res.ok) throw new Error(data.error || "Could not publish the site");
+      toast.success("Your website is live");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Deployment failed");
+      toast.error(err instanceof Error ? err.message : "Could not publish the site");
     } finally {
       setDeploying(false);
     }
@@ -57,8 +59,10 @@ export function DeliveryPanel({
       <div className="rounded-xl border bg-card p-8 text-center">
         <h2 className="font-display text-lg font-semibold">Unlock delivery</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Your website is generated and safely backed up. Complete payment to{" "}
-          {isManaged ? "deploy it live on your subdomain" : "download the full source code as a ZIP"}.
+          Your website is generated. Complete payment to{" "}
+          {isManaged
+            ? "publish it live with one click. We host it for you — no files to download or upload."
+            : "download the full source code as a ZIP"}.
         </p>
         <Button variant="brand" className="mt-5" onClick={() => router.push(`/app/project/${projectId}/quote`)}>
           Go to quote & payment
@@ -77,32 +81,41 @@ export function DeliveryPanel({
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="font-display text-lg font-semibold">Managed hosting</h2>
+              <h2 className="font-display text-lg font-semibold">
+                {isLive ? "Your website is live" : "Publish your website"}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Deploy your site live on a subdomain. Re-deploy any time after edits.
+                {deploying
+                  ? "Publishing now — this usually takes under a minute. Keep this tab open."
+                  : isLive
+                    ? "We host this for you. Re-publish after you make edits."
+                    : "Click Make it live and we publish the site to hosting. You never download files, open GitHub, or log into Vercel."}
               </p>
             </div>
             <Button variant="brand" onClick={deploy} disabled={deploying}>
               {deploying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-              {deployment?.liveUrl ? "Re-deploy" : "Deploy live"}
+              {deploying ? "Publishing…" : isLive ? "Re-publish" : "Make it live"}
             </Button>
           </div>
 
-          {deployment?.liveUrl && (
-            <a
-              href={deployment.liveUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-            >
-              <ExternalLink className="h-4 w-4" /> {deployment.liveUrl}
-            </a>
+          {domainUrl && (
+            <div className="mt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your domain</p>
+              <a
+                href={domainUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+              >
+                <ExternalLink className="h-4 w-4" /> {domainUrl.replace(/^https?:\/\//, "")}
+              </a>
+            </div>
           )}
 
           {deployment?.logs && deployment.logs.length > 0 && (
             <div className="mt-5 rounded-lg border bg-muted/40 p-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Deployment log
+                Publish log
               </div>
               <ul className="space-y-1 text-xs text-muted-foreground">
                 {deployment.logs.map((l, i) => (

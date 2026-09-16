@@ -10,6 +10,7 @@ import { ProjectTabs } from "@/components/app/project-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
 import { DeliveryPanel } from "@/components/app/delivery-panel";
 import { prisma } from "@/lib/prisma";
+import { hideDeploymentHosts, publicSiteUrl } from "@/lib/deployment/url";
 
 export const metadata: Metadata = { title: "Deliver" };
 
@@ -58,8 +59,13 @@ export default async function DeploymentPage({
   const deployment = deploymentRow
     ? {
         status: deploymentRow.status,
-        liveUrl: deploymentRow.liveUrl,
-        logs: deploymentRow.logs ? (JSON.parse(deploymentRow.logs) as DeploymentLog[]) : [],
+        liveUrl: publicSiteUrl(deploymentRow),
+        logs: deploymentRow.logs
+          ? (JSON.parse(deploymentRow.logs) as DeploymentLog[]).map((l) => ({
+              ...l,
+              message: hideDeploymentHosts(l.message),
+            }))
+          : [],
       }
     : null;
 

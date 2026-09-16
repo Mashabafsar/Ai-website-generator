@@ -105,6 +105,7 @@ export const env = {
   deployment: {
     provider: process.env.DEPLOYMENT_PROVIDER ?? "vercel",
     token: process.env.DEPLOYMENT_TOKEN ?? "",
+    teamId: process.env.DEPLOYMENT_TEAM_ID || process.env.VERCEL_TEAM_ID || process.env.VERCEL_ORG_ID || "",
     platformDomain: process.env.PLATFORM_DOMAIN ?? "agencypartner.site",
     get enabled() {
       return Boolean(process.env.DEPLOYMENT_TOKEN);

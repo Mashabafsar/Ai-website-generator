@@ -25,7 +25,7 @@ const OPTIONS = [
     type: PackageType.MANAGED_HOSTING,
     icon: Cloud,
     title: "Managed hosting",
-    desc: "We deploy the site to a live subdomain and keep it online for you.",
+    desc: "We publish the site to a live URL for you. No files to download or upload.",
   },
 ] as const;
 

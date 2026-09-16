@@ -1,6 +1,7 @@
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
+import { publicSiteUrl } from "@/lib/deployment/url";
 
 const HUBSPOT_API = "https://api.hubapi.com";
 
@@ -35,7 +36,7 @@ async function loadCustomer(projectId: string): Promise<HubSpotCustomer | null> 
       user: { select: { email: true, name: true } },
       questionnaire: true,
       quote: { select: { packageType: true } },
-      deployment: { select: { liveUrl: true } },
+      deployment: { select: { liveUrl: true, subdomain: true } },
     },
   });
   if (!project?.user?.email) return null;
@@ -53,7 +54,7 @@ async function loadCustomer(projectId: string): Promise<HubSpotCustomer | null> 
   }
 
   const website =
-    project.deployment?.liveUrl ||
+    publicSiteUrl(project.deployment) ||
     `${env.appUrl.replace(/\/$/, "")}/app/project/${projectId}/preview`;
 
   return {

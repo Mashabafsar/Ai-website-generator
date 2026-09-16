@@ -2,12 +2,20 @@ import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { DeploymentStatus, ProjectStatus } from "@/lib/constants";
 import { parseProject } from "@/lib/projects/projects";
-import { generateProjectFiles } from "@/lib/export/generate-project";
-import { deployToVercel, aliasDeployment } from "@/lib/deployment/vercel";
+import { generateProjectFiles, type ProjectFile } from "@/lib/export/generate-project";
+import { deployToVercel, aliasDeployment, assignProjectDomain } from "@/lib/deployment/vercel";
+import { siteDomainUrl } from "@/lib/deployment/url";
 import { slugify } from "@/lib/utils";
 import { notifyOwnerSiteLive } from "@/lib/notify/owner";
 
 export type DeploymentLog = { at: string; status: string; message: string };
+
+export class HostingNotConfiguredError extends Error {
+  constructor() {
+    super("Live hosting is not configured");
+    this.name = "HostingNotConfiguredError";
+  }
+}
 
 function log(logs: DeploymentLog[], status: string, message: string): DeploymentLog[] {
   return [...logs, { at: new Date().toISOString(), status, message }];
@@ -41,11 +49,23 @@ async function saveDeployment(
   });
 }
 
+/** Only the files a visitor needs — not blueprint JSON or README. */
+function isLiveHostFile(filePath: string): boolean {
+  const p = filePath.replace(/\\/g, "/");
+  if (p === "vercel.json") return true;
+  if (p.endsWith(".html")) return true;
+  if (p.startsWith("templates/") || p.startsWith("uploads/")) return true;
+  return /\.(png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|css|js)$/i.test(p);
+}
+
+function publicSiteFiles(files: ProjectFile[]): ProjectFile[] {
+  return files.filter((f) => isLiveHostFile(f.path));
+}
+
 /**
- * Deployment Agent — deploys the already-generated, GitHub-backed site to a
- * subdomain. Uses the existing project source; no second "create repo" step.
- * Falls back to a recorded (simulated) deployment when no provider token is set,
- * so the managed-hosting flow still completes end-to-end in the MVP.
+ * Deployment Agent — publishes the generated site to live hosting (Vercel).
+ * The client only clicks Make it live. Files are uploaded from this app; they
+ * never download GitHub or log into the host.
  */
 export async function deployProject(projectId: string): Promise<{
   status: string;
@@ -60,43 +80,37 @@ export async function deployProject(projectId: string): Promise<{
     throw new Error("Website has not been generated yet");
   }
 
+  if (!env.deployment.enabled) {
+    throw new HostingNotConfiguredError();
+  }
+
   const subdomain = `${slugify(project.businessName)}-${project.id.slice(-6)}`;
   const fqdn = `${subdomain}.${env.deployment.platformDomain}`;
   let logs: DeploymentLog[] = [];
 
-  logs = log(logs, DeploymentStatus.PENDING, "Deployment requested");
+  logs = log(logs, DeploymentStatus.PENDING, "Publishing requested");
   await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.DEPLOYING } });
   await saveDeployment(projectId, { status: DeploymentStatus.BUILD_STARTED, subdomain, logs });
 
-  const files = await generateProjectFiles({
-    businessName: project.businessName,
-    blueprint: parsed.blueprint,
-    site: parsed.assembledPages,
-  });
-
-  // No provider token: record a simulated deployment so the flow completes.
-  if (!env.deployment.enabled) {
-    logs = log(logs, DeploymentStatus.BUILD_STARTED, "No deployment provider configured — recording simulated deployment.");
-    const liveUrl = `https://${fqdn}`;
-    logs = log(logs, DeploymentStatus.DEPLOYED, `Site marked live at ${liveUrl}`);
-    await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
-    await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });
-    await notifyOwnerSiteLive({ projectId, businessName: project.businessName, liveUrl });
-    return { status: DeploymentStatus.DEPLOYED, liveUrl, subdomain };
-  }
+  const files = publicSiteFiles(
+    await generateProjectFiles({
+      businessName: project.businessName,
+      blueprint: parsed.blueprint,
+      site: parsed.assembledPages,
+    })
+  );
 
   try {
-    logs = log(logs, DeploymentStatus.BUILD_STARTED, "Uploading files to Vercel");
-    const result = await deployToVercel({ projectName: subdomain, files });
-    logs = log(logs, DeploymentStatus.BUILD_STARTED, `Deployment created (${result.deploymentId})`);
+    logs = log(logs, DeploymentStatus.BUILD_STARTED, "Uploading the site to hosting");
+    await saveDeployment(projectId, { status: DeploymentStatus.BUILD_STARTED, subdomain, logs });
 
-    const aliased = await aliasDeployment(result.deploymentId, fqdn);
-    const liveUrl = aliased ? `https://${fqdn}` : `https://${result.url}`;
-    logs = log(
-      logs,
-      DeploymentStatus.DEPLOYED,
-      aliased ? `Aliased to ${fqdn}` : `Live at ${result.url} (subdomain alias unavailable)`
-    );
+    const result = await deployToVercel({ projectName: subdomain, files });
+    logs = log(logs, DeploymentStatus.BUILD_STARTED, "Host confirmed the site is live");
+
+    const liveUrl = siteDomainUrl(subdomain);
+    await assignProjectDomain(result.projectId || subdomain, fqdn);
+    await aliasDeployment(result.deploymentId, fqdn);
+    logs = log(logs, DeploymentStatus.DEPLOYED, `Your domain is ${liveUrl}`);
 
     await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });

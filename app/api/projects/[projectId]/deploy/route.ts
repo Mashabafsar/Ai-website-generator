@@ -1,7 +1,7 @@
 import { requireUser, jsonOk, jsonError } from "@/lib/http";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { hasPaidPackage } from "@/lib/payments/access";
-import { deployProject } from "@/lib/deployment/deploy";
+import { deployProject, HostingNotConfiguredError } from "@/lib/deployment/deploy";
 import { PackageType } from "@/lib/constants";
 
 export const maxDuration = 120;
@@ -28,6 +28,14 @@ export async function POST(_req: Request, { params }: Ctx) {
     return jsonOk(result);
   } catch (err) {
     console.error("Deploy error:", err);
-    return jsonError("Deployment failed. See deployment logs.", 500);
+    if (err instanceof HostingNotConfiguredError || (err instanceof Error && err.name === "HostingNotConfiguredError")) {
+      return jsonError(
+        "Live hosting isn't connected on this platform yet. Please try again later.",
+        503,
+        "HOSTING_NOT_CONFIGURED"
+      );
+    }
+    const message = err instanceof Error ? err.message : "Deployment failed";
+    return jsonError(message.slice(0, 240), 500);
   }
 }
