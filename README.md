@@ -128,8 +128,8 @@ See `.env.example` for the full list. Highlights:
 | `BETTER_AUTH_SECRET` | Auth session signing secret |
 | `CURSOR_API_KEY` | Cursor SDK key (the only AI provider) |
 | `HEAVY_MODEL_NAME` / `LIGHT_MODEL_NAME` | Cursor models for generation vs. edits |
-| `CURSOR_TIMEOUT_MS` | How long to wait on Cursor for a full website (default 15 minutes) before template fallback |
-| `CURSOR_LIGHT_TIMEOUT_MS` | How long to wait for site plan, import extract, and section edits (default 10 minutes) |
+| `CURSOR_TIMEOUT_MS` | How long to wait on Cursor for a full website before template fallback (default 270s; Vercel Hobby max is 300s) |
+| `CURSOR_LIGHT_TIMEOUT_MS` | How long to wait for site plan, import extract, and section edits (default 270s) |
 | `AI_USE_MOCK` | `true` to skip APIs and use the local template |
 | `SIGNUP_CREDIT_BONUS`, `CREDIT_COST_HEAVY_GENERATE`, `CREDIT_COST_LIGHT_EDIT` | Credit economics |
 | `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers |

@@ -33,7 +33,7 @@ import {
 // can't be read. Branding/asset failures are fail-soft — the customer still
 // keeps the text prefill. Token usage still lands in the admin ledger as `scrape_extract`.
 
-export const maxDuration = 800;
+export const maxDuration = 300;
 
 type Body = { url?: string; projectId?: string };
 
