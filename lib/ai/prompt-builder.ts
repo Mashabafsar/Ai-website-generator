@@ -3,16 +3,20 @@ import { limitsForPrompt } from "@/lib/sections/text-limits";
 import { ICON_GROUPS } from "@/lib/icons/registry";
 import { PALETTE_NAMES } from "@/lib/agents/theme";
 import { THEME_FONTS } from "@/templates/shared/fonts";
+import { QUOTE_CTA_LABEL } from "@/lib/pricing/contact-cta";
 import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteSection } from "@/lib/blueprint/types";
 
 const GUARDRAILS = `You are a website COPYWRITER and art director. Follow these rules strictly:
 - Return ONLY valid JSON. No prose, no markdown fences, no comments.
-- The website LAYOUT is already chosen and FIXED. Write its content and pick its
-  typeface, color palette, icons, and photo keywords from the lists given below.
-- Emit EXACTLY the sections listed below, in the SAME order, with the SAME
-  "type" and "variant" values. Do NOT add, remove, reorder, or substitute any
-  section, and do NOT invent new variants or content fields.
+- The Website Planner already chose which pages and sections this audience needs.
+  Fill those slots. Do not add extra pages. Do not drop a listed page or slot.
+- Always include the "home" page as listed. Do not invent new slugs, types,
+  variants, or content fields.
+- PRICING sections list the customer's services or products as plan names. Never
+  write dollar amounts, currencies, or numbers like "$200" or "300 dollars".
+  Leave planPrices empty. Each plan's button is "${QUOTE_CTA_LABEL}" and goes to
+  Contact so visitors can ask about that service.
 - Only ever use ids that appear in the lists below — never invent a font id,
   palette name, or icon name, and never return a raw hex color or font stack.
 - Do NOT generate any frontend code, HTML, CSS, or scripts.
@@ -91,16 +95,12 @@ function pageSlots(sections: string[]): string {
     .join("\n");
 }
 
-/**
- * Describes every page the design supports. "home" is mandatory; the rest are
- * optional and the model picks which to include based on the business — but it
- * can only ever choose from THIS list and must keep each page's slots verbatim.
- */
 function templatePages(req: NormalizedRequirements): string {
-  return req.template.pages
+  const pages = req.layout.length ? req.layout : req.template.pages;
+  return pages
     .map((page) => {
-      const optional = page.slug === "home" ? "(ALWAYS include)" : "(OPTIONAL — include only if it fits the business)";
-      return [`PAGE "${page.slug}" — ${page.title} ${optional}, sections in this EXACT order:`, pageSlots(page.sections)].join(
+      const note = page.slug === "home" ? "(ALWAYS include)" : "(planned for this audience)";
+      return [`PAGE "${page.slug}" — ${page.title} ${note}, fill every listed slot in this EXACT order:`, pageSlots(page.sections)].join(
         "\n"
       );
     })
@@ -119,15 +119,15 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     contact: req.contact,
   };
 
-  const optionalSlugs = req.template.pages.filter((p) => p.slug !== "home").map((p) => `"${p.slug}"`);
-  const pageChoice = optionalSlugs.length
+  const pages = req.layout.length ? req.layout : req.template.pages;
+  const multi = pages.some((p) => p.slug !== "home");
+  const pageChoice = multi
     ? [
-        `This design supports these OPTIONAL pages: ${optionalSlugs.join(", ")}.`,
-        "YOU decide which of them to include based on the business — a simple business",
-        "may only need home; a richer one benefits from more. Always include \"home\".",
-        "Only emit pages from the list below, and never invent a page or a slot.",
+        `These pages were planned for this audience: ${pages.map((p) => `"${p.slug}"`).join(", ")}.`,
+        "Fill every listed slot. Do not add or drop pages.",
+        `Pricing cards use the customer's services as names, empty planPrices, and a "${QUOTE_CTA_LABEL}" button to Contact — never dollar amounts.`,
       ].join("\n")
-    : 'This design is a single page. Return exactly one page with slug "home".';
+    : 'This design is a single page. Return exactly one page with slug "home" and fill every listed slot.';
 
   return [
     GUARDRAILS,
@@ -146,7 +146,7 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     "THE PAGES AND THEIR LOCKED SECTIONS:",
     templatePages(req),
     "",
-    "For every page you include, populate every field of every section. Fields ending",
+    "For every listed page, populate every field of every listed section. Fields ending",
     "with [] are string arrays; keep parallel arrays (e.g. itemTitles/itemBodies) the",
     "same length.",
     "",
@@ -195,7 +195,8 @@ export function buildLightPrompt(params: {
     "You are editing ONE website section. Follow these rules strictly:",
     "- Return ONLY valid JSON: the updated `content` object for this section.",
     "- Keep the SAME field keys and array lengths as the input content.",
-    "- Do not change facts (names, emails, phone, prices) unless asked.",
+    "- Do not change facts (names, emails, phone) unless asked.",
+    "- Never introduce dollar amounts or prices. Send visitors to Contact our sales instead.",
     "- Do not add code, HTML, or secrets. Write original copy.",
     `- Brand tone: ${brandTone}.`,
     limitsForPrompt(),

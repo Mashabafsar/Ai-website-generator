@@ -579,7 +579,6 @@ function pricingBody(slots: TemplateSlot[]): string {
   const pricing = slotAt(slots, "pricing");
   const faq = slotAt(slots, "faq");
   const names = list(pricing.content, "planNames", ["Starter", "Beginner", "Best Value"]);
-  const prices = list(pricing.content, "planPrices", ["$199/month"]);
   const features = list(pricing.content, "planFeatures");
   const blurb = list(pricing.content, "itemBodies");
   const cards = names
@@ -590,10 +589,9 @@ function pricingBody(slots: TemplateSlot[]): string {
         .join("");
       return `<article class="rounded-[20px] p-8 text-white" style="background-color:${RB.inverse}">
         <span class="inline-flex rounded px-4 py-1 text-[14px] font-semibold" style="background-color:${i === 1 ? RB.brand : "#2A2A2A"}">${esc(name)}</span>
-        <p class="mt-6 text-[40px] font-bold" style="${dFont(true)}">${esc(prices[i] || prices[0])}</p>
         <p class="mt-3 text-[16px] leading-normal text-white/80">${esc(blurb[i] || "")}</p>
         <ul class="mt-6 space-y-2 border-t border-white/20 pt-6 text-[16px]">${lines}</ul>
-        <a href="${pageHref("contact")}" class="mt-8 flex h-12 items-center justify-center rounded-md bg-[#2A2A2A] text-[14px] font-semibold uppercase">Chose package</a>
+        <a href="${pageHref("contact")}" class="mt-8 flex h-12 items-center justify-center rounded-md bg-[#2A2A2A] text-[14px] font-semibold uppercase">Contact our sales</a>
       </article>`;
     })
     .join("");

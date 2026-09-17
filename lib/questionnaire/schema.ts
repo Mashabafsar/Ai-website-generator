@@ -92,6 +92,35 @@ export const questionnaireSchema = z.object({
 
   // Delivery
   packageType: z.nativeEnum(PackageType).default(PackageType.SELF_HOSTING),
+
+  // Pages and sections the Website Planner chose for this business.
+  layout: z
+    .array(
+      z.object({
+        slug: z.string().min(1).max(40),
+        sections: z.array(z.string().min(1).max(80)).max(40),
+      })
+    )
+    .max(12)
+    .optional()
+    .default([]),
+  layoutPlan: z
+    .object({
+      audience: z.string().max(400),
+      summary: z.string().max(800),
+      fingerprint: z.string().max(4000),
+      pages: z
+        .array(
+          z.object({
+            slug: z.string().min(1).max(40),
+            title: z.string().max(80),
+            why: z.string().max(280),
+            sections: z.array(z.string().max(80)).max(40),
+          })
+        )
+        .max(12),
+    })
+    .optional(),
 });
 
 export type QuestionnaireAnswers = z.infer<typeof questionnaireSchema>;
@@ -120,6 +149,7 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   contactEmail: "",
   contactPhone: "",
   packageType: PackageType.SELF_HOSTING,
+  layout: [],
 };
 
 /** Merge stored JSON with defaults so records saved before new fields still parse. */
@@ -130,6 +160,10 @@ export function parseQuestionnaireAnswers(raw: unknown): QuestionnaireAnswers {
     importedBrand?: unknown;
     importedAssetConsent?: unknown;
   };
+  if (!Array.isArray(incoming.layout)) merged.layout = [];
+  if (!incoming.layoutPlan || typeof incoming.layoutPlan !== "object") {
+    delete (merged as { layoutPlan?: unknown }).layoutPlan;
+  }
   // A malformed brand or consent must not fail the rest of a saved questionnaire.
   const brand = parseImportedBrand(incoming.importedBrand);
   const consent = parseAssetConsent(incoming.importedAssetConsent);
@@ -140,6 +174,7 @@ export function parseQuestionnaireAnswers(raw: unknown): QuestionnaireAnswers {
 
   const parsed = questionnaireSchema.safeParse(merged);
   if (parsed.success) return parsed.data;
+  delete (merged as { layoutPlan?: unknown }).layoutPlan;
   return questionnaireSchema.parse({
     ...merged,
     demographics: merged.demographics || merged.targetAudience || "General audience",

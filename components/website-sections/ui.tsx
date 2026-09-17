@@ -55,7 +55,7 @@ export function SiteButton({
     className
   );
 
-  if (href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+  if (href && !href.toLowerCase().startsWith("javascript:")) {
     return (
       <a href={href} className={styles}>
         {children}

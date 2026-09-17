@@ -7,7 +7,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 // metered.
 
 export type UsageEvent = {
-  provider: string; // cursor | gemini | mock
+  provider: string; // cursor | mock
   model: string;
   promptTokens: number;
   completionTokens: number;

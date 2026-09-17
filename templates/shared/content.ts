@@ -113,6 +113,10 @@ export function slotAt(slots: TemplateSlot[], type: string, occurrence = 0): Tem
   return EMPTY;
 }
 
+export function hasSlot(slots: TemplateSlot[], type: string): boolean {
+  return slots.some((slot) => slot.type === type);
+}
+
 export function text(content: SlotContent, key: string, fallback = ""): string {
   const value = content[key];
   return typeof value === "string" && value.trim() ? value : fallback;

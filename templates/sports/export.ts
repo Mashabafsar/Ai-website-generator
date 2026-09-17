@@ -139,13 +139,14 @@ export function renderSportsPage(site: AssembledSite): string {
   const catBodies = list(categories.content, "itemBodies");
   const catImages = categories.itemImages;
   const cImg = (i: number) => catImages[i] || CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length];
-  const catPrice = (i: number): string | null => {
-    const m = (catBodies[i] || "").match(/\$\s?[\d.,]+/);
-    return m ? m[0].replace(/\s+/, "") : null;
-  };
+  const catBlurb = (i: number) =>
+    (catBodies[i] || "")
+      .replace(/starting from\s*\$?\s*[\d.,]+/gi, "")
+      .replace(/\$\s*[\d.,]+/g, "")
+      .replace(/\s+—\s+/g, " ")
+      .trim();
 
   const planNames = list(pricing.content, "planNames", ["Starter Plan", "Active Balance", "Inner Mastery"]);
-  const planPrices = list(pricing.content, "planPrices", ["$25", "$49", "$89"]);
   const planFeatures = list(pricing.content, "planFeatures");
   const popularIndex = planNames.length > 2 ? 1 : planNames.length - 1;
 
@@ -159,10 +160,15 @@ export function renderSportsPage(site: AssembledSite): string {
   const answers = list(faq.content, "answers");
 
   const footerLinks = list(footer.content, "linkLabels", NAV.map((n) => n.label));
+  const navItems = NAV.filter((item) => {
+    if (item.href === "#sp-pricing") return Boolean(pricing.type);
+    if (item.href === "#sp-faq") return Boolean(faq.type);
+    return true;
+  });
 
   const contactEmail = site.contact?.email?.trim() || "";
   const contactPhone = site.contact?.phone?.trim() || "";
-  const contactHref = contactEmail ? `mailto:${esc(contactEmail)}` : "#sp-pricing";
+  const contactHref = "#sp-contact";
 
   const logoMark = customLogo
     ? `<img src="${esc(customLogo)}" alt="" class="h-9 w-9 rounded-lg object-contain" />`
@@ -177,7 +183,7 @@ export function renderSportsPage(site: AssembledSite): string {
   <div class="relative z-10 mx-auto flex min-h-[92vh] max-w-[90rem] flex-col justify-between px-4 py-6 lg:px-10 lg:py-8">
     <div class="flex items-center justify-between gap-4">
       <nav class="hidden items-center gap-1 lg:flex">
-        ${NAV.map((item) => `<a href="${item.href}" class="rounded-xl px-3 py-2 text-sm font-medium text-white/90 backdrop-blur-[4px] transition-colors hover:bg-white/15">${esc(item.label)}</a>`).join("\n        ")}
+        ${navItems.map((item) => `<a href="${item.href}" class="rounded-xl px-3 py-2 text-sm font-medium text-white/90 backdrop-blur-[4px] transition-colors hover:bg-white/15">${esc(item.label)}</a>`).join("\n        ")}
       </nav>
       <a href="#sp-top" class="flex items-center gap-3">
         ${logoMark}
@@ -268,10 +274,8 @@ export function renderSportsPage(site: AssembledSite): string {
   </div>
   <div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
     ${catTitles.map((title, i) => {
-      const price = catPrice(i);
-      const overlay = price
-        ? `<div class="mt-2"><div class="font-semibold leading-none text-white text-[2.8rem]" style="font-family:var(--sp-display)">${esc(price)}</div><div class="mt-1 text-base text-white/85">Starting from</div></div>`
-        : (catBodies[i] ? `<div class="mt-1 text-sm text-white/80">${esc(catBodies[i])}</div>` : "");
+      const blurb = catBlurb(i);
+      const overlay = blurb ? `<div class="mt-1 text-sm text-white/80">${esc(blurb)}</div>` : "";
       return `<div class="relative h-[31rem] overflow-hidden rounded-[22px]">
       <img src="${esc(cImg(i))}" alt="${esc(title)}" class="absolute inset-0 h-full w-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
@@ -281,7 +285,7 @@ export function renderSportsPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="sp-pricing" class="relative isolate overflow-hidden">
+${pricing.type ? `<section id="sp-pricing" class="relative isolate overflow-hidden">
   <div class="absolute inset-0 overflow-hidden">
     <img src="${PRICING_BG}" alt="" class="h-full w-full object-cover opacity-60" />
     <div class="absolute inset-0" style="background:rgba(14,18,27,0.86)"></div>
@@ -313,16 +317,15 @@ export function renderSportsPage(site: AssembledSite): string {
             <div><div class="text-3xl font-semibold uppercase leading-none tracking-[-0.36px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(planNames[i])}</div><div class="mt-2 text-base font-medium" style="color:${SP.body}">${esc((planFeatures[i] || "").split("\n")[0] || "Our most popular plan")}</div></div>
             <span class="grid size-16 shrink-0 place-items-center rounded-[20px]" style="background:${SP.surface}">${arrow("h-6 w-6", SP.ink)}</span>
           </div>
-          <div class="mt-6 flex items-end gap-2"><span class="text-[3.75rem] font-semibold leading-none tracking-[-0.6px]" style="font-family:var(--sp-display);color:${SP.ink}">${esc(planPrices[i] || "$0")}</span><span class="pb-1.5 text-lg font-medium" style="color:${SP.body}">/ month</span></div>
           <div class="my-7 flex items-center gap-2"><span class="size-2 rounded-sm" style="background:${SP.ink}"></span><span class="h-[2px] flex-1" style="background:${SP.line}"></span><span class="size-2 rounded-sm" style="background:${SP.ink}"></span></div>
           <ul class="flex flex-col gap-4">${items}</ul>
-          <a href="${contactHref}" class="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium" style="background:${SP.brand};color:${SP.ink}">Get started ${arrow("h-4 w-4", SP.ink)}</a>
+          <a href="${contactHref}" class="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium" style="background:${SP.brand};color:${SP.ink}">Contact our sales ${arrow("h-4 w-4", SP.ink)}</a>
         </div>
       </div>`;
       })()}
     </div>
   </div>
-</section>
+</section>` : ""}
 
 <section id="sp-testimonials" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
   ${sectionHeader("Testimonials", false, 7)}
@@ -345,7 +348,7 @@ export function renderSportsPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
+${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
   ${sectionHeader("FAQ", false, 8)}
   <div class="mt-10 flex flex-col items-start gap-12 lg:flex-row">
     <div class="flex flex-col gap-5 lg:w-[38rem]">
@@ -362,7 +365,7 @@ export function renderSportsPage(site: AssembledSite): string {
       </div>
     </div>
   </div>
-</section>
+</section>` : ""}
 
 <section id="sp-event" class="mx-auto max-w-[90rem] px-4 pb-16 lg:px-[3.75rem] lg:pb-20">
   <div class="relative overflow-hidden rounded-[24px]">
@@ -384,7 +387,7 @@ export function renderSportsPage(site: AssembledSite): string {
   </div>
 </section>
 
-<footer class="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style="background:${SP.white};${sectionBandCss(footer.theme)}">
+<footer id="sp-contact" class="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style="background:${SP.white};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[82.5rem]">
     <div class="flex flex-col items-start gap-10 lg:flex-row lg:gap-24">
       <div class="flex flex-col items-start gap-8 lg:flex-row">

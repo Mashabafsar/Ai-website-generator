@@ -9,6 +9,7 @@ import { brandCss, sectionBandCss } from "@/templates/shared/brand";
 import { resolveThemeFont, themeFontHref } from "@/templates/shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import { relativizeHtml } from "@/lib/export/relativize";
+import { exportContactHref, QUOTE_CTA_LABEL } from "@/lib/pricing/contact-cta";
 
 // Renders an AssembledSite to a set of static, hostable HTML files. Tailwind is
 // loaded via the Play CDN and theme tokens are injected as CSS variables, so the
@@ -65,7 +66,7 @@ const NAV_TYPES: Array<{ type: string; label: string }> = [
   { type: "contact", label: "Contact" },
 ];
 
-function renderSection(section: AssembledSection, site: AssembledSite): string {
+function renderSection(section: AssembledSection, site: AssembledSite, page: AssembledPage): string {
   const p = section.props as P;
   switch (section.componentName) {
     case "HeroSplitWithImage": {
@@ -295,8 +296,10 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
     }
     case "PricingTiers": {
       const names = arr(p.planNames);
-      const prices = arr(p.planPrices);
       const features = arr(p.planFeatures);
+      const quoteHref = site.pages.some((pg) => pg.slug === "contact")
+        ? exportContactHref(page.slug)
+        : "#contact";
       return `<section class="mx-auto max-w-6xl px-6 py-24">
   <div class="mb-12 text-center">
     <h2 class="text-4xl font-bold tracking-tight sm:text-5xl">${esc(p.heading)}</h2>
@@ -309,7 +312,6 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
         return `<div class="relative flex flex-col rounded-2xl border site-card p-7 ${popular ? "border-2 shadow-xl md:-translate-y-3" : ""}" ${popular ? 'style="border-color:var(--primary)"' : ""}>
       ${popular ? `<span class="absolute right-0 top-0 rounded-bl-xl rounded-tr-xl px-3 py-1 text-xs font-semibold text-white" style="background:var(--primary)">Popular</span>` : ""}
       <p class="text-sm font-semibold site-muted">${esc(n)}</p>
-      <div class="mt-4 text-5xl font-bold tracking-tight">${esc(prices[i] ?? "")}</div>
       <ul class="mt-6 space-y-2 text-sm">
         ${(features[i] ?? "")
           .split("\n")
@@ -317,7 +319,7 @@ function renderSection(section: AssembledSection, site: AssembledSite): string {
           .map((f) => `<li>✓ ${esc(f)}</li>`)
           .join("\n")}
       </ul>
-      <a href="#contact" class="mt-8 inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold text-white" style="background:${popular ? "var(--primary)" : "#0f172a"}">Get started</a>
+      <a href="${esc(quoteHref)}" class="mt-8 inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold text-white" style="background:${popular ? "var(--primary)" : "#0f172a"}">${QUOTE_CTA_LABEL}</a>
     </div>`;
       })
       .join("\n")}
@@ -414,12 +416,12 @@ function renderPage(page: AssembledPage, site: AssembledSite): string {
     .filter((s) => s.type !== "footer")
     .map((s) => {
       const band = sectionBandCss(s.theme);
-      return `<div id="${esc(s.type)}"${band ? ` style="${band}"` : ""}>${renderSection(s, site)}</div>`;
+      return `<div id="${esc(s.type)}"${band ? ` style="${band}"` : ""}>${renderSection(s, site, page)}</div>`;
     })
     .join("\n");
   const footer = page.sections
     .filter((s) => s.type === "footer")
-    .map((s) => renderSection(s, site))
+    .map((s) => renderSection(s, site, page))
     .join("\n");
 
   return `<!doctype html>

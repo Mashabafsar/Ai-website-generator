@@ -1,6 +1,7 @@
 import { getVariantSpec } from "@/lib/sections/registry";
 import { shortId } from "@/lib/utils";
 import { pageTitle } from "@/lib/blueprint/page-catalog";
+import { looksLikePrice } from "@/lib/pricing/contact-cta";
 import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type {
   WebsiteBlueprint,
@@ -10,43 +11,32 @@ import type {
 import type { TemplatePageDef } from "@/lib/templates/types";
 
 /**
- * Forces AI output onto the selected template's locked layout. The model is only
- * ever a copywriter here: whatever it returns, the finished blueprint has exactly
- * the template's pages (home + whichever optional pages the model chose to write)
- * and, per page, exactly the template's sections, in the template's order, with
- * the template's fields. Anything it invented is dropped; anything it skipped
- * falls back to the registry defaults.
- *
- * This is where "the AI decides which pages to generate" is enforced: an optional
- * page is included only when the model actually returned a page with that slug
- * (and the template supports it). "home" is always present.
+ * Forces AI output onto the selected template's locked variants, keeping only
+ * the pages and sections the customer asked for in the questionnaire.
  */
 export function conformToTemplate(
   blueprint: WebsiteBlueprint,
   req: NormalizedRequirements
 ): WebsiteBlueprint {
-  const templatePages = req.template.pages.length
-    ? req.template.pages
-    : [{ slug: "home", title: pageTitle("home"), sections: req.template.sections }];
+  const templatePages = req.layout.length
+    ? req.layout
+    : req.template.pages.length
+      ? req.template.pages
+      : [{ slug: "home", title: pageTitle("home"), sections: req.template.sections }];
 
-  // Every section the model wrote, indexed by the page slug it wrote it under,
-  // plus a flat pool used as a fallback when a page match runs out.
   const byPageSlug = new Map<string, WebsiteSection[]>();
   for (const page of blueprint.pages) {
     byPageSlug.set(page.slug, page.sections);
   }
   const allGenerated = blueprint.pages.flatMap((page) => page.sections);
 
-  const includedSlugs = new Set(blueprint.pages.map((p) => p.slug));
-
-  const pages: WebsitePage[] = templatePages
-    .filter((pageDef) => pageDef.slug === "home" || includedSlugs.has(pageDef.slug))
-    .map((pageDef) => conformPage(pageDef, byPageSlug.get(pageDef.slug) ?? [], allGenerated, req));
+  const pages: WebsitePage[] = templatePages.map((pageDef) =>
+    conformPage(pageDef, byPageSlug.get(pageDef.slug) ?? [], allGenerated, req)
+  );
 
   return { ...blueprint, pages };
 }
 
-/** Builds one page's locked slots, preferring copy the model wrote for it. */
 function conformPage(
   pageDef: TemplatePageDef,
   pageSections: WebsiteSection[],
@@ -61,7 +51,6 @@ function conformPage(
       const spec = getVariantSpec(variant);
       if (!spec) return null;
 
-      // Prefer content the model wrote under this page, then anything unused.
       let source: WebsiteSection | null = null;
       const localIndex = takeMatch(pageSections, claimedLocal, spec.variant, spec.type);
       if (localIndex !== -1) {
@@ -84,6 +73,8 @@ function conformPage(
           field.type === "string[]"
         );
       }
+
+      if (spec.type === "pricing") applyServicePricing(content, req.services);
 
       return {
         id: source?.id || shortId(spec.type),
@@ -109,7 +100,30 @@ function conformPage(
   return { slug: pageDef.slug, title, sections };
 }
 
-/** Prefers an exact variant match, then any unused section of the same type. */
+/** Pricing cards list the customer's services — never published dollar rates. */
+export function applyServicePricing(
+  content: WebsiteSection["content"],
+  services: string[]
+): void {
+  const names = services.map((s) => s.trim()).filter(Boolean);
+  if (!names.length) {
+    const existing = Array.isArray(content.planNames) ? content.planNames.map(String) : [];
+    content.planNames = existing.length ? existing : ["Starter", "Growth", "Premium"];
+  } else {
+    content.planNames = names;
+  }
+  const planNames = content.planNames as string[];
+  content.planPrices = planNames.map(() => "");
+  const existingFeatures = Array.isArray(content.planFeatures)
+    ? content.planFeatures.map(String)
+    : [];
+  content.planFeatures = planNames.map((name, i) => {
+    const current = existingFeatures[i]?.trim() ?? "";
+    if (current && !looksLikePrice(current)) return current;
+    return `${name}\nContact our sales team for details and a quote.`;
+  });
+}
+
 function takeMatch(
   sections: WebsiteSection[],
   claimed: Set<number>,
@@ -133,9 +147,11 @@ function pickValue(
   const safeFallback = fallback ?? (wantsArray ? [] : "");
 
   if (wantsArray) {
-    if (!Array.isArray(candidate)) return safeFallback;
-    const cleaned = candidate.map(String).filter((v) => v.trim().length > 0);
-    return cleaned.length ? cleaned : safeFallback;
+    if (Array.isArray(candidate)) {
+      const cleaned = candidate.map(String).filter((v) => v.trim().length > 0);
+      return cleaned.length ? cleaned : safeFallback;
+    }
+    return safeFallback;
   }
 
   if (typeof candidate !== "string" || !candidate.trim()) return safeFallback;

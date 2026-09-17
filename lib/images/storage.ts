@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { optimizeImage, type ImageProfile } from "@/lib/images/optimize";
+import type { ImageProfile, OptimizedImage } from "@/lib/images/optimize";
 import { env } from "@/lib/env";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -175,9 +175,18 @@ export async function saveProjectImage(params: {
   optimize?: ImageProfile;
 }): Promise<StoredImage> {
   const { projectId, subdir, optimize } = params;
-  const optimized = optimize
-    ? await optimizeImage(params.bytes, params.contentType, optimize)
-    : null;
+  let optimized: OptimizedImage | null = null;
+  if (optimize) {
+    try {
+      const { optimizeImage } = await import("@/lib/images/optimize");
+      optimized = await optimizeImage(params.bytes, params.contentType, optimize);
+    } catch (err) {
+      console.warn(
+        "[images] optimize skipped; uploading original:",
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
   const bytes = optimized?.bytes ?? params.bytes;
   const contentType = optimized?.contentType ?? params.contentType;
 

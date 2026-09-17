@@ -63,7 +63,7 @@ export function omegaDemoBlueprint(): WebsiteBlueprint {
               heading: "Plans",
               subheading: "Simple monthly options.",
               planNames: ["Starter", "Studio", "House"],
-              planPrices: ["$29", "$79", "$199"],
+              planPrices: ["", "", ""],
               planFeatures: ["Core access", "Priority support", "Dedicated partner"],
             },
           },

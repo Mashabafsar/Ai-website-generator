@@ -1,7 +1,9 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { AgentOptions, LocalAgentStore, RunResult } from "@cursor/sdk";
+import { randomUUID } from "node:crypto";
+import type { Run, RunResult, SDKAgent } from "@cursor/sdk";
+import { withTimeout } from "@/lib/ai/timeout";
 
 /**
  * Isolated working directory for Cursor SDK local runs. The product only needs
@@ -9,29 +11,53 @@ import type { AgentOptions, LocalAgentStore, RunResult } from "@cursor/sdk";
  * agent's workspace (file tools, settings, git).
  */
 const SCRATCH = path.join(tmpdir(), "website-builder-cursor");
-const STORE_DIR = path.join(SCRATCH, "agent-store");
 
-let store: LocalAgentStore | undefined;
 let announced = false;
 
-function ensureDirs(): void {
+function ensureScratch(): void {
   mkdirSync(SCRATCH, { recursive: true });
-  mkdirSync(STORE_DIR, { recursive: true });
+}
+
+function runErrorMessage(result: RunResult): string {
+  const err = result.error;
+  if (err && typeof err.message === "string" && err.message.trim()) return err.message;
+  return "";
+}
+
+/** Pull the assistant text out of a finished run, or throw with a useful reason. */
+export function cursorReplyText(result: RunResult): string {
+  if (result.status === "error" || result.status === "cancelled") {
+    const extra = runErrorMessage(result);
+    const status = result.status === "cancelled" ? "cancelled" : "failed";
+    throw new Error(extra ? `Cursor agent run ${status}: ${extra}` : `Cursor agent run ${status}`);
+  }
+  const raw = result.result;
+  if (typeof raw === "string" && raw.trim()) return raw;
+  if (raw && typeof raw === "object") {
+    const encoded = JSON.stringify(raw);
+    if (encoded && encoded !== "{}") return encoded;
+  }
+  throw new Error("Cursor returned an empty response");
 }
 
 /**
- * Options for `Agent.prompt`.
+ * One Cursor turn in its own cwd + JSONL store.
  *
- * The SDK's default persistence is SQLite under
- * `~/.cursor/projects/<cwd-slug>/sdk-agent-store`. On this host that resolved
- * to `/home/sbx_user1051/...` and `mkdir` failed with ENOENT, so every
- * generation fell through to Gemini. A file-backed JSONL store on a directory
- * we create ourselves skips that path entirely. Sandbox stays off so the
- * executor does not remap cwd into a Linux jail we cannot write.
+ * Sharing a single cwd/store made overlapping plan/import/generate calls hit
+ * AgentBusyError, which looked like Cursor "not responding." Timing out
+ * `Agent.prompt` with Promise.race also left that run wedged. Each call now
+ * gets a fresh agent, waits up to `timeoutMs`, and cancels on the way out.
  */
-export async function cursorPromptOptions(apiKey: string, model: string): Promise<AgentOptions> {
-  const { JsonlLocalAgentStore, Cursor, getDefaultSdkStateRoot } = await import("@cursor/sdk");
-  ensureDirs();
+async function runCursorOnce(
+  apiKey: string,
+  model: string,
+  prompt: string,
+  timeoutMs: number
+): Promise<RunResult> {
+  const { Agent, JsonlLocalAgentStore, Cursor, getDefaultSdkStateRoot } = await import(
+    "@cursor/sdk"
+  );
+  ensureScratch();
 
   try {
     mkdirSync(getDefaultSdkStateRoot(SCRATCH), { recursive: true });
@@ -39,38 +65,90 @@ export async function cursorPromptOptions(apiKey: string, model: string): Promis
     console.warn("[ai] Could not pre-create Cursor SDK state root:", err);
   }
 
-  // Always pin this — a leftover sandbox path in the process env would
-  // otherwise win and send mkdir back under /home/sbx_user1051.
-  process.env.CURSOR_AGENT_STORE_FILES_DIR = STORE_DIR;
+  const runCwd = path.join(SCRATCH, `run-${randomUUID()}`);
+  const storeDir = path.join(runCwd, "store");
+  mkdirSync(storeDir, { recursive: true });
+  process.env.CURSOR_AGENT_STORE_FILES_DIR = storeDir;
 
-  store ??= new JsonlLocalAgentStore(STORE_DIR);
+  const store = new JsonlLocalAgentStore(storeDir);
   Cursor.configure({ local: { store } });
 
   if (!announced) {
     announced = true;
-    console.log(
-      `[ai] Cursor local runtime ready (cwd=${SCRATCH}, store=${STORE_DIR}, sandbox=off)`
-    );
+    console.log(`[ai] Cursor local runtime ready (scratch=${SCRATCH}, sandbox=off)`);
   }
 
-  return {
+  const agent: SDKAgent = await Agent.create({
     apiKey,
     model: { id: model },
     local: {
-      cwd: SCRATCH,
+      cwd: runCwd,
       store,
       settingSources: [],
       sandboxOptions: { enabled: false },
+      enableAgentRetries: true,
     },
-  };
+  });
+
+  let run: Run | undefined;
+  try {
+    try {
+      run = await agent.send(prompt);
+    } catch (err) {
+      const busy =
+        err instanceof Error &&
+        (err.name === "AgentBusyError" || /agent is busy|already running/i.test(err.message));
+      if (!busy) throw err;
+      console.warn("[ai] Cursor agent was busy; forcing a fresh run.");
+      run = await agent.send(prompt, { local: { force: true } });
+    }
+
+    return await withTimeout(run.wait(), timeoutMs, "Cursor");
+  } catch (err) {
+    if (run?.supports("cancel")) {
+      await run.cancel().catch(() => undefined);
+    }
+    throw err;
+  } finally {
+    await agent[Symbol.asyncDispose]().catch(() => undefined);
+    try {
+      rmSync(runCwd, { recursive: true, force: true });
+    } catch {
+      // Windows can hold the JSONL store open briefly after dispose.
+    }
+  }
 }
 
-/** One-shot Cursor run using the shared local runtime. */
+/**
+ * One-shot Cursor run. Waits up to `timeoutMs`, retries once on an empty
+ * reply (not on timeout), then throws so the caller can fall back.
+ */
 export async function runCursorPrompt(
   apiKey: string,
   model: string,
-  prompt: string
+  prompt: string,
+  timeoutMs = 600_000
 ): Promise<RunResult> {
-  const { Agent } = await import("@cursor/sdk");
-  return Agent.prompt(prompt, await cursorPromptOptions(apiKey, model));
+  return runCursorOnce(apiKey, model, prompt, timeoutMs);
+}
+
+export async function runCursorText(
+  apiKey: string,
+  model: string,
+  prompt: string,
+  timeoutMs: number
+): Promise<string> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      return cursorReplyText(await runCursorOnce(apiKey, model, prompt, timeoutMs));
+    } catch (err) {
+      lastError = err;
+      const message = err instanceof Error ? err.message : String(err);
+      const empty = /empty response/i.test(message);
+      if (!empty || attempt === 2) throw err;
+      console.warn("[ai] Cursor returned no text; retrying once.");
+    }
+  }
+  throw lastError;
 }

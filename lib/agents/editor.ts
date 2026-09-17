@@ -19,6 +19,7 @@ import { recordAiIncidents } from "@/lib/ai/incidents";
 import { sourceImages } from "@/lib/agents/image-sourcing";
 import { trySyncPaidProjectToGitHub } from "@/lib/github/github";
 import { getTemplateById } from "@/lib/templates/store";
+import { findTemplateLockViolation } from "@/lib/templates/lock";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
 import type {
@@ -158,10 +159,10 @@ export async function saveProjectContent(params: {
 }
 
 /**
- * Rejects saves that add, remove, reorder, or swap any of the locked slots. For
- * a multi-page design each incoming page must be one the design supports and
- * must carry exactly that page's locked slot list, in order. A "home" page is
- * always required; the other pages may be a subset (the ones the AI generated).
+ * Rejects saves that add, reorder, or swap locked slots. Pages may be a subset
+ * of the design (the ones the customer asked for). Each kept page may omit
+ * optional bands but must keep remaining slots in the design's order. Home
+ * is always required.
  */
 async function assertMatchesTemplate(
   projectId: string,
@@ -176,27 +177,11 @@ async function assertMatchesTemplate(
   const template = await getTemplateById(project.templateId);
   if (!template) return;
 
-  const structureError = () =>
-    new TemplateStructureError(
+  const violation = findTemplateLockViolation(template.pages, blueprint);
+  if (violation) {
+    throw new TemplateStructureError(
       `The ${template.name} design has a fixed layout. Edit the content of its sections instead of changing their pages, order, or number.`
     );
-
-  const templateBySlug = new Map(template.pages.map((p) => [p.slug, p.sections]));
-
-  if (!blueprint.pages.some((p) => p.slug === "home")) throw structureError();
-
-  const seen = new Set<string>();
-  for (const page of blueprint.pages) {
-    if (seen.has(page.slug)) throw structureError();
-    seen.add(page.slug);
-
-    const expected = templateBySlug.get(page.slug);
-    if (!expected) throw structureError();
-
-    const incoming = page.sections.map((s) => s.variant);
-    const matches =
-      incoming.length === expected.length && incoming.every((v, i) => v === expected[i]);
-    if (!matches) throw structureError();
   }
 }
 

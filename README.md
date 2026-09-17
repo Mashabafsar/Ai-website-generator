@@ -39,7 +39,7 @@ The core product loop works end to end in this repo.
 1. **Auth** — Better Auth email signup/login. New accounts receive a starter credit bonus.
 2. **Template library** — Users pick a complete, locked design (bespoke renderers such as ForgeTech, Techvantage, CraftedSpaces, plus standard-section designs). The AI fills content slots; it cannot invent layout.
 3. **Questionnaire** — Structured answers (business, audience, services, tone, style, pages, package). Optional **existing-website import** scrapes brand assets (logo, colors, images) with consent tracking.
-4. **Generate** — Heavy model (Cursor, then Gemini, then a deterministic template fallback). Output is Zod-validated, sanitized, and forced onto the chosen template's slots.
+4. **Generate** — Heavy Cursor model, then a deterministic template fallback. Output is Zod-validated, sanitized, and forced onto the chosen template's slots.
 5. **Preview & editor** — Live preview (desktop / tablet / mobile), manual edits (text, images, theme, fonts, icons), and optional lightweight AI section rewrites.
 6. **Credits** — Wallet + ledger with atomic spend, refund on failed generation, and Stripe credit packs. Admin usage page records real token metering separately from credit prices.
 7. **Quote & pay** — Deterministic quote page; Stripe Checkout for website packages and credit packs; webhook + reconcile path.
@@ -54,7 +54,7 @@ The core product loop works end to end in this repo.
 
 ### Stack
 
-Next.js 15 (App Router), TypeScript, Tailwind, ShadCN, Prisma + Supabase Postgres, Better Auth, Stripe, Cursor + Gemini APIs.
+Next.js 15 (App Router), TypeScript, Tailwind, ShadCN, Prisma + Supabase Postgres, Better Auth, Stripe, Cursor API.
 
 Agents live as functions under `lib/agents/`. AI providers, blueprint schemas, the section registry, credits, quote, Stripe, GitHub, deploy, and ZIP export sit beside them under `lib/`.
 
@@ -72,7 +72,7 @@ These are the remaining product and production goals — not a dump of every pos
 
 ### Finish the generation quality bar
 
-- Keep the heavy model as the default first generation; keep Gemini as fallback; keep the template fallback **unbilled** when every real model fails.
+- Keep the heavy Cursor model as the default first generation; keep the template fallback **unbilled** when the model fails.
 - Tighten QA so empty sections, missing CTAs, broken images, and weak SEO do not ship to preview.
 - Grow the template library with more locked, industry-ready designs without letting the AI invent unsupported sections.
 
@@ -126,9 +126,10 @@ See `.env.example` for the full list. Highlights:
 | `DATABASE_URL` | Supabase Postgres runtime URL (pooler, `:6543`; `pgbouncer=true` is applied in code if missing) |
 | `DIRECT_URL` | Supabase Postgres direct URL for Prisma migrations (`:5432`) |
 | `BETTER_AUTH_SECRET` | Auth session signing secret |
-| `CURSOR_API_KEY` | Cursor SDK key (primary AI) |
+| `CURSOR_API_KEY` | Cursor SDK key (the only AI provider) |
 | `HEAVY_MODEL_NAME` / `LIGHT_MODEL_NAME` | Cursor models for generation vs. edits |
-| `GEMINI_API_KEY` / `GEMINI_MODEL_NAME` | Gemini fallback when Cursor fails |
+| `CURSOR_TIMEOUT_MS` | How long to wait on Cursor for a full website (default 15 minutes) before template fallback |
+| `CURSOR_LIGHT_TIMEOUT_MS` | How long to wait for site plan, import extract, and section edits (default 10 minutes) |
 | `AI_USE_MOCK` | `true` to skip APIs and use the local template |
 | `SIGNUP_CREDIT_BONUS`, `CREDIT_COST_HEAVY_GENERATE`, `CREDIT_COST_LIGHT_EDIT` | Credit economics |
 | `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers |

@@ -2,9 +2,7 @@ import { load } from "cheerio";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { extractJson } from "@/lib/blueprint/schema";
-import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
-import { runCursorPrompt } from "@/lib/ai/cursor-runtime";
-import { withTimeout } from "@/lib/ai/timeout";
+import { runCursorText } from "@/lib/ai/cursor-runtime";
 import { fetchGuarded, readCappedText, ScrapeError } from "@/lib/scraper/fetch-guard";
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 
@@ -14,7 +12,7 @@ export type { ScrapeErrorCode } from "@/lib/scraper/fetch-guard";
 // Website Import — the scraper behind the questionnaire's "Do you have a
 // website?" step. Fetches the customer's existing site (hardened against SSRF),
 // parses it with cheerio, then maps the text to questionnaire fields with the
-// lightweight AI chain (Cursor light model -> Gemini), falling back to rules.
+// lightweight Cursor model, falling back to rules.
 
 export type JsonLdFacts = {
   name?: string;
@@ -48,7 +46,6 @@ export type ScrapedSite = {
 const BODY_CAP_BYTES = 2 * 1024 * 1024;
 const TEXT_CAP_CHARS = 8000;
 const FETCH_TIMEOUT_MS = 10_000;
-const AI_TIMEOUT_MS = 20_000;
 
 function collapse(s: string): string {
   return s.replace(/\s+/g, " ").trim();
@@ -390,26 +387,15 @@ function buildExtractPrompt(site: ScrapedSite): string {
 }
 
 async function runLightPrompt(prompt: string): Promise<string> {
-  if (env.ai.cursorApiKey) {
-    try {
-      const result = await withTimeout(
-        runCursorPrompt(env.ai.cursorApiKey, env.ai.lightModel, prompt),
-        AI_TIMEOUT_MS,
-        "Cursor import"
-      );
-      if (result.status !== "error") {
-        return typeof result.result === "string"
-          ? result.result
-          : JSON.stringify(result.result ?? "");
-      }
-    } catch (err) {
-      console.error("[scrape] Cursor extraction failed; trying Gemini:", err);
-    }
+  if (!env.ai.cursorApiKey) {
+    throw new Error("CURSOR_API_KEY is not configured");
   }
-  if (isGeminiConfigured()) {
-    return runGeminiPrompt(prompt, env.ai.geminiModel);
-  }
-  throw new Error("No AI provider configured for extraction");
+  return runCursorText(
+    env.ai.cursorApiKey,
+    env.ai.lightModel,
+    prompt,
+    env.ai.cursorLightTimeoutMs
+  );
 }
 
 function sanitize(value: unknown): unknown {

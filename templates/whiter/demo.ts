@@ -248,7 +248,7 @@ export function whiterDemoBlueprint(): WebsiteBlueprint {
           heading: "Choose the plan that fits",
           subheading: "Every plan includes hosting, SSL, and unlimited pages.",
           planNames: ["Starter", "Growth", "Premium"],
-          planPrices: ["$0", "$29", "$99"],
+          planPrices: ["", "", ""],
           planFeatures: [
             "1 website\nNimbus subdomain\nCommunity support",
             "Unlimited websites\nCustom domain\nPriority support\nAnalytics",

@@ -62,17 +62,27 @@ type SharpFactory = (input: Buffer, options?: { animated?: boolean }) => SharpPi
 let sharpModule: SharpFactory | null | undefined;
 
 /**
- * `sharp` is a declared dependency (and also ships with Next). A missing
- * encoder must cost a customer nothing more than an unoptimized file.
+ * `sharp` is a declared dependency (and also ships with Next). A missing or
+ * blocked native encoder must cost a customer nothing more than an unoptimized
+ * file. Webpack's `import("sharp")` can throw outside a try/catch when the
+ * `.node` addon fails `dlopen` (WDAC on Windows), so load through Node's
+ * `createRequire` instead and never retry after the first failure.
  */
 async function loadSharp(): Promise<SharpFactory | null> {
   if (sharpModule !== undefined) return sharpModule;
+  sharpModule = null;
   try {
-    const loaded = (await import("sharp")) as { default?: unknown; sharp?: unknown };
-    const candidate = loaded.default ?? loaded.sharp ?? loaded;
-    sharpModule = typeof candidate === "function" ? (candidate as SharpFactory) : null;
-  } catch {
-    sharpModule = null;
+    const { createRequire } = await import("node:module");
+    const { join } = await import("node:path");
+    const require = createRequire(join(process.cwd(), "package.json"));
+    const loaded = require("sharp") as { default?: unknown } | SharpFactory;
+    const candidate = typeof loaded === "function" ? loaded : loaded?.default;
+    if (typeof candidate === "function") sharpModule = candidate as SharpFactory;
+  } catch (err) {
+    console.warn(
+      "[images] sharp unavailable; storing original bytes:",
+      err instanceof Error ? err.message : err
+    );
   }
   return sharpModule;
 }
@@ -111,7 +121,23 @@ export async function optimizeImage(
   profile: ImageProfile
 ): Promise<OptimizedImage> {
   const original: OptimizedImage = { bytes, contentType, originalLength: bytes.length };
+  try {
+    return await optimizeImageInner(bytes, contentType, profile, original);
+  } catch (err) {
+    console.warn(
+      "[images] optimize failed; storing original bytes:",
+      err instanceof Error ? err.message : err
+    );
+    return original;
+  }
+}
 
+async function optimizeImageInner(
+  bytes: Buffer,
+  contentType: StoredImageType,
+  profile: ImageProfile,
+  original: OptimizedImage
+): Promise<OptimizedImage> {
   // A sanitized SVG is already small, resolution-independent, and would only
   // lose by being rasterized.
   if (contentType === "image/svg+xml") return original;
@@ -141,31 +167,27 @@ export async function optimizeImage(
   const sharp = await loadSharp();
   if (!sharp) return original;
 
-  try {
-    const animated = contentType === "image/gif";
-    const pipeline = sharp(bytes, { animated })
-      // Applies the EXIF orientation flag before the metadata carrying it is
-      // dropped, so a phone photo does not come out on its side.
-      .rotate()
-      .resize({ width: edge, height: edge, fit: "inside", withoutEnlargement: true });
+  const animated = contentType === "image/gif";
+  const pipeline = sharp(bytes, { animated })
+    // Applies the EXIF orientation flag before the metadata carrying it is
+    // dropped, so a phone photo does not come out on its side.
+    .rotate()
+    .resize({ width: edge, height: edge, fit: "inside", withoutEnlargement: true });
 
-    // A logo has to survive being scaled by the layout, so it is re-encoded
-    // without loss; a photograph will not show the difference at quality 80.
-    const encoded = await (profile === "logo"
-      ? pipeline.webp({ lossless: true, effort: 4 })
-      : pipeline.webp({ quality: PHOTO_QUALITY, effort: 4 })
-    ).toBuffer({ resolveWithObject: true });
+  // A logo has to survive being scaled by the layout, so it is re-encoded
+  // without loss; a photograph will not show the difference at quality 80.
+  const encoded = await (profile === "logo"
+    ? pipeline.webp({ lossless: true, effort: 4 })
+    : pipeline.webp({ quality: PHOTO_QUALITY, effort: 4 })
+  ).toBuffer({ resolveWithObject: true });
 
-    if (encoded.data.length >= bytes.length) return original;
+  if (encoded.data.length >= bytes.length) return original;
 
-    return {
-      bytes: encoded.data,
-      contentType: "image/webp",
-      width: encoded.info.width,
-      height: encoded.info.pageHeight ?? encoded.info.height,
-      originalLength: bytes.length,
-    };
-  } catch {
-    return original;
-  }
+  return {
+    bytes: encoded.data,
+    contentType: "image/webp",
+    width: encoded.info.width,
+    height: encoded.info.pageHeight ?? encoded.info.height,
+    originalLength: bytes.length,
+  };
 }

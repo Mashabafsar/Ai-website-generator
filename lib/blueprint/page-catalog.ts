@@ -1,6 +1,6 @@
 // The fixed catalog of page types a website can be built from. "home" is always
-// present; the AI decides which of the optional pages to include based on the
-// business (and only among the ones the chosen template actually supports).
+// present. The Website Planner Agent chooses optional pages (among those the
+// chosen template actually supports) from the customer's answers.
 //
 // This is the single source of truth for allowed page slugs. It is imported by
 // the schema (to reject unknown slugs), the prompt builder (to describe the

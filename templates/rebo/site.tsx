@@ -828,7 +828,6 @@ function PricingBody({ slots }: { slots: TemplateSlot[] }) {
   const pricing = slotAt(slots, "pricing");
   const faq = slotAt(slots, "faq");
   const names = list(pricing.content, "planNames", ["Starter", "Beginner", "Best Value"]);
-  const prices = list(pricing.content, "planPrices", ["$199/month"]);
   const features = list(pricing.content, "planFeatures");
   const blurb = list(pricing.content, "itemBodies");
   const questions = list(faq.content, "questions");
@@ -846,9 +845,6 @@ function PricingBody({ slots }: { slots: TemplateSlot[] }) {
               >
                 {name}
               </span>
-              <p className="mt-6 text-[40px] font-bold" style={displayFont(true)}>
-                {prices[i] || prices[0]}
-              </p>
               <p className="mt-3 text-[16px] leading-normal text-white/80">{blurb[i]}</p>
               <ul className="mt-6 space-y-2 border-t border-white/20 pt-6 text-[16px]">
                 {(features[i] || features[0] || "").split("\n").map((line) => (
@@ -859,7 +855,7 @@ function PricingBody({ slots }: { slots: TemplateSlot[] }) {
                 ))}
               </ul>
               <a href={pageHref("contact")} className="mt-8 flex h-12 items-center justify-center rounded-md bg-[#2A2A2A] text-[14px] font-semibold uppercase">
-                Chose package
+                Contact our sales
               </a>
             </article>
           ))}

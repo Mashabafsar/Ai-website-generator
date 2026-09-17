@@ -33,7 +33,7 @@ import {
 // can't be read. Branding/asset failures are fail-soft — the customer still
 // keeps the text prefill. Token usage still lands in the admin ledger as `scrape_extract`.
 
-export const maxDuration = 60;
+export const maxDuration = 800;
 
 type Body = { url?: string; projectId?: string };
 
@@ -110,9 +110,11 @@ export async function POST(req: Request) {
       mergeImportedBrand(brand, prevBrand, sameSource)
     );
     const assetsChanged = importedAssetsChanged(prevBrand, nextBrand);
+    const withoutPriorImport = { ...prev };
+    for (const key of IMPORT_OVERWRITE_KEYS) delete withoutPriorImport[key];
     const next = {
       ...defaultQuestionnaire,
-      ...prev,
+      ...withoutPriorImport,
       ...definedFields(fields),
       templateId: project.templateId || prev.templateId || "",
       hasWebsite: "yes",
@@ -160,6 +162,20 @@ function definedFields(fields: Record<string, unknown>): Record<string, unknown>
   }
   return out;
 }
+
+/** Previous typed answers must not leak into a new import (e.g. leftover location). */
+const IMPORT_OVERWRITE_KEYS = [
+  "businessName",
+  "industry",
+  "description",
+  "location",
+  "targetAudience",
+  "demographics",
+  "goals",
+  "services",
+  "contactEmail",
+  "contactPhone",
+] as const;
 
 function mergeImportedBrand(
   next: ImportedBrand | null,

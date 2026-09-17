@@ -16,6 +16,7 @@ import {
 import { parseQuestionnaireAnswers, type QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SiteTemplate } from "@/lib/templates/types";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
+import { planFingerprint, planWebsiteLayout } from "@/lib/agents/website-planner";
 import { createTheme, validateThemeChoice } from "@/lib/agents/theme";
 import { selectIcons } from "@/lib/agents/icon-selection";
 import { sourceImages } from "@/lib/agents/image-sourcing";
@@ -206,6 +207,38 @@ function summarizeFailure(failure: AiFailure) {
 
 const PAID_STATUSES = PAID_PROJECT_STATUSES;
 
+async function answersWithPlannedLayout(params: {
+  userId: string;
+  projectId: string;
+  template: SiteTemplate;
+  answers: QuestionnaireAnswers;
+}): Promise<QuestionnaireAnswers> {
+  const { userId, projectId, template, answers } = params;
+  const fingerprint = planFingerprint(answers, template.pages);
+  if (answers.layout?.length && answers.layoutPlan?.fingerprint === fingerprint) {
+    return answers;
+  }
+
+  const { result: plan, events } = await withUsageCapture(() =>
+    planWebsiteLayout(answers, template.pages)
+  );
+  await persistUsageEvents({ userId, projectId, operation: "site_plan", events });
+  const next: QuestionnaireAnswers = {
+    ...answers,
+    layout: plan.layout,
+    layoutPlan: plan.view,
+  };
+  try {
+    await prisma.questionnaire.update({
+      where: { projectId },
+      data: { answers: JSON.stringify(next) },
+    });
+  } catch (err) {
+    console.error("[planner] could not persist site plan:", err);
+  }
+  return next;
+}
+
 /**
  * The shared pipeline: spend credits, ask the model for copy, snap it onto the
  * locked layout, then persist and back up. Refunds and marks the project FAILED
@@ -222,7 +255,13 @@ async function runGeneration(params: {
 }): Promise<GenerateResult> {
   const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus } = params;
 
-  const requirements = analyzeRequirements(answers, template);
+  const plannedAnswers = await answersWithPlannedLayout({
+    userId,
+    projectId,
+    template,
+    answers,
+  });
+  const requirements = analyzeRequirements(plannedAnswers, template);
   const cost = env.credits.costHeavyGenerate;
 
   // Spend credits up-front (idempotent per attempt); refund on hard failure.

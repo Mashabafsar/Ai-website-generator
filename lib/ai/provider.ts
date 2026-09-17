@@ -1,6 +1,4 @@
 import { env } from "@/lib/env";
-import { runGeminiPrompt, isGeminiConfigured } from "@/lib/ai/gemini";
-import { withTimeout } from "@/lib/ai/timeout";
 import { estimateTokens, recordUsage } from "@/lib/ai/usage";
 import { recordAiFailure } from "@/lib/ai/diagnostics";
 import { classifyAiFailure, FAILURE_LABEL, type AiFailure } from "@/lib/ai/failure";
@@ -9,7 +7,7 @@ import {
   noteProviderFailure,
   providerBlock,
 } from "@/lib/ai/provider-health";
-import { runCursorPrompt } from "@/lib/ai/cursor-runtime";
+import { runCursorText } from "@/lib/ai/cursor-runtime";
 import {
   type SectionContent,
   buildMockBlueprint,
@@ -21,9 +19,6 @@ import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteBlueprint, WebsiteSection } from "@/lib/blueprint/types";
 
 export type { SectionContent };
-
-/** Section rewrites stay short even when generation waits up to ten minutes. */
-const CURSOR_EDIT_TIMEOUT_MS = 20_000;
 
 export interface AiProvider {
   readonly name: string;
@@ -72,50 +67,31 @@ export class MockAiProvider implements AiProvider {
 export class CursorAiProvider implements AiProvider {
   readonly name = "cursor";
 
-  private async runPrompt(prompt: string, model: string): Promise<string> {
-    const result = await runCursorPrompt(env.ai.cursorApiKey, model, prompt);
-    if (result.status === "error") {
-      throw new Error("Cursor agent run failed");
-    }
-    const output =
-      typeof result.result === "string" ? result.result : JSON.stringify(result.result ?? "");
+  private async runPrompt(prompt: string, model: string, timeoutMs: number): Promise<string> {
+    const output = await runCursorText(env.ai.cursorApiKey, model, prompt, timeoutMs);
 
-    // Prefer real token usage if the SDK exposes it; otherwise estimate.
-    const usage = (result as unknown as { usage?: Record<string, unknown> }).usage;
-    const numOr = (v: unknown, fallback: number) => {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : fallback;
-    };
-    if (usage && typeof usage === "object") {
-      const promptTokens = numOr(usage.promptTokens ?? usage.inputTokens, estimateTokens(prompt));
-      const completionTokens = numOr(usage.completionTokens ?? usage.outputTokens, estimateTokens(output));
-      recordUsage({
-        provider: "cursor",
-        model,
-        promptTokens,
-        completionTokens,
-        totalTokens: numOr(usage.totalTokens, promptTokens + completionTokens),
-        estimated: false,
-      });
-    } else {
-      const promptTokens = estimateTokens(prompt);
-      const completionTokens = estimateTokens(output);
-      recordUsage({
-        provider: "cursor",
-        model,
-        promptTokens,
-        completionTokens,
-        totalTokens: promptTokens + completionTokens,
-        estimated: true,
-      });
-    }
+    const promptTokens = estimateTokens(prompt);
+    const completionTokens = estimateTokens(output);
+    recordUsage({
+      provider: "cursor",
+      model,
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+      estimated: true,
+    });
 
     return output;
   }
 
   async generateBlueprint(req: NormalizedRequirements): Promise<WebsiteBlueprint> {
     if (!env.ai.cursorApiKey) throw new Error("CURSOR_API_KEY is not configured");
-    return generateBlueprintWithRunner(req, (p, m) => this.runPrompt(p, m), env.ai.heavyModel, "cursor");
+    return generateBlueprintWithRunner(
+      req,
+      (p, m) => this.runPrompt(p, m, env.ai.cursorTimeoutMs),
+      env.ai.heavyModel,
+      "cursor"
+    );
   }
 
   async reviseSection(params: {
@@ -124,44 +100,23 @@ export class CursorAiProvider implements AiProvider {
     brandTone: string;
   }): Promise<SectionContent> {
     if (!env.ai.cursorApiKey) throw new Error("CURSOR_API_KEY is not configured");
-    return reviseSectionWithRunner(params, (p, m) => this.runPrompt(p, m), env.ai.lightModel);
-  }
-}
-
-/** Gemini REST API provider — used when Cursor fails (or when Cursor isn't configured). */
-export class GeminiAiProvider implements AiProvider {
-  readonly name = "gemini";
-
-  private async runPrompt(prompt: string, _model: string): Promise<string> {
-    // Model is controlled by GEMINI_MODEL_NAME; ignore the Cursor model id.
-    return runGeminiPrompt(prompt, env.ai.geminiModel);
-  }
-
-  async generateBlueprint(req: NormalizedRequirements): Promise<WebsiteBlueprint> {
-    if (!isGeminiConfigured()) throw new Error("GEMINI_API_KEY is not configured");
-    return generateBlueprintWithRunner(req, (p, m) => this.runPrompt(p, m), env.ai.geminiModel, "gemini");
-  }
-
-  async reviseSection(params: {
-    section: WebsiteSection;
-    instruction: string;
-    brandTone: string;
-  }): Promise<SectionContent> {
-    if (!isGeminiConfigured()) throw new Error("GEMINI_API_KEY is not configured");
-    return reviseSectionWithRunner(params, (p, m) => this.runPrompt(p, m), env.ai.geminiModel);
+    return reviseSectionWithRunner(
+      params,
+      (p, m) => this.runPrompt(p, m, env.ai.cursorLightTimeoutMs),
+      env.ai.lightModel
+    );
   }
 }
 
 /**
- * Fallback chain: Cursor → Gemini → deterministic template.
- * Each step only runs if the previous one throws (or is unavailable). Every step
- * that gives up records a classified failure, so the caller can tell an outage
- * from a misconfiguration and knows whether a model wrote the result at all.
+ * Fallback chain: Cursor → deterministic template.
+ * The template step only runs if Cursor throws or is unavailable. Every give-up
+ * records a classified failure so the caller can tell an outage from a
+ * misconfiguration.
  */
 export class FallbackAiProvider implements AiProvider {
   readonly name = "fallback";
   private cursor = new CursorAiProvider();
-  private gemini = new GeminiAiProvider();
   private mock = new MockAiProvider();
 
   /** Classifies and reports one provider's failure, then lets the chain move on. */
@@ -195,7 +150,6 @@ export class FallbackAiProvider implements AiProvider {
   }
 
   async generateBlueprint(req: NormalizedRequirements): Promise<WebsiteBlueprint> {
-    // 1. Cursor (bounded — don't hang forever before Gemini can run)
     if (!env.ai.cursorApiKey) {
       this.missingKey("cursor", "CURSOR_API_KEY");
     } else if (!this.blockedFailure("cursor", env.ai.heavyModel)) {
@@ -205,30 +159,13 @@ export class FallbackAiProvider implements AiProvider {
       } else {
         try {
           console.log("[ai] Generating with Cursor…");
-          return await withTimeout(
-            this.cursor.generateBlueprint(req),
-            env.ai.cursorTimeoutMs,
-            "Cursor generation"
-          );
+          return await this.cursor.generateBlueprint(req);
         } catch (err) {
-          this.absorb(err, "cursor", env.ai.heavyModel, "trying Gemini");
+          this.absorb(err, "cursor", env.ai.heavyModel, "using template fallback");
         }
       }
     }
 
-    // 2. Gemini
-    if (!isGeminiConfigured()) {
-      this.missingKey("gemini", "GEMINI_API_KEY");
-    } else if (!this.blockedFailure("gemini", env.ai.geminiModel)) {
-      try {
-        console.log("[ai] Generating with Gemini…");
-        return await this.gemini.generateBlueprint(req);
-      } catch (err) {
-        this.absorb(err, "gemini", env.ai.geminiModel, "using template fallback");
-      }
-    }
-
-    // 3. Deterministic template
     console.warn(
       "[ai] No model produced a blueprint — building from the deterministic template. This generation is not billable."
     );
@@ -244,23 +181,9 @@ export class FallbackAiProvider implements AiProvider {
       this.missingKey("cursor", "CURSOR_API_KEY");
     } else if (!this.blockedFailure("cursor", env.ai.lightModel)) {
       try {
-        return await withTimeout(
-          this.cursor.reviseSection(params),
-          Math.min(env.ai.cursorTimeoutMs, CURSOR_EDIT_TIMEOUT_MS),
-          "Cursor edit"
-        );
+        return await this.cursor.reviseSection(params);
       } catch (err) {
-        this.absorb(err, "cursor", env.ai.lightModel, "trying Gemini");
-      }
-    }
-
-    if (!isGeminiConfigured()) {
-      this.missingKey("gemini", "GEMINI_API_KEY");
-    } else if (!this.blockedFailure("gemini", env.ai.geminiModel)) {
-      try {
-        return await this.gemini.reviseSection(params);
-      } catch (err) {
-        this.absorb(err, "gemini", env.ai.geminiModel, "using deterministic fallback");
+        this.absorb(err, "cursor", env.ai.lightModel, "using deterministic fallback");
       }
     }
 

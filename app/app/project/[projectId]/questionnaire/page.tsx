@@ -71,7 +71,7 @@ export default async function QuestionnairePage({
         <p className="mt-2 text-muted-foreground">
           {alreadyGenerated
             ? "Update your answers below."
-            : `We'll write the content for your ${template.name} design — the layout stays exactly as you previewed it.`}
+            : `We'll write the content for your ${template.name} design. Tell us about the business — we'll choose the pages that fit who you serve.`}
         </p>
       </div>
 
@@ -104,6 +104,7 @@ export default async function QuestionnairePage({
       <QuestionnaireWizard
         projectId={projectId}
         templateId={template.id}
+        templatePages={template.pages}
         initialAnswers={initialAnswers}
         alreadyGenerated={alreadyGenerated}
         generateCost={env.credits.costHeavyGenerate}

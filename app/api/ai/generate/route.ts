@@ -9,7 +9,7 @@ import {
 import { InsufficientCreditsError } from "@/lib/credits/credits";
 import { rateLimit } from "@/lib/rate-limit";
 
-export const maxDuration = 300;
+export const maxDuration = 900;
 
 export async function POST(req: Request) {
   const { user, response } = await requireUser();

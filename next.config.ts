@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: __dirname,
-  serverExternalPackages: ["@cursor/sdk", "@prisma/client", "archiver"],
+  serverExternalPackages: ["@cursor/sdk", "@prisma/client", "archiver", "sharp"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.pexels.com" },

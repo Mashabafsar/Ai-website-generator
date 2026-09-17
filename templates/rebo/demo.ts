@@ -295,7 +295,7 @@ export function reboDemoBlueprint(): WebsiteBlueprint {
         content: {
           heading: "PRICING PLANS",
           planNames: ["Starter", "Beginner", "Best Value"],
-          planPrices: ["$199/month", "$199/month", "$199/month"],
+          planPrices: ["", "", ""],
           planFeatures: [
             "Web Development\nSEO Optimization\nContent Writing\nSocial Media Management",
             "Web Development\nSEO Optimization\nContent Writing\nSocial Media Management",

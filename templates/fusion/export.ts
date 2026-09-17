@@ -48,11 +48,13 @@ export function renderFusionPage(site: AssembledSite): string {
   <div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
     ${list(features.content, "itemTitles", ["One","Two","Three"]).map((title, i) => `<article class="p-6" style="background:${FU.surface};border-radius:999px"><h3 class="text-xl" style="font-family:var(--fu-display)">${esc(title)}</h3><p class="mt-2 text-sm" style="color:${FU.body}">${esc(list(features.content, "itemBodies")[i] || "")}</p></article>`).join("")}
   </div>
-</section>\n<section class="px-6 py-16">
+</section>\n${pricing.type ? `<section class="px-6 py-16">
   <div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
-    ${list(pricing.content, "planNames", ["Starter","Studio","House"]).map((n, i) => `<article class="p-6" style="background:${FU.card};border-radius:999px"><h3>${esc(n)}</h3><div class="mt-2 text-3xl" style="font-family:var(--fu-display)">${esc(list(pricing.content, "planPrices", ["$29","$79","$199"])[i])}</div></article>`).join("")}
+    ${list(pricing.content, "planNames", ["Starter","Studio","House"]).map((n) => `<article class="p-6" style="background:${FU.card};border-radius:999px"><h3>${esc(n)}</h3><a href="#fu-end" class="mt-2 inline-block text-sm font-semibold underline">Contact our sales</a></article>`).join("")}
   </div>
-</section>\n<section class="px-6 py-12"><div class="mx-auto max-w-3xl">${list(faq.content, "questions").map((q, i) => `<details class="border-b py-4" style="border-color:${FU.line}"><summary>${esc(q)}</summary><p class="mt-2 text-sm" style="color:${FU.body}">${esc(list(faq.content, "answers")[i] || "")}</p></details>`).join("")}</div></section>\n<section class="px-6 py-16">
+</section>` : ""}
+${faq.type ? `<section class="px-6 py-12"><div class="mx-auto max-w-3xl">${list(faq.content, "questions").map((q, i) => `<details class="border-b py-4" style="border-color:${FU.line}"><summary>${esc(q)}</summary><p class="mt-2 text-sm" style="color:${FU.body}">${esc(list(faq.content, "answers")[i] || "")}</p></details>`).join("")}</div></section>` : ""}
+<section class="px-6 py-16">
   <div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
     ${list(testimonials.content, "quotes").map((quote, i) => `<blockquote class="p-6" style="background:${FU.surface};border-radius:999px">${esc(quote)}<footer class="mt-3 text-sm" style="color:${FU.body}">${esc(list(testimonials.content, "authors")[i] || "")}</footer></blockquote>`).join("")}
   </div>

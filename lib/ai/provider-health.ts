@@ -98,7 +98,7 @@ async function runCursorModelCheck(model: string): Promise<ModelCheck> {
     const { Cursor } = await import("@cursor/sdk");
     const models = await withTimeout(
       Cursor.models.list({ apiKey: env.ai.cursorApiKey }),
-      10_000,
+      30_000,
       "Cursor model catalogue"
     );
     if (!models.length) return { ok: true };

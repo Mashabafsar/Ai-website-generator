@@ -332,7 +332,6 @@ function processSteps(slot: TemplateSlot): string {
 
 function pricing(slot: TemplateSlot): string {
   const names = list(slot.content, "planNames", ["Starter", "Growth", "Premium"]);
-  const prices = list(slot.content, "planPrices", ["$99", "$299", "$599"]);
   const features = list(slot.content, "planFeatures");
   const tiers = names
     .map((name, i) => {
@@ -348,11 +347,10 @@ function pricing(slot: TemplateSlot): string {
       return `<div class="relative flex flex-col rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(29,38,58,0.3)]" style="border-color:${popular ? WH.brand : WH.line};border-width:${popular ? 2 : 1}px;background-color:${WH.card}">
         ${popular ? `<span class="absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background:${WH.accent};font-family:var(--wh-display)">Popular</span>` : ""}
         <p class="text-sm font-semibold uppercase tracking-wider" style="color:${WH.muted}">${esc(name)}</p>
-        <div class="mt-3 text-5xl font-extrabold tracking-tight" style="font-family:var(--wh-display);color:${WH.mirage}">${esc(prices[i] || "")}</div>
         <ul class="mt-6 space-y-3 text-sm" style="color:${WH.body}">
           ${feats}
         </ul>
-        <a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background:${popular ? WH.brand : WH.cloudburst};font-family:var(--wh-display)">Get started</a>
+        <a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background:${popular ? WH.brand : WH.cloudburst};font-family:var(--wh-display)">Contact our sales</a>
       </div>`;
     })
     .join("\n      ");

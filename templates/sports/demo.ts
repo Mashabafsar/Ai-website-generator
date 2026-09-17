@@ -93,10 +93,10 @@ export function sportsDemoBlueprint(): WebsiteBlueprint {
                 "Squad Sport — Padel",
               ],
               itemBodies: [
-                "Starting from $44 — endurance rides and indoor cycling for every level.",
-                "Starting from $34 — fast-paced team sessions and league-style play.",
-                "Starting from $44 — coached one-on-one drills and match practice.",
-                "Starting from $44 — high-energy squad games on our indoor courts.",
+                "Endurance rides and indoor cycling for every level.",
+                "Fast-paced team sessions and league-style play.",
+                "Coached one-on-one drills and match practice.",
+                "High-energy squad games on our indoor courts.",
               ],
             },
             itemImages: [
@@ -115,7 +115,7 @@ export function sportsDemoBlueprint(): WebsiteBlueprint {
               subheading:
                 "Built to give every athlete access to expert coaching and structured training — without hidden fees or long-term lock-ins.",
               planNames: ["Starter Plan", "Active Balance", "Inner Mastery"],
-              planPrices: ["$25", "$49", "$89"],
+              planPrices: ["", "", ""],
               planFeatures: [
                 "2 studio or court sessions per week\nAccess to beginner training videos\nCommunity support group\nBasic performance tracking\nFree equipment rental on your first visit",
                 "5 studio or court sessions per week\nFull library of training videos\n1-on-1 monthly coach check-in\nAdvanced performance dashboard\nPriority booking for group sessions\n10% discount on merchandise",

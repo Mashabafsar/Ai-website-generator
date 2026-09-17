@@ -15,7 +15,7 @@ import {
 } from "@/lib/scraper/color";
 import { matchThemeFont, type FontMatch } from "@/lib/scraper/font-match";
 import { imageSize, orientationOf } from "@/lib/scraper/image-size";
-import { decodeIcoToRaster, isIcoBuffer } from "@/lib/images/optimize";
+import { decodeIcoToPng, isIcoBuffer } from "@/lib/images/ico";
 import {
   sanitizeSvg,
   saveProjectImage,
@@ -542,10 +542,10 @@ async function importLogo(
     if (!bytes) continue;
 
     if (type === "image/x-icon" || (!type && isIcoBuffer(bytes))) {
-      const raster = await decodeIcoToRaster(bytes);
-      if (raster) {
-        bytes = raster.bytes;
-        type = raster.type;
+      const png = decodeIcoToPng(bytes);
+      if (png) {
+        bytes = png;
+        type = "image/png";
       } else if (!type) {
         type = "image/x-icon";
       }
@@ -569,7 +569,6 @@ async function importLogo(
         bytes,
         contentType: type,
         subdir: "imported",
-        optimize: "logo",
       });
       return { url: stored.url };
     } catch (err) {
@@ -678,7 +677,6 @@ async function importImages(
         bytes: asset.bytes,
         contentType: type,
         subdir: "imported",
-        optimize: "photo",
       });
       // The budget tracks bytes pulled off the customer's server, not bytes
       // kept, so re-encoding cannot be a licence to download more.

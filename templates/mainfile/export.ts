@@ -353,7 +353,6 @@ function processSteps(slot: TemplateSlot): string {
 
 function pricing(slot: TemplateSlot): string {
   const names = list(slot.content, "planNames", ["Starter", "Professional", "Business"]);
-  const prices = list(slot.content, "planPrices", ["$29", "$99", "$499"]);
   const features = list(slot.content, "planFeatures");
   const tiers = names
     .map((name, i) => {
@@ -367,13 +366,12 @@ function pricing(slot: TemplateSlot): string {
         )
         .join("\n          ");
       const buy = popular
-        ? `<a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background-image:${MR_BRAND_GRADIENT};font-family:var(--mr-display)">Buy now</a>`
-        : `<a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background:${MR.ink};font-family:var(--mr-display)">Buy now</a>`;
+        ? `<a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background-image:${MR_BRAND_GRADIENT};font-family:var(--mr-display)">Contact our sales</a>`
+        : `<a href="${pageHref("contact")}" class="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white" style="background:${MR.ink};font-family:var(--mr-display)">Contact our sales</a>`;
       return `<div class="relative flex flex-col overflow-hidden rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style="border-color:${popular ? "transparent" : MR.line};border-width:${popular ? 0 : 1}px;background-color:${MR.card}">
         ${popular ? `<span class="pointer-events-none absolute inset-x-0 top-0 h-1.5" style="background-image:${MR_BRAND_GRADIENT}"></span>` : ""}
         ${popular ? `<span class="absolute right-6 top-4 rounded-full px-3 py-1 text-xs font-semibold text-white" style="background-image:${MR_GRADIENTS[3]};font-family:var(--mr-display)">Popular</span>` : ""}
         <p class="text-sm font-semibold uppercase tracking-wider" style="color:${MR.muted}">${esc(name)}</p>
-        <div class="mt-3 text-5xl font-bold tracking-tight" style="font-family:var(--mr-display);color:${MR.ink}">${esc(prices[i] || "")}</div>
         <ul class="mt-6 space-y-3 text-sm" style="color:${MR.body}">
           ${feats}
         </ul>

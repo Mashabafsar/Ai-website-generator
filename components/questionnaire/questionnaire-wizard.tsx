@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import {
 import { ColorField } from "@/components/theme/color-field";
 import { parseUserColor } from "@/lib/theme/parse-color";
 import { BrandImportChoice } from "@/components/questionnaire/brand-import-choice";
+import { SitePlanPreview } from "@/components/questionnaire/site-plan-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,8 +36,11 @@ import { cn } from "@/lib/utils";
 import { hasImportedBrand, hasImportedTheme, parseImportedBrand } from "@/lib/branding/imported-brand";
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
+import { isMultiPageTemplate } from "@/lib/agents/site-layout";
+import type { SitePlanView } from "@/lib/agents/website-planner";
+import type { TemplatePageDef } from "@/lib/templates/types";
 
-const STEPS = ["Website", "Business", "Audience", "Style", "Details"] as const;
+const STEPS_BASE = ["Website", "Business", "Audience", "Style", "Details", "Your site"] as const;
 
 const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   0: ["hasWebsite", "existingWebsiteUrl"],
@@ -44,6 +48,7 @@ const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   2: ["targetAudience", "demographics", "goals", "services"],
   3: ["tone", "colorPreference", "customPrimary", "customSecondary", "customAccent", "visualStyle", "brandingNotes", "fontFamily"],
   4: ["contactEmail", "contactPhone"],
+  5: [],
 };
 
 // Fields the website import can prefill — mapped onto the form one at a time.
@@ -88,9 +93,26 @@ function labelsFromAnswers(answers: QuestionnaireAnswers | null | undefined): st
 
 const DESIGN_DEFAULT = "__design_default__";
 
+function resumeStep(answers: QuestionnaireAnswers | null): number {
+  if (!answers?.hasWebsite) return 0;
+  const name = answers.businessName?.trim() ?? "";
+  const industry = answers.industry?.trim() ?? "";
+  const description = answers.description?.trim() ?? "";
+  if (name.length < 2 || industry.length < 2 || description.length < 10) return 1;
+  const audience = answers.targetAudience?.trim() ?? "";
+  const demographics = answers.demographics?.trim() ?? "";
+  const goals = answers.goals?.trim() ?? "";
+  const services = answers.services ?? [];
+  if (audience.length < 3 || demographics.length < 3 || goals.length < 5 || services.length < 1) {
+    return 2;
+  }
+  return 5;
+}
+
 export function QuestionnaireWizard({
   projectId,
   templateId,
+  templatePages,
   initialAnswers,
   alreadyGenerated,
   generateCost,
@@ -99,14 +121,20 @@ export function QuestionnaireWizard({
   projectId: string;
   /** The locked design. Layout stays fixed; optional style fields only tune voice and colors. */
   templateId: string;
+  templatePages: TemplatePageDef[];
   initialAnswers: QuestionnaireAnswers | null;
   alreadyGenerated: boolean;
   generateCost: number;
   importCost: number;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => resumeStep(initialAnswers));
+  const STEPS = STEPS_BASE;
   const [submitting, setSubmitting] = useState(false);
+  const [planning, setPlanning] = useState(false);
+  const [sitePlan, setSitePlan] = useState<SitePlanView | null>(
+    () => initialAnswers?.layoutPlan ?? null
+  );
   const [serviceInput, setServiceInput] = useState("");
   const [importing, setImporting] = useState(false);
   const [removingAssets, setRemovingAssets] = useState(false);
@@ -127,8 +155,76 @@ export function QuestionnaireWizard({
     mode: "onTouched",
   });
 
-  const { control, register, handleSubmit, trigger, watch, setValue, formState } = form;
+  const { register, handleSubmit, trigger, watch, setValue, formState } = form;
   const services = watch("services");
+  const industry = watch("industry");
+  const description = watch("description");
+  const targetAudience = watch("targetAudience");
+  const demographics = watch("demographics");
+  const goals = watch("goals");
+  const brandingNotes = watch("brandingNotes");
+  const businessName = watch("businessName");
+  const location = watch("location");
+
+  useEffect(() => {
+    if (step !== 5) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setPlanning(true);
+      try {
+        const res = await fetch(`/api/projects/${projectId}/site-plan`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessName,
+            industry,
+            description,
+            location,
+            targetAudience,
+            demographics,
+            goals,
+            services,
+            brandingNotes,
+          }),
+        });
+        const data = (await res.json()) as {
+          layout?: QuestionnaireAnswers["layout"];
+          view?: SitePlanView;
+        };
+        if (cancelled) return;
+        if (!res.ok || !data.view) {
+          toast.error("We couldn't plan the site just now — we'll still choose pages when you generate.");
+          return;
+        }
+        setSitePlan(data.view);
+        setValue("layout", data.layout ?? [], { shouldDirty: true });
+        setValue("layoutPlan", data.view, { shouldDirty: true });
+      } catch {
+        if (!cancelled) {
+          toast.error("We couldn't plan the site just now — we'll still choose pages when you generate.");
+        }
+      } finally {
+        if (!cancelled) setPlanning(false);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    step,
+    projectId,
+    businessName,
+    industry,
+    description,
+    location,
+    targetAudience,
+    demographics,
+    goals,
+    brandingNotes,
+    JSON.stringify(services),
+    setValue,
+  ]);
 
   function customColorsReady() {
     if (watch("colorPreference") !== CUSTOM_COLOR_PREFERENCE) return true;
@@ -160,7 +256,18 @@ export function QuestionnaireWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url, projectId }),
       });
-      const data = await res.json();
+      let data: {
+        ok?: boolean;
+        error?: string;
+        code?: string;
+        fields?: Record<string, unknown>;
+        brand?: unknown;
+      } = {};
+      try {
+        data = (await res.json()) as typeof data;
+      } catch {
+        throw new Error("We couldn't read that website. Please try again.");
+      }
       notifyCreditsChanged();
       router.refresh();
       if (res.status === 402 || data?.code === "INSUFFICIENT_CREDITS") {
@@ -175,16 +282,17 @@ export function QuestionnaireWizard({
       const filled: string[] = [];
       for (const key of IMPORTABLE_FIELDS) {
         const value = fields[key];
-        if (typeof value === "string" && value.trim()) {
-          setValue(key, value.trim(), { shouldDirty: true, shouldValidate: true });
-          filled.push(IMPORT_FIELD_LABELS[key]);
-        } else if (key === "services" && Array.isArray(value) && value.length) {
-          setValue("services", value.filter((v): v is string => typeof v === "string" && !!v), {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-          filled.push(IMPORT_FIELD_LABELS.services);
+        if (key === "services") {
+          const list = Array.isArray(value)
+            ? value.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+            : [];
+          setValue("services", list, { shouldDirty: true, shouldValidate: true });
+          if (list.length) filled.push(IMPORT_FIELD_LABELS.services);
+          continue;
         }
+        const text = typeof value === "string" ? value.trim() : "";
+        setValue(key, text, { shouldDirty: true, shouldValidate: true });
+        if (text) filled.push(IMPORT_FIELD_LABELS[key]);
       }
       setImportedSummary(filled);
       const brand = parseImportedBrand(data.brand);
@@ -210,7 +318,13 @@ export function QuestionnaireWizard({
         setStep(1);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "We couldn't read that website.");
+      const message =
+        err instanceof TypeError && /failed to fetch/i.test(err.message)
+          ? "Import didn't finish — please try again."
+          : err instanceof Error
+            ? err.message
+            : "We couldn't read that website.";
+      toast.error(message);
     } finally {
       setImporting(false);
     }
@@ -255,10 +369,15 @@ export function QuestionnaireWizard({
     }
     setSubmitting(true);
     try {
+      const payload = {
+        ...values,
+        templateId,
+        layout: values.layout ?? [],
+      };
       const saveRes = await fetch(`/api/projects/${projectId}/questionnaire`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, templateId }),
+        body: JSON.stringify(payload),
       });
       if (!saveRes.ok) throw new Error("Could not save your answers");
 
@@ -450,19 +569,35 @@ export function QuestionnaireWizard({
 
             {step === 2 && (
               <>
-                <Field label="Target audience" error={err.targetAudience?.message}>
+                <p className="text-sm text-muted-foreground">
+                  Everyday words are perfect. We use this to choose the right pages
+                  for your visitors — you won&apos;t have to pick them yourself.
+                </p>
+                <Field
+                  label="Who is this website for?"
+                  error={err.targetAudience?.message}
+                  hint="The people who should find you online."
+                >
                   <Input
-                    placeholder="Families and working professionals"
+                    placeholder="Families and working professionals nearby"
                     {...register("targetAudience")}
                   />
                 </Field>
-                <Field label="Demographics" error={err.demographics?.message}>
+                <Field
+                  label="Who do you help most?"
+                  error={err.demographics?.message}
+                  hint="Ages, families, local businesses — whatever you know."
+                >
                   <Input
-                    placeholder="Families with kids, local homeowners, ages 30–55"
+                    placeholder="Local families, homeowners, ages 30–55"
                     {...register("demographics")}
                   />
                 </Field>
-                <Field label="Website goals" error={err.goals?.message}>
+                <Field
+                  label="What should this website do?"
+                  error={err.goals?.message}
+                  hint="For example: get more calls, look professional, explain your work."
+                >
                   <Textarea
                     rows={3}
                     placeholder="Book more appointments and look trustworthy to first-time visitors."
@@ -470,8 +605,9 @@ export function QuestionnaireWizard({
                   />
                 </Field>
                 <Field
-                  label="Services or products"
+                  label="What do you offer?"
                   error={err.services?.message as string | undefined}
+                  hint="Add each service or product, one at a time."
                 >
                   <div className="flex gap-2">
                     <Input
@@ -638,6 +774,14 @@ export function QuestionnaireWizard({
               </>
             )}
 
+            {step === 5 && (
+              <SitePlanPreview
+                plan={sitePlan}
+                loading={planning}
+                multiPage={isMultiPageTemplate(templatePages)}
+              />
+            )}
+
             <div className="flex items-center justify-between pt-2">
               <Button
                 type="button"
@@ -658,7 +802,7 @@ export function QuestionnaireWizard({
                 <Button
                   type="button"
                   variant="brand"
-                  disabled={submitting}
+                  disabled={submitting || planning}
                   onClick={handleSubmit(onSubmit)}
                 >
                   {submitting ? (

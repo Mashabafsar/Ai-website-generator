@@ -86,7 +86,6 @@ export function SaasLandingSite({
   const featureBodies = list(features.content, "itemBodies");
 
   const planNames = list(pricing.content, "planNames", ["Personal", "Pro", "Enterprise"]);
-  const planPrices = list(pricing.content, "planPrices", ["$19", "$39", "$79"]);
   const planFeatures = list(pricing.content, "planFeatures");
   const popularIndex = planNames.length > 2 ? 1 : planNames.length - 1;
 
@@ -98,6 +97,11 @@ export function SaasLandingSite({
   const roles = list(testimonials.content, "roles");
 
   const footerLinks = list(footer.content, "linkLabels", NAV.map((n) => n.label));
+  const navItems = NAV.filter((item) => {
+    if (item.href === "#sl-pricing") return Boolean(pricing.type);
+    if (item.href === "#sl-faq") return Boolean(faq.type);
+    return true;
+  });
 
   const details = contact ?? site?.contact;
   const contactEmail = details?.email?.trim() || "";
@@ -147,7 +151,7 @@ export function SaasLandingSite({
             </span>
           </a>
           <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map((item) => (
+            {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
@@ -159,11 +163,11 @@ export function SaasLandingSite({
             ))}
           </nav>
           <a
-            href="#sl-pricing"
+            href="#sl-contact"
             className="rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors"
             style={{ backgroundColor: SL.brand, fontFamily: "var(--sl-display)" }}
           >
-            Get started free
+            Get a quote
           </a>
         </div>
       </header>
@@ -190,7 +194,7 @@ export function SaasLandingSite({
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a
-              href="#sl-pricing"
+              href="#sl-contact"
               className="rounded-full px-7 py-3.5 text-sm font-semibold text-white"
               style={{ backgroundColor: SL.brand, fontFamily: "var(--sl-display)" }}
             >
@@ -275,7 +279,7 @@ export function SaasLandingSite({
         </div>
       </section>
 
-      {/* Pricing */}
+      {pricing.type ? (
       <section id="sl-pricing" className="px-4 py-16 sm:px-6 md:py-24" style={sectionBandStyle(pricing.theme)}>
         <div
           className="mx-auto max-w-6xl rounded-[2rem] border px-6 py-16 md:px-10"
@@ -293,26 +297,9 @@ export function SaasLandingSite({
               {text(
                 pricing.content,
                 "subheading",
-                "Transparent and flexible options tailored to suit your needs."
+                "Tell us about your workspace — we'll send a tailored quote."
               )}
             </p>
-            <div className="mt-7 flex items-center justify-center gap-3 text-sm font-medium">
-              <span style={{ color: SL.ink }}>Monthly</span>
-              <span
-                className="relative inline-flex h-6 w-11 items-center rounded-full"
-                style={{ backgroundColor: SL.brand }}
-                aria-hidden
-              >
-                <span className="ml-0.5 h-5 w-5 rounded-full bg-white" />
-              </span>
-              <span style={{ color: SL.body }}>Yearly</span>
-              <span
-                className="rounded px-1.5 py-1 text-xs font-semibold uppercase leading-none"
-                style={{ backgroundColor: "#B5E4CA", color: SL.dark }}
-              >
-                Save 20%
-              </span>
-            </div>
           </div>
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
             {planNames.map((name, i) => {
@@ -340,19 +327,6 @@ export function SaasLandingSite({
                       </span>
                     )}
                   </div>
-                  <div
-                    className="mt-3 text-5xl font-extrabold tracking-tight"
-                    style={{ fontFamily: "var(--sl-display)" }}
-                  >
-                    {planPrices[i] || "$0"}
-                    <span
-                      className="align-baseline text-base font-medium"
-                      style={{ color: popular ? "rgba(255,255,255,0.6)" : SL.muted }}
-                    >
-                      {" "}
-                      /mo
-                    </span>
-                  </div>
                   <ul className="mt-8 flex-1 space-y-3">
                     {featureLines.map((line, j) => (
                       <li
@@ -366,7 +340,7 @@ export function SaasLandingSite({
                     ))}
                   </ul>
                   <a
-                    href="#sl-top"
+                    href="#sl-contact"
                     className="mt-8 rounded-full px-6 py-3 text-center text-sm font-semibold"
                     style={
                       popular
@@ -378,7 +352,7 @@ export function SaasLandingSite({
                           }
                     }
                   >
-                    Get started
+                    Contact our sales
                   </a>
                 </div>
               );
@@ -386,8 +360,9 @@ export function SaasLandingSite({
           </div>
         </div>
       </section>
+      ) : null}
 
-      {/* FAQ */}
+      {faq.type ? (
       <section id="sl-faq" className="px-6 py-8 md:py-12">
         <div className="mx-auto max-w-2xl text-center">
           <Eyebrow center>FAQ</Eyebrow>
@@ -426,6 +401,7 @@ export function SaasLandingSite({
           ))}
         </div>
       </section>
+      ) : null}
 
       {/* Testimonials — Wall of Love */}
       <section id="sl-reviews" className="px-6 py-8 md:py-12">
@@ -472,7 +448,7 @@ export function SaasLandingSite({
       </section>
 
       {/* Download / final CTA */}
-      <section className="px-4 py-16 sm:px-6 md:py-20">
+      <section id="sl-contact" className="px-4 py-16 sm:px-6 md:py-20">
         <div
           className="mx-auto max-w-6xl rounded-[2rem] px-6 py-20 text-center text-white md:px-10"
           style={{ backgroundColor: SL.dark }}

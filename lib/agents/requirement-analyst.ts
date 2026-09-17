@@ -4,6 +4,8 @@ import type { SiteTemplate, TemplatePageDef } from "@/lib/templates/types";
 import { featuresFromVariants } from "@/lib/quote/features";
 import { parseUserColor } from "@/lib/theme/parse-color";
 import type { CustomThemeColors } from "@/lib/agents/theme";
+import { resolveSiteLayout } from "@/lib/agents/site-layout";
+import { signalsFromAnswers } from "@/lib/agents/site-structure";
 
 export type NormalizedRequirements = {
   business: { name: string; industry: string; description: string; location?: string };
@@ -38,6 +40,8 @@ export type NormalizedRequirements = {
     /** Every page the design supports, each with its locked ordered slots. */
     pages: TemplatePageDef[];
   };
+  /** Pages and section variants the Website Planner chose for this audience. */
+  layout: TemplatePageDef[];
 };
 
 /**
@@ -59,13 +63,20 @@ export function analyzeRequirements(
   const demographics = answers.demographics?.trim() || "";
   const goals = answers.goals?.trim() || "";
   const brandingNotes = answers.brandingNotes?.trim() || "";
-  // Features come from every page's slots so a multi-page design's pricing /
-  // contact / gallery pages are reflected in the deterministic quote.
-  const allVariants = template.pages.flatMap((p) => p.sections);
+
+  const layout = resolveSiteLayout(
+    template.pages,
+    answers.layout,
+    signalsFromAnswers({ ...answers, services })
+  );
+
+  // Features come from the pages and sections the planner kept, so the
+  // deterministic quote matches the site that will actually be generated.
+  const allVariants = layout.flatMap((p) => p.sections);
   const features = featuresFromVariants(allVariants.length ? allVariants : template.sections);
 
   const quoteSignals = ["service_business", "multi_section_homepage", `template:${template.slug}`];
-  if (template.pages.length > 1) quoteSignals.push("multi_page");
+  if (layout.length > 1) quoteSignals.push("multi_page");
   for (const feature of features) {
     if (feature === "contact_form") quoteSignals.push("contact_form");
     if (feature === "gallery") quoteSignals.push("gallery");
@@ -114,6 +125,7 @@ export function analyzeRequirements(
       sections: template.sections,
       pages: template.pages,
     },
+    layout,
   };
 }
 

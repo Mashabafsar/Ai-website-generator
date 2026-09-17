@@ -15,6 +15,7 @@ const OPERATION_LABEL: Record<string, string> = {
   heavy_generate: "Website generation",
   light_edit: "AI section edit",
   scrape_extract: "Website import",
+  site_plan: "Site plan",
 };
 
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString();

@@ -1,6 +1,7 @@
 import { isAllowedImageUrl } from "@/lib/images/provider";
 import { normalizeIconName } from "@/lib/icons/registry";
 import { clampBlueprintText } from "@/lib/sections/text-limits";
+import { looksLikePrice, stripPriceAmounts } from "@/lib/pricing/contact-cta";
 import type { StockImageReference, WebsiteBlueprint } from "@/lib/blueprint/types";
 
 // Security Guardrail Agent — sanitizes AI-generated text before it is stored or
@@ -47,7 +48,18 @@ export function sanitizeBlueprint(blueprint: WebsiteBlueprint): WebsiteBlueprint
   for (const page of blueprint.pages) {
     for (const section of page.sections) {
       for (const [k, val] of Object.entries(section.content)) {
-        section.content[k] = sanitizeValue(val);
+        const cleaned = sanitizeValue(val);
+        if (k === "planPrices") {
+          section.content[k] = Array.isArray(cleaned)
+            ? cleaned.map((item) => (looksLikePrice(item) ? "" : item))
+            : looksLikePrice(String(cleaned))
+              ? ""
+              : cleaned;
+        } else if (Array.isArray(cleaned)) {
+          section.content[k] = cleaned.map(stripPriceAmounts);
+        } else {
+          section.content[k] = stripPriceAmounts(cleaned);
+        }
       }
       section.selectedImage = sanitizeImage(section.selectedImage);
       if (section.itemImages) {

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { TEMPLATE_FALLBACK, type AiFailure } from "@/lib/ai/failure";
 
-export type AiOperation = "heavy_generate" | "light_edit" | "scrape_extract";
+export type AiOperation = "heavy_generate" | "light_edit" | "scrape_extract" | "site_plan";
 
 /**
  * Writes the failures behind an AI operation to the admin ledger, plus a marker

@@ -573,7 +573,6 @@ function ProcessSteps({ slot }: { slot: TemplateSlot }) {
 
 function Pricing({ slot }: { slot: TemplateSlot }) {
   const names = list(slot.content, "planNames", ["Starter", "Growth", "Premium"]);
-  const prices = list(slot.content, "planPrices", ["$99", "$299", "$599"]);
   const features = list(slot.content, "planFeatures");
   return (
     <Section theme={slot.theme}>
@@ -595,9 +594,6 @@ function Pricing({ slot }: { slot: TemplateSlot }) {
               <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: WH.muted }}>
                 {name}
               </p>
-              <div className="mt-3 text-5xl font-extrabold tracking-tight" style={{ fontFamily: "var(--wh-display)", color: WH.mirage }}>
-                {prices[i] || ""}
-              </div>
               <ul className="mt-6 space-y-3 text-sm" style={{ color: WH.body }}>
                 {(features[i] || "")
                   .split("\n")
@@ -616,7 +612,7 @@ function Pricing({ slot }: { slot: TemplateSlot }) {
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full py-3 text-sm font-semibold text-white"
                 style={{ background: popular ? WH.brand : WH.cloudburst, fontFamily: "var(--wh-display)" }}
               >
-                Get started
+                Contact our sales
               </a>
             </div>
           );

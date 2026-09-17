@@ -93,7 +93,6 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   const featureBodies = list(features.content, "itemBodies");
 
   const planNames = list(pricing.content, "planNames", ["Personal", "Pro", "Enterprise"]);
-  const planPrices = list(pricing.content, "planPrices", ["$19", "$39", "$79"]);
   const planFeatures = list(pricing.content, "planFeatures");
   const popularIndex = planNames.length > 2 ? 1 : planNames.length - 1;
 
@@ -105,6 +104,11 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   const roles = list(testimonials.content, "roles");
 
   const footerLinks = list(footer.content, "linkLabels", NAV.map((n) => n.label));
+  const navItems = NAV.filter((item) => {
+    if (item.href === "#sl-pricing") return Boolean(pricing.type);
+    if (item.href === "#sl-faq") return Boolean(faq.type);
+    return true;
+  });
   const contactEmail = site.contact?.email?.trim() || "";
 
   const body = `
@@ -119,12 +123,12 @@ export function renderSaasLandingPage(site: AssembledSite): string {
       <span class="text-lg font-bold tracking-tight" style="font-family:var(--sl-display)">${esc(businessName)}</span>
     </a>
     <nav class="hidden items-center gap-1 md:flex">
-      ${NAV.map(
+      ${navItems.map(
         (item) =>
           `<a href="${item.href}" class="sl-nav rounded-full px-4 py-2 text-sm font-medium" style="color:${SL.body}">${esc(item.label)}</a>`
       ).join("\n      ")}
     </nav>
-    <a href="#sl-pricing" class="rounded-full px-5 py-2.5 text-sm font-semibold text-white" style="background:${SL.brand};font-family:var(--sl-display)">Get started free</a>
+    <a href="#sl-contact" class="rounded-full px-5 py-2.5 text-sm font-semibold text-white" style="background:${SL.brand};font-family:var(--sl-display)">Get a quote</a>
   </div>
 </header>
 
@@ -142,7 +146,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
       )
     )}</p>
     <div class="mt-8 flex flex-wrap justify-center gap-3">
-      <a href="#sl-pricing" class="rounded-full px-7 py-3.5 text-sm font-semibold text-white" style="background:${SL.brand};font-family:var(--sl-display)">${esc(
+      <a href="#sl-contact" class="rounded-full px-7 py-3.5 text-sm font-semibold text-white" style="background:${SL.brand};font-family:var(--sl-display)">${esc(
         text(hero.content, "ctaPrimary", "Start free trial")
       )}</a>
       <a href="#sl-features" class="rounded-full border px-7 py-3.5 text-sm font-semibold" style="border-color:${SL.line};color:${SL.ink};font-family:var(--sl-display)">${esc(
@@ -191,7 +195,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section id="sl-pricing" class="px-4 py-16 sm:px-6 md:py-24">
+${pricing.type ? `<section id="sl-pricing" class="px-4 py-16 sm:px-6 md:py-24">
   <div class="mx-auto max-w-6xl rounded-[2rem] border px-6 py-16 md:px-10" style="background:${SL.surface};border-color:${SL.line}">
     <div class="mx-auto max-w-2xl text-center">
       ${eyebrow("Pricing")}
@@ -199,14 +203,8 @@ export function renderSaasLandingPage(site: AssembledSite): string {
         text(pricing.content, "heading", "Simple, transparent pricing")
       )}</h2>
       <p class="mt-4 text-base leading-relaxed" style="color:${SL.body}">${esc(
-        text(pricing.content, "subheading", "Transparent and flexible options tailored to suit your needs.")
+        text(pricing.content, "subheading", "Tell us about your workspace — we'll send a tailored quote.")
       )}</p>
-      <div class="mt-7 flex items-center justify-center gap-3 text-sm font-medium">
-        <span style="color:${SL.ink}">Monthly</span>
-        <span class="relative inline-flex h-6 w-11 items-center rounded-full" style="background:${SL.brand}"><span class="ml-0.5 h-5 w-5 rounded-full bg-white"></span></span>
-        <span style="color:${SL.body}">Yearly</span>
-        <span class="rounded px-1.5 py-1 text-xs font-semibold uppercase leading-none" style="background:#B5E4CA;color:${SL.dark}">Save 20%</span>
-      </div>
     </div>
     <div class="mt-12 grid gap-5 lg:grid-cols-3">
       ${planNames
@@ -220,8 +218,8 @@ export function renderSaasLandingPage(site: AssembledSite): string {
             ? `<span class="rounded px-1.5 py-1 text-xs font-semibold uppercase leading-none" style="background:#FFBC99;color:${SL.dark}">Most popular</span>`
             : "";
           const cardBtn = popular
-            ? `<a href="#sl-top" class="mt-8 rounded-full px-6 py-3 text-center text-sm font-semibold text-white" style="background:${SL.brand};font-family:var(--sl-display)">Get started</a>`
-            : `<a href="#sl-top" class="mt-8 rounded-full px-6 py-3 text-center text-sm font-semibold" style="border:1px solid ${SL.line};color:${SL.ink};font-family:var(--sl-display)">Get started</a>`;
+            ? `<a href="#sl-contact" class="mt-8 rounded-full px-6 py-3 text-center text-sm font-semibold text-white" style="background:${SL.brand};font-family:var(--sl-display)">Contact our sales</a>`
+            : `<a href="#sl-contact" class="mt-8 rounded-full px-6 py-3 text-center text-sm font-semibold" style="border:1px solid ${SL.line};color:${SL.ink};font-family:var(--sl-display)">Contact our sales</a>`;
           const items = featureLines
             .map(
               (line) => `<li class="flex items-start gap-3 border-b pb-3 text-sm last:border-b-0" style="border-color:${
@@ -236,11 +234,6 @@ export function renderSaasLandingPage(site: AssembledSite): string {
           <div class="text-lg font-semibold" style="font-family:var(--sl-display)">${esc(name)}</div>
           ${badge}
         </div>
-        <div class="mt-3 text-5xl font-extrabold tracking-tight" style="font-family:var(--sl-display)">${esc(
-          planPrices[i] || "$0"
-        )}<span class="align-baseline text-base font-medium" style="color:${
-          popular ? "rgba(255,255,255,0.6)" : SL.muted
-        }"> /mo</span></div>
         <ul class="mt-8 flex-1 space-y-3">
           ${items}
         </ul>
@@ -250,9 +243,9 @@ export function renderSaasLandingPage(site: AssembledSite): string {
         .join("\n      ")}
     </div>
   </div>
-</section>
+</section>` : ""}
 
-<section id="sl-faq" class="px-6 py-8 md:py-12">
+${faq.type ? `<section id="sl-faq" class="px-6 py-8 md:py-12">
   <div class="mx-auto max-w-2xl text-center">
     ${eyebrow("FAQ")}
     <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl" style="font-family:var(--sl-display)">${esc(
@@ -273,7 +266,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
       )
       .join("\n    ")}
   </div>
-</section>
+</section>` : ""}
 
 <section id="sl-reviews" class="px-6 py-8 md:py-12">
   <div class="mx-auto max-w-2xl text-center">
@@ -300,7 +293,7 @@ export function renderSaasLandingPage(site: AssembledSite): string {
   </div>
 </section>
 
-<section class="px-4 py-16 sm:px-6 md:py-20">
+<section id="sl-contact" class="px-4 py-16 sm:px-6 md:py-20">
   <div class="mx-auto max-w-6xl rounded-[2rem] px-6 py-20 text-center text-white md:px-10" style="background:${SL.dark}">
     <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl" style="font-family:var(--sl-display)">${esc(
       text(cta.content, "headline", "Ready to start?")

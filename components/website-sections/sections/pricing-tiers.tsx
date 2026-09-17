@@ -3,11 +3,12 @@
 import { Check, Star } from "lucide-react";
 import { a, s, type SectionProps } from "../helpers";
 import { SiteButton } from "../ui";
+import { QUOTE_CTA_LABEL, previewContactHref } from "@/lib/pricing/contact-cta";
 
 export function PricingTiers(p: SectionProps) {
   const names = a(p.planNames);
-  const prices = a(p.planPrices);
   const features = a(p.planFeatures);
+  const contactHref = previewContactHref();
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
@@ -39,7 +40,6 @@ export function PricingTiers(p: SectionProps) {
                 </div>
               )}
               <p className="text-base font-semibold opacity-60">{name}</p>
-              <div className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">{prices[index] ?? ""}</div>
               <ul className="mt-5 flex flex-col gap-2">
                 {(features[index] ?? "")
                   .split("\n")
@@ -52,8 +52,8 @@ export function PricingTiers(p: SectionProps) {
                   ))}
               </ul>
               <hr className="my-4 w-full" />
-              <SiteButton href="#contact" variant="primary" className="mt-8 w-full">
-                Get started
+              <SiteButton href={contactHref} variant="primary" className="mt-8 w-full">
+                {QUOTE_CTA_LABEL}
               </SiteButton>
             </div>
           );

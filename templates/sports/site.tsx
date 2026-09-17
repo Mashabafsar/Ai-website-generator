@@ -133,15 +133,14 @@ export function SportsSite({
   const catBodies = list(categories.content, "itemBodies");
   const catImages = categories.itemImages;
   const cImg = (i: number) => catImages[i] || CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length];
-  // The design overlays a big "Starting from $X" price on each category card.
-  // Pull it out of the body copy ("Starting from $44 — …") when present.
-  const catPrice = (i: number): string | null => {
-    const m = (catBodies[i] || "").match(/\$\s?[\d.,]+/);
-    return m ? m[0].replace(/\s+/, "") : null;
-  };
+  const catBlurb = (i: number) =>
+    (catBodies[i] || "")
+      .replace(/starting from\s*\$?\s*[\d.,]+/gi, "")
+      .replace(/\$\s*[\d.,]+/g, "")
+      .replace(/\s+—\s+/g, " ")
+      .trim();
 
   const planNames = list(pricing.content, "planNames", ["Starter Plan", "Active Balance", "Inner Mastery"]);
-  const planPrices = list(pricing.content, "planPrices", ["$25", "$49", "$89"]);
   const planFeatures = list(pricing.content, "planFeatures");
   const popularIndex = planNames.length > 2 ? 1 : planNames.length - 1;
 
@@ -156,11 +155,16 @@ export function SportsSite({
   const answers = list(faq.content, "answers");
 
   const footerLinks = list(footer.content, "linkLabels", NAV.map((n) => n.label));
+  const navItems = NAV.filter((item) => {
+    if (item.href === "#sp-pricing") return Boolean(pricing.type);
+    if (item.href === "#sp-faq") return Boolean(faq.type);
+    return true;
+  });
 
   const details = contact ?? site?.contact;
   const contactEmail = details?.email?.trim() || "";
   const contactPhone = details?.phone?.trim() || "";
-  const contactHref = contactEmail ? `mailto:${contactEmail}` : "#sp-pricing";
+  const contactHref = "#sp-contact";
 
   return (
     <div
@@ -202,7 +206,7 @@ export function SportsSite({
           {/* Nav */}
           <div className="flex items-center justify-between gap-4">
             <nav className="hidden items-center gap-1 lg:flex">
-              {NAV.map((item) => (
+              {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
@@ -442,7 +446,7 @@ export function SportsSite({
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {catTitles.map((title, i) => {
-            const price = catPrice(i);
+            const blurb = catBlurb(i);
             return (
               <div key={`${title}-${i}`} className="relative h-[31rem] overflow-hidden rounded-[22px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -450,19 +454,7 @@ export function SportsSite({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-7 px-6">
                   <div className="text-base font-medium text-white">{title}</div>
-                  {price ? (
-                    <div className="mt-2">
-                      <div
-                        className="font-semibold leading-none text-white text-[2.8rem]"
-                        style={{ fontFamily: "var(--sp-display)" }}
-                      >
-                        {price}
-                      </div>
-                      <div className="mt-1 text-base text-white/85">Starting from</div>
-                    </div>
-                  ) : (
-                    catBodies[i] && <div className="mt-1 text-sm text-white/80">{catBodies[i]}</div>
-                  )}
+                  {blurb ? <div className="mt-1 text-sm text-white/80">{blurb}</div> : null}
                 </div>
               </div>
             );
@@ -470,7 +462,7 @@ export function SportsSite({
         </div>
       </section>
 
-      {/* Pricing */}
+      {pricing.type ? (
       <section id="sp-pricing" className="relative isolate overflow-hidden" style={sectionBandStyle(pricing.theme)}>
         <div aria-hidden className="absolute inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -550,25 +542,7 @@ export function SportsSite({
                       </span>
                     </div>
 
-                    <div className="mt-6 flex items-end gap-2">
-                      <span
-                        className="text-[3.75rem] font-semibold leading-none tracking-[-0.6px]"
-                        style={{ fontFamily: "var(--sp-display)", color: SP.ink }}
-                      >
-                        {planPrices[i] || "$0"}
-                      </span>
-                      <span className="pb-1.5 text-lg font-medium" style={{ color: SP.body }}>
-                        / month
-                      </span>
-                    </div>
-
-                    <div className="my-7 flex items-center gap-2">
-                      <span className="size-2 rounded-sm" style={{ backgroundColor: SP.ink }} />
-                      <span className="h-[2px] flex-1" style={{ backgroundColor: SP.line }} />
-                      <span className="size-2 rounded-sm" style={{ backgroundColor: SP.ink }} />
-                    </div>
-
-                    <ul className="flex flex-col gap-4">
+                    <ul className="mt-8 flex flex-col gap-4">
                       {featureLines.map((line, j) => (
                         <li key={j} className="flex items-start gap-3">
                           <Check className="mt-1 h-4 w-4 shrink-0" stroke={SP.ink} />
@@ -582,7 +556,7 @@ export function SportsSite({
                       className="mt-8 flex items-center justify-center gap-3 rounded-[20px] py-4 text-base font-medium"
                       style={{ backgroundColor: SP.brand, color: SP.ink }}
                     >
-                      Get started
+                      Contact our sales
                       <Arrow className="h-4 w-4" stroke={SP.ink} />
                     </a>
                   </div>
@@ -592,6 +566,7 @@ export function SportsSite({
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* Testimonials */}
       <section id="sp-testimonials" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20" style={sectionBandStyle(testimonials.theme)}>
@@ -646,7 +621,7 @@ export function SportsSite({
         </div>
       </section>
 
-      {/* FAQ */}
+      {faq.type ? (
       <section id="sp-faq" className="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20" style={sectionBandStyle(faq.theme)}>
         <SectionHeader label="FAQ" index={8} />
         <div className="mt-10 flex flex-col items-start gap-12 lg:flex-row">
@@ -696,6 +671,7 @@ export function SportsSite({
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* Event / closing CTA */}
       <section id="sp-event" className="mx-auto max-w-[90rem] px-4 pb-16 lg:px-[3.75rem] lg:pb-20" style={sectionBandStyle(event.theme)}>
@@ -756,7 +732,7 @@ export function SportsSite({
       </section>
 
       {/* Footer */}
-      <footer className="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style={{ backgroundColor: SP.white, ...sectionBandStyle(footer.theme) }}>
+      <footer id="sp-contact" className="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style={{ backgroundColor: SP.white, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[82.5rem]">
           <div className="flex flex-col items-start gap-10 lg:flex-row lg:gap-24">
             <div className="flex flex-col items-start gap-8 lg:flex-row">

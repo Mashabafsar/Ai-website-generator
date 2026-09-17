@@ -123,6 +123,7 @@ export function FusionSite({
           <img src={heroImage} alt="" data-parallax="0.08" className="w-full object-cover" />
         </div>
       </section>
+      {features.type ? (
       <section id="fu-main" className="px-6 py-20" style={{ backgroundColor: FU.surface }}>
         <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {list(features.content, "itemTitles", ["Fast", "Private", "Simple"]).map((title, i) => (
@@ -134,17 +135,21 @@ export function FusionSite({
           ))}
         </div>
       </section>
+      ) : null}
+      {pricing.type ? (
       <section className="px-6 py-20">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
           {list(pricing.content, "planNames", ["Starter", "Studio", "House"]).map((name, i) => (
             <article key={i} className="p-6 rounded-full" style={{ backgroundColor: i === 1 ? FU.inverse : FU.card, color: i === 1 ? FU.inverseFg : FU.ink, border: `1px solid ${FU.line}` }}>
               <h3 className="text-sm uppercase tracking-widest">{name}</h3>
-              <div className="mt-3 text-4xl" style={{ fontFamily: "var(--fu-display)" }}>{list(pricing.content, "planPrices", ["$29", "$79", "$199"])[i]}</div>
+              <a href="#fu-end" className="mt-3 inline-block text-sm font-semibold underline underline-offset-4">Contact our sales</a>
               <p className="mt-3 text-sm opacity-80">{list(pricing.content, "planFeatures")[i] || ""}</p>
             </article>
           ))}
         </div>
       </section>
+      ) : null}
+      {faq.type ? (
       <section className="px-6 py-12">
         <div className="mx-auto max-w-3xl">
           {list(faq.content, "questions").map((q, i) => (
@@ -155,6 +160,8 @@ export function FusionSite({
           ))}
         </div>
       </section>
+      ) : null}
+      {testimonials.type ? (
       <section className="px-6 py-16">
         <div className="mx-auto flex max-w-6xl gap-4 overflow-x-auto">
           {list(testimonials.content, "quotes").map((quote, i) => (
@@ -165,6 +172,7 @@ export function FusionSite({
           ))}
         </div>
       </section>
+      ) : null}
       <section id="fu-about" className="px-6 py-20 text-center">
         <h2 className="text-4xl" style={{ fontFamily: "var(--fu-display)" }}>{text(cta.content, "headline", "Ready")}</h2>
         <a href={contactEmail ? `mailto:${contactEmail}` : "#fu-end"} className="mt-8 inline-flex rounded-full px-8 py-3 font-semibold" style={{ backgroundColor: FU.brand, color: FU.inverseFg }}>

@@ -18,15 +18,14 @@ export const env = {
     cursorApiKey: process.env.CURSOR_API_KEY ?? "",
     heavyModel: process.env.HEAVY_MODEL_NAME ?? "claude-opus-5",
     lightModel: process.env.LIGHT_MODEL_NAME ?? "composer-2.5",
-    // Gemini is the fallback when Cursor fails (or when Cursor isn't configured).
-    geminiApiKey: process.env.GEMINI_API_KEY ?? "",
-    geminiModel: process.env.GEMINI_MODEL_NAME ?? "gemini-2.5-flash",
-    // How long to wait on Cursor before falling through to Gemini (ms). Opus
-    // blueprints are large (~50k tokens); 3 minutes still cut some runs off and
-    // the chain then billed Gemini instead. Edits keep a shorter cap in provider.ts.
-    cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 600_000),
-    // Explicit mock mode only. When false, the FallbackAiProvider chain runs:
-    // Cursor → Gemini → deterministic template.
+    // How long to wait on Cursor for a full website blueprint (ms) before
+    // falling back to the deterministic template. Generation + JSON repair
+    // share this budget per prompt; keep it well above a slow Opus turn.
+    cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 900_000),
+    // Plan, scrape extract, and section edits. Short waits used to abort
+    // while the agent was still writing, then the next call hit a busy agent.
+    cursorLightTimeoutMs: num(process.env.CURSOR_LIGHT_TIMEOUT_MS, 600_000),
+    // Explicit mock mode only. When false: Cursor, then a deterministic template.
     useMock: bool(process.env.AI_USE_MOCK, false),
   },
 

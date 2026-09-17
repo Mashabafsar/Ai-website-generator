@@ -451,21 +451,22 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "heading", label: "Heading", type: "string", required: true },
       { key: "subheading", label: "Subheading", type: "text" },
       { key: "planNames", label: "Plan names", type: "string[]", required: true },
-      { key: "planPrices", label: "Plan prices", type: "string[]", required: true },
+      { key: "planPrices", label: "Plan prices", type: "string[]", required: false },
       { key: "planFeatures", label: "Plan features (newline per plan)", type: "string[]", required: true },
     ],
     keywords: () => [],
-    defaults: () => ({
-      heading: "Simple pricing",
-      subheading: "Choose the plan that fits you.",
-      planNames: ["Starter", "Growth", "Premium"],
-      planPrices: ["$99", "$299", "$599"],
-      planFeatures: [
-        "Core service\nEmail support\n1 revision",
-        "Everything in Starter\nPriority support\n3 revisions",
-        "Everything in Growth\nDedicated manager\nUnlimited revisions",
-      ],
-    }),
+    defaults: (ctx) => {
+      const names = list(ctx, 6, ["Starter", "Growth", "Premium"]);
+      return {
+        heading: "What we offer",
+        subheading: "No published rates — contact our sales team for a quote on the service you need.",
+        planNames: names,
+        planPrices: names.map(() => ""),
+        planFeatures: names.map(
+          (name) => `${name}\nContact our sales team for details and a quote.`
+        ),
+      };
+    },
   },
 
   // ---- CONTACT ----

@@ -1,32 +1,36 @@
 import { shortId } from "@/lib/utils";
 import { getVariantSpec } from "@/lib/sections/registry";
 import { pageTitle } from "@/lib/blueprint/page-catalog";
+import { applyServicePricing } from "@/lib/agents/template-fill";
 import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteBlueprint, WebsitePage, WebsiteSection } from "@/lib/blueprint/types";
 
 function makeSection(variant: string, req: NormalizedRequirements): WebsiteSection {
   const spec = getVariantSpec(variant);
   if (!spec) throw new Error(`Unknown variant in planner: ${variant}`);
+  const content = spec.defaults(req.context);
+  if (spec.type === "pricing") applyServicePricing(content, req.services);
   return {
     id: shortId(spec.type),
     type: spec.type,
     variant: spec.variant,
-    content: spec.defaults(req.context),
+    content,
     imageKeywords: spec.needsImage ? spec.keywords(req.context) : undefined,
     selectedImage: null,
   };
 }
 
 /**
- * Deterministic content generator for the selected template. Fills every page's
- * locked slots with registry defaults — used as the mock provider and as the
- * fallback when the AI response can't be validated. The deterministic path
- * includes ALL of the design's pages (home + every optional page it supports).
+ * Deterministic content generator for the selected template. Fills the pages
+ * and slots the Website Planner chose. Used as the mock provider and as the fallback
+ * when the AI response can't be validated.
  */
 export function buildMockBlueprint(req: NormalizedRequirements): WebsiteBlueprint {
-  const pageDefs = req.template.pages.length
-    ? req.template.pages
-    : [{ slug: "home", title: pageTitle("home"), sections: req.template.sections }];
+  const pageDefs = req.layout.length
+    ? req.layout
+    : req.template.pages.length
+      ? req.template.pages
+      : [{ slug: "home", title: pageTitle("home"), sections: req.template.sections }];
 
   const pages: WebsitePage[] = pageDefs.map((def) => ({
     slug: def.slug,

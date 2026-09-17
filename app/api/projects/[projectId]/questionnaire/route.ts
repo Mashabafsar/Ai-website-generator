@@ -10,6 +10,7 @@ import {
 import { isProjectImportPath, recordAssetConsent } from "@/lib/branding/asset-consent";
 import { getTemplateById, getTemplateBySlug } from "@/lib/templates/store";
 import { slugify } from "@/lib/utils";
+import { clampSiteLayout } from "@/lib/agents/site-layout";
 
 type Ctx = { params: Promise<{ projectId: string }> };
 
@@ -48,6 +49,9 @@ export async function POST(req: Request, { params }: Ctx) {
     return jsonError("Select a design from the template library", 400, "TEMPLATE_REQUIRED");
   }
   answers.templateId = template.id;
+  if (answers.layout?.length) {
+    answers.layout = clampSiteLayout(template.pages, answers.layout);
+  }
 
   const existing = await prisma.questionnaire.findUnique({ where: { projectId } });
   const prev = existing ? (JSON.parse(existing.answers) as Record<string, unknown>) : {};

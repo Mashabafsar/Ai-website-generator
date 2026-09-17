@@ -78,7 +78,7 @@ export function saasldgDemoBlueprint(): WebsiteBlueprint {
               heading: "Pricing",
               subheading: "Transparent, flexible options tailored to suit your needs.",
               planNames: ["Personal", "Pro", "Enterprise"],
-              planPrices: ["$19", "$39", "$79"],
+              planPrices: ["", "", ""],
               planFeatures: [
                 "Task management\nReal-time collaboration\nBasic analytics\nMobile app access",
                 "Advanced reporting\nCustomizable branding\nEnhanced security\nWorkflow automation",

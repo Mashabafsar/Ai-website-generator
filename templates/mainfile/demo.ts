@@ -238,7 +238,7 @@ export function mainfileDemoBlueprint(): WebsiteBlueprint {
           heading: "Choose the plan that fits",
           subheading: "Every plan includes source files, support, and a flexible license.",
           planNames: ["Starter", "Professional", "Business"],
-          planPrices: ["$29", "$99", "$499"],
+          planPrices: ["", "", ""],
           planFeatures: [
             "1 landing page\nCommunity support\nFlexible license",
             "Up to 5 pages\n100+ components\nPriority support\nSpeedy build tooling",
