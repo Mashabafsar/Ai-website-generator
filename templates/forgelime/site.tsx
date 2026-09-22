@@ -130,8 +130,9 @@ export function ForgeLimeSite({
   ]);
   const stepBodies = list(process.content, "stepBodies");
 
-  const statValues = list(stats.content, "itemTitles", ["97%", "50+", "10"]);
+  const statValues = list(stats.content, "itemTitles", ["97%", "50+", "10"]).slice(0, 3);
   const statLabels = list(stats.content, "itemBodies", ["Satisfaction rate", "Delivered projects", "Years of experience"]);
+  const statsAreCompact = statValues.length > 0 && statValues.every(isCompactStat);
 
   const quoteList = list(testimonials.content, "quotes");
   const authorList = list(testimonials.content, "authors");
@@ -408,12 +409,12 @@ export function ForgeLimeSite({
         </div>
       </section>
 
-      <section className="mx-auto max-w-[90rem] overflow-hidden rounded-[28px] px-0" style={{ background: FL.sectionGreen, ...sectionBandStyle(stats.theme) }}>
-        <div className="relative px-6 pb-14 pt-20 lg:px-20">
+      <section className="relative mx-auto max-w-[90rem] overflow-hidden rounded-[28px] px-0" style={{ background: FL.sectionGreen, ...sectionBandStyle(stats.theme) }}>
+        <div className="relative overflow-hidden px-6 pb-14 pt-20 lg:px-20">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ASSETS.statsCard} alt="" className="pointer-events-none absolute -left-40 top-24 hidden h-[420px] w-[420px] object-contain opacity-70 lg:block" />
+          <img src={ASSETS.statsCard} alt="" className="pointer-events-none absolute -left-40 top-24 z-0 hidden h-[420px] w-[420px] object-contain opacity-40 lg:block" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ASSETS.statsMedal} alt="" className="pointer-events-none absolute -bottom-36 -right-28 hidden h-[460px] w-[460px] object-contain opacity-70 lg:block" />
+          <img src={ASSETS.statsMedal} alt="" className="pointer-events-none absolute -right-16 top-8 z-0 hidden h-[220px] w-[220px] object-contain opacity-40 lg:block" />
 
           <div className="relative z-10 flex flex-col items-center text-center">
             <div className="inline-flex items-center gap-3 rounded-full border border-[#356905] bg-[#002D00] px-5 py-2">
@@ -424,7 +425,7 @@ export function ForgeLimeSite({
               <img src={ASSETS.iconArrow} alt="" className="h-4 w-4 object-contain" />
             </div>
 
-            <h2 className="mt-6 max-w-[36rem] text-[clamp(2.5rem,7vw,4.5rem)] uppercase leading-[0.92] tracking-[-1.4px]" style={{ fontFamily: "var(--fl-display)" }}>
+            <h2 className="mt-6 max-w-[36rem] text-[clamp(2.5rem,7vw,4.5rem)] uppercase leading-[1.05] tracking-[-1.4px] break-words" style={{ fontFamily: "var(--fl-display)" }}>
               <AccentWords text={text(stats.content, "heading", "Empowering Success in Numbers")} words={1} accent={FL.brand} />
             </h2>
             <p className="mt-5 max-w-[36rem] text-xl leading-relaxed text-[#F1FBE8]">
@@ -440,13 +441,24 @@ export function ForgeLimeSite({
           </div>
         </div>
 
-        <div className="grid gap-8 rounded-[28px] bg-[#002D00] px-6 py-12 text-center md:grid-cols-3 md:px-16">
-          {statValues.slice(0, 3).map((value, i) => (
-            <div key={`${value}-${i}`}>
-              <div className="text-[clamp(3.5rem,8vw,7rem)] uppercase leading-[0.92] tracking-[-2px] text-[#A9FF5C]" style={{ fontFamily: "var(--fl-display)" }}>
+        <div
+          className={`relative z-10 grid gap-8 rounded-[28px] bg-[#002D00] px-6 py-12 text-center md:px-16 ${
+            statsAreCompact ? "md:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3"
+          }`}
+        >
+          {statValues.map((value, i) => (
+            <div key={`${value}-${i}`} className="min-w-0 px-2">
+              <div
+                className={
+                  statsAreCompact
+                    ? "text-[clamp(3.5rem,8vw,7rem)] uppercase leading-none tracking-[-2px] text-[#A9FF5C]"
+                    : "text-[clamp(1.65rem,3vw,2.5rem)] uppercase leading-snug tracking-[-0.4px] text-[#A9FF5C] break-words"
+                }
+                style={{ fontFamily: "var(--fl-display)" }}
+              >
                 {value}
               </div>
-              <p className="mt-2 text-xl text-[#F1FBE8]">{statLabels[i] || "Measured growth"}</p>
+              <p className="mt-3 text-lg leading-relaxed text-[#F1FBE8]">{statLabels[i] || "Measured growth"}</p>
             </div>
           ))}
         </div>
@@ -676,6 +688,11 @@ export function ForgeLimeSite({
       </footer>
     </div>
   );
+}
+
+function isCompactStat(value: string): boolean {
+  const compact = value.replace(/\s+/g, "").trim();
+  return compact.length > 0 && compact.length <= 8 && /^[\d,.]+[kKmMbB+%]*$/.test(compact);
 }
 
 function AccentWords({
