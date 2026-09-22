@@ -4,31 +4,27 @@ function platformHost(): string {
   return env.deployment.platformDomain.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
 }
 
-/** Client-facing site URL: `{subdomain}.{PLATFORM_DOMAIN}` — never a Vercel deployment host. */
+/** `{subdomain}.{PLATFORM_DOMAIN}` when the custom domain is actually attached. */
 export function siteDomainUrl(subdomain: string): string {
   return `https://${subdomain}.${platformHost()}`;
 }
 
-export function isVercelDeploymentUrl(url: string): boolean {
-  try {
-    return new URL(url).hostname.toLowerCase().endsWith(".vercel.app");
-  } catch {
-    return /vercel\.app/i.test(url);
-  }
+export function toHttpsUrl(url: string): string {
+  const trimmed = url.trim().replace(/^\/\//, "");
+  if (!trimmed) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
 }
 
+/** Prefer the stored live URL (Vercel host or custom domain). */
 export function publicSiteUrl(row: {
   subdomain?: string | null;
   liveUrl?: string | null;
 } | null): string | null {
   if (!row) return null;
+  const url = row.liveUrl?.trim();
+  if (url) return toHttpsUrl(url);
   const sub = row.subdomain?.trim();
   if (sub) return siteDomainUrl(sub);
-  const url = row.liveUrl?.trim();
-  if (!url || isVercelDeploymentUrl(url)) return null;
-  return url;
-}
-
-export function hideDeploymentHosts(message: string): string {
-  return message.replace(/https?:\/\/\S*vercel\.app\S*/gi, "").replace(/\s{2,}/g, " ").trim();
+  return null;
 }

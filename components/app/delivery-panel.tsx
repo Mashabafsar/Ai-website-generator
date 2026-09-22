@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, ExternalLink, Loader2, Rocket, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ export function DeliveryPanel({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [deploying, setDeploying] = useState(false);
+  const autoStarted = useRef(false);
 
   useEffect(() => {
     const checkout = searchParams.get("checkout");
@@ -54,6 +55,16 @@ export function DeliveryPanel({
     }
   }
 
+  useEffect(() => {
+    if (!isPaid || !isManaged || isLive || deploying) return;
+    if (deployment?.status === "FAILED") return;
+    if (autoStarted.current) return;
+    autoStarted.current = true;
+    void deploy();
+    // Publish as soon as managed hosting is paid — same as the original Vercel flow.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPaid, isManaged, isLive, deployment?.status]);
+
   if (!isPaid) {
     return (
       <div className="rounded-xl border bg-card p-8 text-center">
@@ -62,7 +73,8 @@ export function DeliveryPanel({
           Your website is generated. Complete payment to{" "}
           {isManaged
             ? "publish it live with one click. We host it for you — no files to download or upload."
-            : "download the full source code as a ZIP"}.
+            : "download the full source code as a ZIP"}
+          .
         </p>
         <Button variant="brand" className="mt-5" onClick={() => router.push(`/app/project/${projectId}/quote`)}>
           Go to quote & payment
@@ -89,7 +101,7 @@ export function DeliveryPanel({
                   ? "Publishing now — this usually takes under a minute. Keep this tab open."
                   : isLive
                     ? "We host this for you. Re-publish after you make edits."
-                    : "Click Make it live and we publish the site to hosting. You never download files, open GitHub, or log into Vercel."}
+                    : "We'll publish this to Vercel automatically. You never download files, open GitHub, or log into Vercel."}
               </p>
             </div>
             <Button variant="brand" onClick={deploy} disabled={deploying}>
@@ -100,7 +112,7 @@ export function DeliveryPanel({
 
           {domainUrl && (
             <div className="mt-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your domain</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Live site</p>
               <a
                 href={domainUrl}
                 target="_blank"
@@ -135,11 +147,7 @@ export function DeliveryPanel({
           <p className="mt-1 text-sm text-muted-foreground">
             Download your complete website source as a ZIP and host it anywhere.
           </p>
-          <Button
-            variant="brand"
-            className="mt-5"
-            asChild
-          >
+          <Button variant="brand" className="mt-5" asChild>
             <a href={`/api/projects/${projectId}/download`}>
               <Download className="h-4 w-4" /> Download ZIP
             </a>

@@ -4,7 +4,7 @@ import { hasPaidPackage } from "@/lib/payments/access";
 import { deployProject, HostingNotConfiguredError } from "@/lib/deployment/deploy";
 import { PackageType } from "@/lib/constants";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ projectId: string }> };
 

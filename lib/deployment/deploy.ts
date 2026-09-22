@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
-import { DeploymentStatus, ProjectStatus } from "@/lib/constants";
+import { DeploymentStatus, PackageType, ProjectStatus } from "@/lib/constants";
 import { parseProject } from "@/lib/projects/projects";
 import { generateProjectFiles, type ProjectFile } from "@/lib/export/generate-project";
 import { deployToVercel, aliasDeployment, assignProjectDomain } from "@/lib/deployment/vercel";
-import { siteDomainUrl } from "@/lib/deployment/url";
+import { siteDomainUrl, toHttpsUrl } from "@/lib/deployment/url";
 import { slugify } from "@/lib/utils";
 import { notifyOwnerSiteLive } from "@/lib/notify/owner";
+import { hasPaidPackage } from "@/lib/payments/access";
 
 export type DeploymentLog = { at: string; status: string; message: string };
 
@@ -105,12 +106,17 @@ export async function deployProject(projectId: string): Promise<{
     await saveDeployment(projectId, { status: DeploymentStatus.BUILD_STARTED, subdomain, logs });
 
     const result = await deployToVercel({ projectName: subdomain, files });
-    logs = log(logs, DeploymentStatus.BUILD_STARTED, "Host confirmed the site is live");
+    logs = log(logs, DeploymentStatus.BUILD_STARTED, "Vercel confirmed the site is live");
 
-    const liveUrl = siteDomainUrl(subdomain);
     await assignProjectDomain(result.projectId || subdomain, fqdn);
-    await aliasDeployment(result.deploymentId, fqdn);
-    logs = log(logs, DeploymentStatus.DEPLOYED, `Your domain is ${liveUrl}`);
+    const aliased = await aliasDeployment(result.deploymentId, fqdn);
+    const vercelUrl = toHttpsUrl(result.url);
+    const liveUrl = aliased ? siteDomainUrl(subdomain) : vercelUrl;
+    logs = log(
+      logs,
+      DeploymentStatus.DEPLOYED,
+      aliased ? `Your domain is ${liveUrl}` : `Live at ${liveUrl}`
+    );
 
     await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });
@@ -122,4 +128,14 @@ export async function deployProject(projectId: string): Promise<{
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.PAID } });
     throw err;
   }
+}
+
+/** After managed-hosting payment: publish to Vercel unless already live or in flight. */
+export async function publishManagedSiteIfDue(projectId: string): Promise<void> {
+  const paid = await hasPaidPackage(projectId, PackageType.MANAGED_HOSTING);
+  if (!paid) return;
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project?.blueprint) return;
+  if (project.status === ProjectStatus.LIVE || project.status === ProjectStatus.DEPLOYING) return;
+  await deployProject(projectId);
 }

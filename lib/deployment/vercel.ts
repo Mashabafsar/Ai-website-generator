@@ -155,7 +155,7 @@ export async function aliasDeployment(deploymentId: string, alias: string): Prom
       headers: { ...authHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ alias }),
     });
-    return res.ok;
+    return res.ok || res.status === 409;
   } catch {
     return false;
   }

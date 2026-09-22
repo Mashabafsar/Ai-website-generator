@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getStripe } from "@/lib/stripe/stripe";
 import { grantPurchase } from "@/lib/credits/credits";
@@ -7,6 +7,9 @@ import { prisma } from "@/lib/prisma";
 import { PaymentType, PaymentStatus, ProjectStatus } from "@/lib/constants";
 import { syncPaidCustomerToHubSpot } from "@/lib/crm/hubspot";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
+import { publishManagedSiteIfDue } from "@/lib/deployment/deploy";
+
+export const maxDuration = 300;
 
 // Stripe requires the raw request body to verify the signature.
 export async function POST(req: Request) {
@@ -80,5 +83,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     await syncPaidCustomerToHubSpot(projectId);
     await trySyncProjectToGitHub(projectId);
+    after(() =>
+      publishManagedSiteIfDue(projectId).catch((err) => {
+        console.error("[deploy] auto-publish after payment failed:", err);
+      })
+    );
   }
 }
