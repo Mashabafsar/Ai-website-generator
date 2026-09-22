@@ -1,25 +1,16 @@
-import { Hind, Open_Sans } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { MR, MR_GRADIENTS, MR_BRAND_GRADIENT, MR_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
 
-const display = Hind({
-  subsets: ["latin"],
-  variable: "--mr-display",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const body = Open_Sans({
-  subsets: ["latin"],
-  variable: "--mr-body",
-  weight: ["400", "600", "700"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Hind", variable: "--mr-display", weights: ["400", "500", "600", "700"] },
+  { family: "Open Sans", variable: "--mr-body", weights: ["400", "600", "700"] },
+]);
 
 const FALLBACK = {
   hero: "/templates/mainfile/hero.jpg",
@@ -89,15 +80,17 @@ export function MainfileSite({
 
   return (
     <div
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#7DBCFF"),
+        ...faces.style,
         fontFamily: "var(--mr-body), ui-sans-serif, system-ui, sans-serif",
         color: MR.body,
         backgroundColor: MR.white,
         ...themeFontStyle(site?.theme, ["--mr-display", "--mr-body"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}

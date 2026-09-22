@@ -1,27 +1,14 @@
 import type { Metadata } from "next";
-import { Sora, Space_Grotesk, Onest } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { templateFaces } from "@/templates/shared/template-faces";
 
-const sora = Sora({
-  subsets: ["latin"],
-  variable: "--font-sora",
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-});
-
-// App-shell typeface (dashboard design system).
-const onest = Onest({
-  subsets: ["latin"],
-  variable: "--font-onest",
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Sora", variable: "--font-sora" },
+  { family: "Space Grotesk", variable: "--font-space-grotesk" },
+  { family: "Onest", variable: "--font-onest" },
+]);
 
 export const metadata: Metadata = {
   title: {
@@ -41,7 +28,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sora.variable} ${spaceGrotesk.variable} ${onest.variable}`} suppressHydrationWarning>
+    <html lang="en" style={faces.style} suppressHydrationWarning>
+      <head>
+        <link rel="stylesheet" href={faces.href} />
+      </head>
       <body>
         {children}
         <Toaster />

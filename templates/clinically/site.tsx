@@ -1,23 +1,18 @@
-import { Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { CL } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Inter({
-  subsets: ["latin"],
-  variable: "--cl-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--cl-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Inter", variable: "--cl-display", weights: ["500","600","700"] },
+  { family: "Inter", variable: "--cl-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/clinically/hero.jpg";
 const NAV = [
@@ -65,15 +60,17 @@ export function ClinicallySite({
   return (
     <div
       id="cl-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#1E5DBC"),
+        ...faces.style,
         fontFamily: "var(--cl-body), ui-sans-serif, system-ui, sans-serif",
         color: CL.ink,
         backgroundColor: CL.bg,
         ...themeFontStyle(site?.theme, ["--cl-display", "--cl-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: CL.line, backgroundColor: CL.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

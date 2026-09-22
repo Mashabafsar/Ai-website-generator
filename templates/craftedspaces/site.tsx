@@ -1,18 +1,15 @@
-import { Sora } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { CS } from "./tokens";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
 
-const sora = Sora({
-  subsets: ["latin"],
-  variable: "--cs-font",
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Sora", variable: "--cs-font", weights: ["400", "500", "600"] },
+]);
 
 const A = {
   logoIcon: "/templates/craftedspaces/logo73.svg",
@@ -167,15 +164,17 @@ export function CraftedSpacesSite({
   return (
     <div
       id="cs-top"
-      className={`${sora.variable} scroll-smooth`}
+      className={`scroll-smooth`}
       style={{
         ...brandStyle(site?.theme, "#FFF6D2"),
+        ...faces.style,
         fontFamily: "var(--cs-font), ui-sans-serif, system-ui, sans-serif",
         color: CS.ink,
         backgroundColor: CS.canvas,
         ...themeFontStyle(site?.theme, ["--cs-font"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}

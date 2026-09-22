@@ -1,25 +1,16 @@
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { SL, SL_FEATURE_COLORS, SL_ICON_PATHS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
 
-const display = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--sl-display",
-  weight: ["600", "700", "800"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--sl-body",
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Plus Jakarta Sans", variable: "--sl-display", weights: ["600", "700", "800"] },
+  { family: "Inter", variable: "--sl-body", weights: ["400", "500", "600"] },
+]);
 
 const HERO_FALLBACK = "/templates/saasldg/hero.jpg";
 const AVATARS = [
@@ -109,15 +100,17 @@ export function SaasLandingSite({
   return (
     <div
       id="sl-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#2A85FF"),
+        ...faces.style,
         fontFamily: "var(--sl-body), ui-sans-serif, system-ui, sans-serif",
         color: SL.ink,
         backgroundColor: SL.white,
         ...themeFontStyle(site?.theme, ["--sl-display", "--sl-body"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}

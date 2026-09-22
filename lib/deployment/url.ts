@@ -1,14 +1,4 @@
-import { env } from "@/lib/env";
-
-function platformHost(): string {
-  return env.deployment.platformDomain.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
-}
-
-/** `{subdomain}.{PLATFORM_DOMAIN}` when the custom domain is actually attached. */
-export function siteDomainUrl(subdomain: string): string {
-  return `https://${subdomain}.${platformHost()}`;
-}
-
+/** Normalize a host or URL from Vercel into an https link. */
 export function toHttpsUrl(url: string): string {
   const trimmed = url.trim().replace(/^\/\//, "");
   if (!trimmed) return trimmed;
@@ -16,15 +6,11 @@ export function toHttpsUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
-/** Prefer the stored live URL (Vercel host or custom domain). */
+/** The stored Vercel live URL. Never invents a custom platform domain. */
 export function publicSiteUrl(row: {
   subdomain?: string | null;
   liveUrl?: string | null;
 } | null): string | null {
-  if (!row) return null;
-  const url = row.liveUrl?.trim();
-  if (url) return toHttpsUrl(url);
-  const sub = row.subdomain?.trim();
-  if (sub) return siteDomainUrl(sub);
-  return null;
+  const url = row?.liveUrl?.trim();
+  return url ? toHttpsUrl(url) : null;
 }

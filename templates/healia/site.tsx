@@ -1,23 +1,18 @@
-import { Fraunces, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { HE } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Fraunces({
-  subsets: ["latin"],
-  variable: "--he-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--he-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Fraunces", variable: "--he-display", weights: ["500","600","700"], kind: "serif" },
+  { family: "Inter", variable: "--he-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/healia/hero.jpg";
 const NAV = [
@@ -65,15 +60,17 @@ export function HealiaSite({
   return (
     <div
       id="he-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#F38660"),
+        ...faces.style,
         fontFamily: "var(--he-body), ui-sans-serif, system-ui, sans-serif",
         color: HE.ink,
         backgroundColor: HE.bg,
         ...themeFontStyle(site?.theme, ["--he-display", "--he-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: HE.line, backgroundColor: HE.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

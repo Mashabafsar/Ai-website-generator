@@ -1,23 +1,18 @@
-import { Syne, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { RB } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Syne({
-  subsets: ["latin"],
-  variable: "--rb-display",
-  weight: ["700","800"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--rb-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Syne", variable: "--rb-display", weights: ["700","800"] },
+  { family: "Inter", variable: "--rb-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/rebel/hero.jpg";
 const NAV = [
@@ -64,15 +59,17 @@ export function RebelSite({
   return (
     <div
       id="rb-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#111111"),
+        ...faces.style,
         fontFamily: "var(--rb-body), ui-sans-serif, system-ui, sans-serif",
         color: RB.ink,
         backgroundColor: RB.bg,
         ...themeFontStyle(site?.theme, ["--rb-display", "--rb-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: RB.line, backgroundColor: RB.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

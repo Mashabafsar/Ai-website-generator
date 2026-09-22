@@ -1,16 +1,13 @@
-import { Poppins } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { RS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const sans = Poppins({
-  subsets: ["latin"],
-  variable: "--rs-sans",
-  weight: ["500", "600"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Poppins", variable: "--rs-sans", weights: ["500", "600"] },
+]);
 
 const HERO = "/templates/resume/hero.png";
 const WORK = [
@@ -92,9 +89,10 @@ export function ResumeSite({
   return (
     <div
       id="rs-top"
-      className={`${sans.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#000000"),
+        ...faces.style,
         fontFamily: "var(--rs-sans), ui-sans-serif, system-ui, sans-serif",
         fontWeight: 500,
         color: RS.ink,
@@ -102,6 +100,7 @@ export function ResumeSite({
         ...themeFontStyle(site?.theme, ["--rs-sans"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="px-6 py-6 md:px-10" style={{ ...sectionBandStyle(hero.theme) }}>
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-start justify-between gap-4 text-base tracking-[-0.05em]">

@@ -21,7 +21,7 @@ The rest of the product was meant to run without a human in the loop:
 | Payment | Stripe: one-time ZIP (self-hosting) or creation fee + monthly (managed hosting) |
 | Credits | Credits gate AI work; Stripe package payment gates delivery |
 | Backup | Paid websites committed to the **AI-WEBSITE-BUILDER-WEBSITE** GitHub repo under `clients/<slug>/` |
-| Delivery | ZIP download, or automatic deploy to `{slug}.{PLATFORM_DOMAIN}` |
+| Delivery | ZIP download, or automatic deploy to the Vercel-assigned live URL |
 | CRM | After a website-package payment, upsert the paying customer in HubSpot |
 | Notify | Email the owner when the ZIP is ready or the site goes live |
 | Database | Prisma as the only data layer (originally SQLite, now Supabase Postgres) |
@@ -68,7 +68,7 @@ These are the remaining product and production goals — not a dump of every pos
 
 - Run GitHub backup, Vercel subdomain deploys, HubSpot customer sync, and owner emails against **live keys**, not just local stubs.
 - Confirm Stripe webhooks, website-package checkout, and credit-pack checkout in a real Stripe environment (test, then live).
-- Prove the ZIP and live-site paths on paid projects: self-hosting download, managed hosting going live on `{slug}.{PLATFORM_DOMAIN}`.
+- Prove the ZIP and live-site paths on paid projects: self-hosting download, managed hosting going live on the Vercel-assigned URL.
 
 ### Finish the generation quality bar
 
@@ -139,7 +139,7 @@ See `.env.example` for the full list. Highlights:
 | `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
 | `GITHUB_SITES_REPO` | Optional `owner/AI-WEBSITE-BUILDER-WEBSITE` override |
 | `GITHUB_REPO_VISIBILITY` | Unused for the shared sites repo (that repo already exists) |
-| `DEPLOYMENT_TOKEN`, `PLATFORM_DOMAIN` | Managed subdomain deploys (Vercel) |
+| `DEPLOYMENT_TOKEN` | Vercel token for publishing managed-hosting sites (uses the assigned `*.vercel.app` URL while testing) |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Storage uploads for scraped/editor images |
 | `SUPABASE_STORAGE_BUCKET` | Bucket name (default `scraped-assets`) |
 

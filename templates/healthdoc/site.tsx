@@ -1,23 +1,14 @@
-import { Manrope, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { HD } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Manrope({
-  subsets: ["latin"],
-  variable: "--hd-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--hd-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Manrope", variable: "--hd-display", weights: ["500","600","700"] },
+  { family: "Inter", variable: "--hd-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/healthdoc/hero.jpg";
 const NAV = [
@@ -63,15 +54,17 @@ export function HealthdocSite({
   return (
     <div
       id="hd-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#8246FB"),
+        ...faces.style,
         fontFamily: "var(--hd-body), ui-sans-serif, system-ui, sans-serif",
         color: HD.ink,
         backgroundColor: HD.bg,
         ...themeFontStyle(site?.theme, ["--hd-display", "--hd-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: HD.line, backgroundColor: HD.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

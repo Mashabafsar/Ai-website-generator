@@ -1,23 +1,18 @@
-import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FK } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--fk-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = DM_Sans({
-  subsets: ["latin"],
-  variable: "--fk-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Bricolage Grotesque", variable: "--fk-display", weights: ["500","600","700"] },
+  { family: "DM Sans", variable: "--fk-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/foks/hero.jpg";
 const NAV = [
@@ -63,15 +58,17 @@ export function FoksSite({
   return (
     <div
       id="fk-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#171717"),
+        ...faces.style,
         fontFamily: "var(--fk-body), ui-sans-serif, system-ui, sans-serif",
         color: FK.ink,
         backgroundColor: FK.bg,
         ...themeFontStyle(site?.theme, ["--fk-display", "--fk-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: FK.line, backgroundColor: FK.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

@@ -1,23 +1,18 @@
-import { Fraunces, Manrope } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { LV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Fraunces({
-  subsets: ["latin"],
-  variable: "--lv-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Manrope({
-  subsets: ["latin"],
-  variable: "--lv-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Fraunces", variable: "--lv-display", weights: ["500","600","700"], kind: "serif" },
+  { family: "Manrope", variable: "--lv-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/levyna/hero.jpg";
 const NAV = [
@@ -64,15 +59,17 @@ export function LevynaSite({
   return (
     <div
       id="lv-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#D8F366"),
+        ...faces.style,
         fontFamily: "var(--lv-body), ui-sans-serif, system-ui, sans-serif",
         color: LV.ink,
         backgroundColor: LV.bg,
         ...themeFontStyle(site?.theme, ["--lv-display", "--lv-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: LV.line, backgroundColor: LV.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

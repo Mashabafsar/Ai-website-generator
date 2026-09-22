@@ -1,23 +1,18 @@
-import { Cormorant_Garamond, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { LB } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--lb-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--lb-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Cormorant Garamond", variable: "--lb-display", weights: ["500","600","700"], kind: "serif" },
+  { family: "Inter", variable: "--lb-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/levynablush/hero.jpg";
 const NAV = [
@@ -64,15 +59,17 @@ export function LevynablushSite({
   return (
     <div
       id="lb-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#FF8FFC"),
+        ...faces.style,
         fontFamily: "var(--lb-body), ui-sans-serif, system-ui, sans-serif",
         color: LB.ink,
         backgroundColor: LB.bg,
         ...themeFontStyle(site?.theme, ["--lb-display", "--lb-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: LB.line, backgroundColor: LB.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

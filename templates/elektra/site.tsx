@@ -1,23 +1,18 @@
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { EL } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--el-display",
-  weight: ["600","700","800"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--el-body",
-  weight: ["400","500","600"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Plus Jakarta Sans", variable: "--el-display", weights: ["600","700","800"] },
+  { family: "Inter", variable: "--el-body", weights: ["400","500","600"] },
+]);
 
 const HERO = "/templates/elektra/hero.jpg";
 const NAV = [
@@ -64,15 +59,17 @@ export function ElektraSite({
   return (
     <div
       id="el-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#3B82F6"),
+        ...faces.style,
         fontFamily: "var(--el-body), ui-sans-serif, system-ui, sans-serif",
         color: EL.ink,
         backgroundColor: EL.bg,
         ...themeFontStyle(site?.theme, ["--el-display", "--el-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: EL.line, backgroundColor: EL.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

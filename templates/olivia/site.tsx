@@ -1,23 +1,14 @@
-import { Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { OL } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Inter({
-  subsets: ["latin"],
-  variable: "--ol-display",
-  weight: ["400","500","600","700"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--ol-body",
-  weight: ["400","500","600"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Inter", variable: "--ol-display", weights: ["400","500","600","700"] },
+  { family: "Inter", variable: "--ol-body", weights: ["400","500","600"] },
+]);
 
 const HERO = "/templates/olivia/hero.jpg";
 const NAV = [
@@ -63,15 +54,17 @@ export function OliviaSite({
   return (
     <div
       id="ol-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#161616"),
+        ...faces.style,
         fontFamily: "var(--ol-body), ui-sans-serif, system-ui, sans-serif",
         color: OL.ink,
         backgroundColor: OL.bg,
         ...themeFontStyle(site?.theme, ["--ol-display", "--ol-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: OL.line, backgroundColor: OL.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

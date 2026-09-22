@@ -1,23 +1,18 @@
-import { Playfair_Display, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { LG } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--lg-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--lg-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Playfair Display", variable: "--lg-display", weights: ["500","600","700"], kind: "serif" },
+  { family: "Inter", variable: "--lg-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/levynagold/hero.jpg";
 const NAV = [
@@ -64,15 +59,17 @@ export function LevynagoldSite({
   return (
     <div
       id="lg-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#E5BE68"),
+        ...faces.style,
         fontFamily: "var(--lg-body), ui-sans-serif, system-ui, sans-serif",
         color: LG.ink,
         backgroundColor: LG.bg,
         ...themeFontStyle(site?.theme, ["--lg-display", "--lg-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: LG.line, backgroundColor: LG.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

@@ -1,25 +1,16 @@
-import { Inter, Rubik } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { WH } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
 
-const display = Rubik({
-  subsets: ["latin"],
-  variable: "--wh-display",
-  weight: ["500", "600", "700", "800"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--wh-body",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Rubik", variable: "--wh-display", weights: ["500", "600", "700", "800"] },
+  { family: "Inter", variable: "--wh-body", weights: ["400", "500", "600", "700"] },
+]);
 
 const ICONS = [
   "/templates/whiter/icon-target.svg",
@@ -80,15 +71,17 @@ export function WhiterSite({
 
   return (
     <div
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#1787FC"),
+        ...faces.style,
         fontFamily: "var(--wh-body), ui-sans-serif, system-ui, sans-serif",
         color: WH.ink,
         backgroundColor: WH.white,
         ...themeFontStyle(site?.theme, ["--wh-display", "--wh-body"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}

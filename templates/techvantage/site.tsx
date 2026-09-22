@@ -1,25 +1,16 @@
-import { Inter, Urbanist } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { TV } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
 
-const display = Urbanist({
-  subsets: ["latin"],
-  variable: "--tv-display",
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--tv-body",
-  weight: ["400", "500"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Urbanist", variable: "--tv-display", weights: ["500", "600", "700"] },
+  { family: "Inter", variable: "--tv-body", weights: ["400", "500"] },
+]);
 
 const ASSETS = {
   logo: "/templates/techvantage/logo.svg",
@@ -175,15 +166,17 @@ export function TechvantageSite({
   return (
     <div
       id="tv-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#0C3DFF"),
+        ...faces.style,
         fontFamily: "var(--tv-body), ui-sans-serif, system-ui, sans-serif",
         color: TV.ink,
         backgroundColor: TV.canvas,
         ...themeFontStyle(site?.theme, ["--tv-display", "--tv-body"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}

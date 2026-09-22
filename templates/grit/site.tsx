@@ -1,23 +1,18 @@
-import { Playfair_Display, IBM_Plex_Mono } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { GR } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--gr-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = IBM_Plex_Mono({
-  subsets: ["latin"],
-  variable: "--gr-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Playfair Display", variable: "--gr-display", weights: ["500","600","700"], kind: "serif" },
+  { family: "IBM Plex Mono", variable: "--gr-body", weights: ["400","500"], kind: "mono" },
+]);
 
 const HERO = "/templates/grit/hero.jpg";
 const NAV = [
@@ -63,15 +58,17 @@ export function GritSite({
   return (
     <div
       id="gr-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#FF5050"),
+        ...faces.style,
         fontFamily: "var(--gr-body), ui-sans-serif, system-ui, sans-serif",
         color: GR.ink,
         backgroundColor: GR.bg,
         ...themeFontStyle(site?.theme, ["--gr-display", "--gr-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: GR.line, backgroundColor: GR.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

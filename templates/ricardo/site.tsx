@@ -1,23 +1,18 @@
-import { Cormorant_Garamond, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { RC } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--rc-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--rc-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Cormorant Garamond", variable: "--rc-display", weights: ["500","600","700"], kind: "serif" },
+  { family: "Inter", variable: "--rc-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/ricardo/hero.jpg";
 const NAV = [
@@ -63,15 +58,17 @@ export function RicardoSite({
   return (
     <div
       id="rc-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#DB2777"),
+        ...faces.style,
         fontFamily: "var(--rc-body), ui-sans-serif, system-ui, sans-serif",
         color: RC.ink,
         backgroundColor: RC.bg,
         ...themeFontStyle(site?.theme, ["--rc-display", "--rc-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: RC.line, backgroundColor: RC.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

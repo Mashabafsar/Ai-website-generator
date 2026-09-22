@@ -1,17 +1,16 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { WJ } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const sans = Inter({
-  subsets: ["latin"],
-  variable: "--wj-sans",
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
+
+
+const faces = templateFaces([
+  { family: "Inter", variable: "--wj-sans", weights: ["400", "500", "600"] },
+]);
 
 const A = "/templates/willjacks";
 const HERO = `${A}/hero.jpg`;
@@ -50,15 +49,17 @@ export function WilljacksSite({
 
   return (
     <div
-      className={`${sans.variable} overflow-x-hidden scroll-smooth antialiased`}
+      className={`overflow-x-hidden scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#181818"),
+        ...faces.style,
         fontFamily: "var(--wj-sans), Inter, ui-sans-serif, system-ui, sans-serif",
         color: WJ.ink,
         backgroundColor: WJ.bg,
         ...themeFontStyle(site?.theme, ["--wj-sans"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <style>{WJ_CSS}</style>
       <SiteNav pages={pages} active={active} businessName={businessName} customLogo={customLogo} location={location} />

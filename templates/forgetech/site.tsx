@@ -1,23 +1,14 @@
-import { Nunito_Sans, Space_Grotesk } from "next/font/google";
 import type { AssembledSite, SectionTheme, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FT } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--ft-display",
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-
-const body = Nunito_Sans({
-  subsets: ["latin"],
-  variable: "--ft-body",
-  weight: ["400", "600", "700"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Space Grotesk", variable: "--ft-display", weights: ["500", "600", "700"] },
+  { family: "Nunito Sans", variable: "--ft-body", weights: ["400", "600", "700"] },
+]);
 
 const ASSETS = {
   hero: "/templates/forgetech/hero.jpg",
@@ -130,15 +121,17 @@ export function ForgeTechSite({
   return (
     <div
       id="ft-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#FF750B"),
+        ...faces.style,
         fontFamily: "var(--ft-body), ui-sans-serif, system-ui, sans-serif",
         color: FT.ink,
         backgroundColor: FT.canvas,
         ...themeFontStyle(site?.theme, ["--ft-display", "--ft-body"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}

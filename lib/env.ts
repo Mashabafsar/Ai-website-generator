@@ -103,7 +103,9 @@ export const env = {
     provider: process.env.DEPLOYMENT_PROVIDER ?? "vercel",
     token: process.env.DEPLOYMENT_TOKEN ?? "",
     teamId: process.env.DEPLOYMENT_TEAM_ID || process.env.VERCEL_TEAM_ID || process.env.VERCEL_ORG_ID || "",
-    platformDomain: process.env.PLATFORM_DOMAIN ?? "agencypartner.site",
+    // Testing uses Vercel's assigned host (`*.vercel.app`). Leave this empty
+    // until a real custom domain exists — do not default to agencypartner.site.
+    platformDomain: (process.env.PLATFORM_DOMAIN ?? "").trim(),
     get enabled() {
       return Boolean(process.env.DEPLOYMENT_TOKEN);
     },

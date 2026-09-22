@@ -1,24 +1,15 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Anton, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { SF } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Anton({
-  subsets: ["latin"],
-  variable: "--sf-display",
-  weight: "400",
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--sf-body",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Anton", variable: "--sf-display", weights: ["400"] },
+  { family: "Inter", variable: "--sf-body", weights: ["400", "500", "600", "700"] },
+]);
 
 const A = "/templates/sarahfolio";
 
@@ -83,15 +74,17 @@ export function SarahfolioSite({
 
   return (
     <div
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#FFBF38"),
+        ...faces.style,
         fontFamily: "var(--sf-body), Inter, ui-sans-serif, system-ui, sans-serif",
         color: SF.ink,
         backgroundColor: SF.bg,
         ...themeFontStyle(site?.theme, ["--sf-display", "--sf-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <style>{`
         .sf-menu > summary { list-style: none; }

@@ -1,23 +1,18 @@
-import { Instrument_Serif, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { LU } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Instrument_Serif({
-  subsets: ["latin"],
-  variable: "--lu-display",
-  weight: "400",
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--lu-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Instrument Serif", variable: "--lu-display", weights: ["400"], kind: "serif" },
+  { family: "Inter", variable: "--lu-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/lukasz/hero.jpg";
 const NAV = [
@@ -63,15 +58,17 @@ export function LukaszSite({
   return (
     <div
       id="lu-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#1A1A1A"),
+        ...faces.style,
         fontFamily: "var(--lu-body), ui-sans-serif, system-ui, sans-serif",
         color: LU.ink,
         backgroundColor: LU.bg,
         ...themeFontStyle(site?.theme, ["--lu-display", "--lu-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: LU.line, backgroundColor: LU.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

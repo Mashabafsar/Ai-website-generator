@@ -1,23 +1,14 @@
-import { Barlow_Condensed, Onest } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FL } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Barlow_Condensed({
-  subsets: ["latin"],
-  variable: "--fl-display",
-  weight: ["600", "700", "800"],
-  display: "swap",
-});
-
-const body = Onest({
-  subsets: ["latin"],
-  variable: "--fl-body",
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Barlow Condensed", variable: "--fl-display", weights: ["600", "700", "800"] },
+  { family: "Onest", variable: "--fl-body", weights: ["400", "500", "700"] },
+]);
 
 const ASSETS = {
   heroPattern: "/templates/forgelime/hero-pattern.png",
@@ -173,9 +164,10 @@ export function ForgeLimeSite({
   return (
     <div
       id="fl-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#A9FF5C"),
+        ...faces.style,
         ["--fl-display" as string]: DISPLAY_STACK,
         ["--fl-body" as string]: BODY_STACK,
         fontFamily: "var(--fl-body)",
@@ -184,6 +176,7 @@ export function ForgeLimeSite({
         ...themeFontStyle(site?.theme, ["--fl-display", "--fl-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
 
       <section className="relative overflow-hidden" style={sectionBandStyle(hero.theme)}>

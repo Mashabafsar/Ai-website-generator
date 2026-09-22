@@ -1,23 +1,18 @@
-import { Manrope, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { AP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Manrope({
-  subsets: ["latin"],
-  variable: "--ap-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--ap-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Manrope", variable: "--ap-display", weights: ["500","600","700"] },
+  { family: "Inter", variable: "--ap-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/atelierpf/hero.jpg";
 const NAV = [
@@ -63,15 +58,17 @@ export function AtelierpfSite({
   return (
     <div
       id="ap-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#222420"),
+        ...faces.style,
         fontFamily: "var(--ap-body), ui-sans-serif, system-ui, sans-serif",
         color: AP.ink,
         backgroundColor: AP.bg,
         ...themeFontStyle(site?.theme, ["--ap-display", "--ap-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: AP.line, backgroundColor: AP.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

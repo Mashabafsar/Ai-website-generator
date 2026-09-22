@@ -1,24 +1,15 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Inter, Space_Grotesk } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { RB } from "./tokens";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--rb-display",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--rb-body",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Space Grotesk", variable: "--rb-display", weights: ["400", "500", "600", "700"] },
+  { family: "Inter", variable: "--rb-body", weights: ["400", "500", "600", "700"] },
+]);
 
 const A = "/templates/rebo";
 const CLASH = "https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap";
@@ -73,9 +64,10 @@ export function ReboSite({
 
   return (
     <div
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#E44F39"),
+        ...faces.style,
         fontFamily: "var(--rb-body), Inter, ui-sans-serif, system-ui, sans-serif",
         color: RB.ink,
         backgroundColor: isHome ? RB.bg : RB.innerBg,
@@ -83,6 +75,7 @@ export function ReboSite({
       }}
     >
       <link rel="stylesheet" href={CLASH} />
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <style>{`
         @keyframes rb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }

@@ -1,23 +1,14 @@
-import { Space_Grotesk, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FU } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--fu-display",
-  weight: ["500","600","700"],
-  display: "swap",
-});
-
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--fu-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+const faces = templateFaces([
+  { family: "Space Grotesk", variable: "--fu-display", weights: ["500","600","700"] },
+  { family: "Inter", variable: "--fu-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/fusion/hero.jpg";
 const NAV = [
@@ -63,15 +54,17 @@ export function FusionSite({
   return (
     <div
       id="fu-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#8758FF"),
+        ...faces.style,
         fontFamily: "var(--fu-body), ui-sans-serif, system-ui, sans-serif",
         color: FU.ink,
         backgroundColor: FU.bg,
         ...themeFontStyle(site?.theme, ["--fu-display", "--fu-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: FU.line, backgroundColor: FU.bg }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

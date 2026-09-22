@@ -3,8 +3,8 @@ import { env } from "@/lib/env";
 import { DeploymentStatus, PackageType, ProjectStatus } from "@/lib/constants";
 import { parseProject } from "@/lib/projects/projects";
 import { generateProjectFiles, type ProjectFile } from "@/lib/export/generate-project";
-import { deployToVercel, aliasDeployment, assignProjectDomain } from "@/lib/deployment/vercel";
-import { siteDomainUrl, toHttpsUrl } from "@/lib/deployment/url";
+import { deployToVercel } from "@/lib/deployment/vercel";
+import { toHttpsUrl } from "@/lib/deployment/url";
 import { slugify } from "@/lib/utils";
 import { notifyOwnerSiteLive } from "@/lib/notify/owner";
 import { hasPaidPackage } from "@/lib/payments/access";
@@ -86,7 +86,6 @@ export async function deployProject(projectId: string): Promise<{
   }
 
   const subdomain = `${slugify(project.businessName)}-${project.id.slice(-6)}`;
-  const fqdn = `${subdomain}.${env.deployment.platformDomain}`;
   let logs: DeploymentLog[] = [];
 
   logs = log(logs, DeploymentStatus.PENDING, "Publishing requested");
@@ -106,17 +105,8 @@ export async function deployProject(projectId: string): Promise<{
     await saveDeployment(projectId, { status: DeploymentStatus.BUILD_STARTED, subdomain, logs });
 
     const result = await deployToVercel({ projectName: subdomain, files });
-    logs = log(logs, DeploymentStatus.BUILD_STARTED, "Vercel confirmed the site is live");
-
-    await assignProjectDomain(result.projectId || subdomain, fqdn);
-    const aliased = await aliasDeployment(result.deploymentId, fqdn);
-    const vercelUrl = toHttpsUrl(result.url);
-    const liveUrl = aliased ? siteDomainUrl(subdomain) : vercelUrl;
-    logs = log(
-      logs,
-      DeploymentStatus.DEPLOYED,
-      aliased ? `Your domain is ${liveUrl}` : `Live at ${liveUrl}`
-    );
+    const liveUrl = toHttpsUrl(result.url);
+    logs = log(logs, DeploymentStatus.DEPLOYED, `Live at ${liveUrl}`);
 
     await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });

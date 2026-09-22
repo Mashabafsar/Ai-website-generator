@@ -1,23 +1,18 @@
-import { Syne, Inter } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { WC } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Syne({
-  subsets: ["latin"],
-  variable: "--wc-display",
-  weight: ["600","700","800"],
-  display: "swap",
-});
 
-const body = Inter({
-  subsets: ["latin"],
-  variable: "--wc-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Syne", variable: "--wc-display", weights: ["600","700","800"] },
+  { family: "Inter", variable: "--wc-body", weights: ["400","500"] },
+]);
 
 const HERO = "/templates/webcanvas/hero.jpg";
 const NAV = [
@@ -63,15 +58,17 @@ export function WebcanvasSite({
   return (
     <div
       id="wc-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#EEEBDE"),
+        ...faces.style,
         fontFamily: "var(--wc-body), ui-sans-serif, system-ui, sans-serif",
         color: WC.ink,
         backgroundColor: WC.bg,
         ...themeFontStyle(site?.theme, ["--wc-display", "--wc-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: WC.line, backgroundColor: WC.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

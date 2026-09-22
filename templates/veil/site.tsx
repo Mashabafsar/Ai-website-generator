@@ -1,23 +1,18 @@
-import { Syne, DM_Mono } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { VE } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
-const display = Syne({
-  subsets: ["latin"],
-  variable: "--ve-display",
-  weight: ["600","700","800"],
-  display: "swap",
-});
 
-const body = DM_Mono({
-  subsets: ["latin"],
-  variable: "--ve-body",
-  weight: ["400","500"],
-  display: "swap",
-});
+
+
+
+const faces = templateFaces([
+  { family: "Syne", variable: "--ve-display", weights: ["600","700","800"] },
+  { family: "DM Mono", variable: "--ve-body", weights: ["400","500"], kind: "mono" },
+]);
 
 const HERO = "/templates/veil/hero.jpg";
 const NAV = [
@@ -64,15 +59,17 @@ export function VeilSite({
   return (
     <div
       id="ve-top"
-      className={`${display.variable} ${body.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#C8F04D"),
+        ...faces.style,
         fontFamily: "var(--ve-body), ui-sans-serif, system-ui, sans-serif",
         color: VE.ink,
         backgroundColor: VE.bg,
         ...themeFontStyle(site?.theme, ["--ve-display", "--ve-body"]),
       }}
     >
+      {<link rel="stylesheet" href={faces.href} />}
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <header className="sticky top-0 z-20 border-b backdrop-blur" style={{ borderColor: VE.line, backgroundColor: VE.inverse }}>
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-4">

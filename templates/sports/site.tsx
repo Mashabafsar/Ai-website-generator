@@ -1,20 +1,17 @@
-import { Bebas_Neue } from "next/font/google";
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { SP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { templateFaces } from "../shared/template-faces";
 
 // The design's display/body face is Clash Grotesk (Fontshare — not on Google
 // Fonts), so we load it via a stylesheet and expose it through --sp-display.
-const DISPLAY_STACK = "'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif";
+const faces = templateFaces([
+  { family: "Bebas Neue", variable: "--sp-wordmark", weights: ["400"] },
+]);
 
-const wordmark = Bebas_Neue({
-  subsets: ["latin"],
-  variable: "--sp-wordmark",
-  weight: ["400"],
-  display: "swap",
-});
+const DISPLAY_STACK = "'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif";
 
 const HERO_FALLBACK = "/templates/sports/hero.jpg";
 const ABOUT_FALLBACK = "/templates/sports/about.jpg";
@@ -169,9 +166,10 @@ export function SportsSite({
   return (
     <div
       id="sp-top"
-      className={`${wordmark.variable} scroll-smooth antialiased`}
+      className={`scroll-smooth antialiased`}
       style={{
         ...brandStyle(site?.theme, "#ffc857"),
+        ...faces.style,
         ["--sp-display" as string]: DISPLAY_STACK,
         fontFamily: DISPLAY_STACK,
         color: SP.ink,
@@ -180,6 +178,7 @@ export function SportsSite({
         ...themeFontStyle(site?.theme, ["--sp-display", "--sp-wordmark"]),
       }}
     >
+      <link rel="stylesheet" href={faces.href} />
       {themeFontHref(site?.theme) ? (
         <link rel="stylesheet" href={themeFontHref(site?.theme)!} />
       ) : null}
