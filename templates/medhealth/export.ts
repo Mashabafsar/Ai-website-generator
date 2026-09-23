@@ -88,7 +88,7 @@ export function renderMedhealthPage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&family=Inter:wght@400;500;600&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --mh-display: 'Manrope', ui-sans-serif, system-ui, sans-serif; --mh-body: 'Inter', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#224171")} ${themeFontCss(site.theme, ["--mh-display","--mh-body"])} }

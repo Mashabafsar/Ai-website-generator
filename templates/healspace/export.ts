@@ -88,7 +88,7 @@ export function renderHealspacePage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --hs-display: 'Newsreader', ui-sans-serif, system-ui, sans-serif; --hs-body: 'Manrope', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#E47565")} ${themeFontCss(site.theme, ["--hs-display","--hs-body"])} }

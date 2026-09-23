@@ -478,7 +478,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { ${brandCss(site.theme, "#FFF6D2")} ${themeFontCss(site.theme, ["--cs-font"])} }

@@ -544,12 +544,12 @@ export function renderSarahfolioPage(site: AssembledSite, pageSlug?: string): st
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --sf-display: Anton, ui-sans-serif, system-ui, sans-serif; --sf-body: Inter, ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#FFBF38")} ${themeFontCss(site.theme, ["--sf-display","--sf-body"])} }
     html { scroll-behavior: smooth; }
-    body { font-family: var(--sf-body), Inter, ui-sans-serif, system-ui, sans-serif; color: ${SF.ink}; background: ${SF.bg}; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--sf-body), ui-sans-serif, system-ui, sans-serif; color: ${SF.ink}; background: ${SF.bg}; -webkit-font-smoothing: antialiased; }
     .sf-menu > summary { list-style: none; }
     .sf-menu > summary::-webkit-details-marker { display: none; }
     .sf-cta:active { transform: scale(0.97); }

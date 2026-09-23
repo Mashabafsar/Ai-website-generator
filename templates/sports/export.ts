@@ -433,14 +433,14 @@ ${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --sp-display: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --sp-wordmark: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#ffc857")} ${themeFontCss(site.theme, ["--sp-display","--sp-wordmark"])} }
+    :root { --sp-display: 'Clash Grotesk', ui-sans-serif, system-ui, sans-serif; --sp-wordmark: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#ffc857")} ${themeFontCss(site.theme, ["--sp-display","--sp-wordmark"])} }
     html { scroll-behavior: smooth; }
     body {
-      font-family: 'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+      font-family: 'Clash Grotesk', ui-sans-serif, system-ui, sans-serif;
       color: ${SP.ink};
       background: ${SP.white};
       -webkit-font-smoothing: antialiased;

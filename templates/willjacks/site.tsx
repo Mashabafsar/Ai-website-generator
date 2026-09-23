@@ -53,7 +53,7 @@ export function WilljacksSite({
       style={{
         ...brandStyle(site?.theme, "#181818"),
         ...faces.style,
-        fontFamily: "var(--wj-sans), Inter, ui-sans-serif, system-ui, sans-serif",
+        fontFamily: "var(--wj-sans), ui-sans-serif, system-ui, sans-serif",
         color: WJ.ink,
         backgroundColor: WJ.bg,
         ...themeFontStyle(site?.theme, ["--wj-sans"]),
@@ -81,7 +81,7 @@ function pageHref(slug: string): string {
 }
 
 function displayFont(): CSSProperties {
-  return { fontFamily: "var(--wj-sans), Inter, ui-sans-serif, sans-serif" };
+  return { fontFamily: "var(--wj-sans), ui-sans-serif, sans-serif" };
 }
 
 function SiteNav({

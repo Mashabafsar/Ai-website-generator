@@ -351,7 +351,7 @@ ${faq.type ? `<section id="sl-faq" class="px-6 py-8 md:py-12">
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --sl-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#2A85FF")} ${themeFontCss(site.theme, ["--sl-display","--sl-body"])} }

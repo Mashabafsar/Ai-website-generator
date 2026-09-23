@@ -364,12 +364,12 @@ export function renderForgeLimePage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Onest:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Onest:wght@400;500;700&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root {
-      --fl-display: 'Barlow Condensed', 'Oswald', ui-sans-serif, system-ui, sans-serif;
-      --fl-body: 'Onest', 'Inter', ui-sans-serif, system-ui, sans-serif;
+      --fl-display: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
+      --fl-body: 'Onest', ui-sans-serif, system-ui, sans-serif;
       ${brandCss(site.theme, "#A9FF5C")}
       ${themeFontCss(site.theme, ["--fl-display", "--fl-body"])}
     }

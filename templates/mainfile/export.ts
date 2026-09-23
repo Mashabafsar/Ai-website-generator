@@ -568,7 +568,7 @@ export function renderMainfilePage(site: AssembledSite, pageSlug?: string): stri
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --mr-display: 'Hind', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#7DBCFF")} ${themeFontCss(site.theme, ["--mr-display","--mr-body"])} }

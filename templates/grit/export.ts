@@ -83,7 +83,7 @@ export function renderGritPage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --gr-display: 'Playfair Display', ui-sans-serif, system-ui, sans-serif; --gr-body: 'IBM Plex Mono', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#FF5050")} ${themeFontCss(site.theme, ["--gr-display","--gr-body"])} }

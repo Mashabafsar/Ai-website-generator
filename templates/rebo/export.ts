@@ -45,7 +45,7 @@ function pageHref(slug: string): string {
 function dFont(clash = false): string {
   return clash
     ? "font-family:var(--rb-clash),'Clash Display',var(--rb-display),ui-sans-serif,sans-serif"
-    : "font-family:var(--rb-display),'Space Grotesk',ui-sans-serif,sans-serif";
+    : "font-family:var(--rb-display),ui-sans-serif,sans-serif";
 }
 
 function asterisk(className = ""): string {
@@ -802,13 +802,13 @@ export function renderReboPage(site: AssembledSite, pageSlug?: string): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=block" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --rb-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --rb-body: Inter, ui-sans-serif, system-ui, sans-serif; --rb-clash: 'Clash Display', var(--rb-display), ui-sans-serif, sans-serif; ${brandCss(site.theme, "#E44F39")} ${themeFontCss(site.theme, ["--rb-display","--rb-body","--rb-clash"])} }
     html { scroll-behavior: smooth; }
-    body { font-family: var(--rb-body), Inter, ui-sans-serif, system-ui, sans-serif; color: ${RB.ink}; background: ${bg}; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--rb-body), ui-sans-serif, system-ui, sans-serif; color: ${RB.ink}; background: ${bg}; -webkit-font-smoothing: antialiased; }
     @keyframes rb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     .rb-marquee { animation: rb-marquee 18s linear infinite; }
     @media (prefers-reduced-motion: reduce) { .rb-marquee { animation: none; } }

@@ -21,7 +21,7 @@ export type ThemeFont = {
 };
 
 const gf = (family: string, weights: string) =>
-  `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}:wght@${weights}&display=swap`;
+  `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}:wght@${weights}&display=block`;
 
 const sans = (family: string) => `'${family}', ui-sans-serif, system-ui, sans-serif`;
 const serif = (family: string) => `'${family}', ui-serif, Georgia, serif`;
@@ -48,7 +48,7 @@ export const THEME_FONTS: ThemeFont[] = [
 export const FONT_CATALOG_HREF =
   "https://fonts.googleapis.com/css2?" +
   THEME_FONTS.map((f) => f.href.split("css2?")[1]).join("&") +
-  "&display=swap";
+  "&display=block";
 
 /** The selected font for a theme, or null when the template default applies. */
 export function resolveThemeFont(theme?: ThemeTokens | null): ThemeFont | null {

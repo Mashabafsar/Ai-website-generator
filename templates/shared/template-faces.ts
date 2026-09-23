@@ -32,7 +32,7 @@ export function templateFaces(faces: TemplateFace[]): TemplateFaces {
     faces
       .map((face) => `family=${encodeURIComponent(face.family)}:wght@${weightList(face.weights)}`)
       .join("&") +
-    "&display=swap";
+    "&display=block";
   const style: CSSProperties = {};
   for (const face of faces) {
     (style as Record<string, string>)[face.variable] = stack(face.family, face.kind);

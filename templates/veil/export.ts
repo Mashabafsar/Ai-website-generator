@@ -82,7 +82,7 @@ export function renderVeilPage(site: AssembledSite): string {
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=block" rel="stylesheet" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
     :root { --ve-display: 'Syne', ui-sans-serif, system-ui, sans-serif; --ve-body: 'DM Mono', ui-sans-serif, system-ui, sans-serif; ${brandCss(site.theme, "#C8F04D")} ${themeFontCss(site.theme, ["--ve-display","--ve-body"])} }

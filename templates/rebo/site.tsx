@@ -12,7 +12,7 @@ const faces = templateFaces([
 ]);
 
 const A = "/templates/rebo";
-const CLASH = "https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap";
+const CLASH = "https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=block";
 
 const FALLBACK = {
   hero: `${A}/hero.png`,
@@ -68,7 +68,8 @@ export function ReboSite({
       style={{
         ...brandStyle(site?.theme, "#E44F39"),
         ...faces.style,
-        fontFamily: "var(--rb-body), Inter, ui-sans-serif, system-ui, sans-serif",
+        ["--rb-clash" as string]: "'Clash Display', ui-sans-serif, system-ui, sans-serif",
+        fontFamily: "var(--rb-body), ui-sans-serif, system-ui, sans-serif",
         color: RB.ink,
         backgroundColor: isHome ? RB.bg : RB.innerBg,
         ...themeFontStyle(site?.theme, ["--rb-display", "--rb-body", "--rb-clash"]),
@@ -130,7 +131,7 @@ function displayFont(clash = false): CSSProperties {
   return {
     fontFamily: clash
       ? "var(--rb-clash), 'Clash Display', var(--rb-display), ui-sans-serif, sans-serif"
-      : "var(--rb-display), 'Space Grotesk', ui-sans-serif, sans-serif",
+      : "var(--rb-display), ui-sans-serif, sans-serif",
   };
 }
 

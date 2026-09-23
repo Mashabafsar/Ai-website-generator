@@ -239,7 +239,7 @@ export function renderLuxeframePage(site: AssembledSite, pageSlug?: string): str
   <meta name="description" content="${esc(site.seo.description)}" />
   ${themeFontHref(site.theme) ? `<link href="${themeFontHref(site.theme)}" rel="stylesheet" />` : ""}
   <style>
-    :root { --lx-display: MatterSemiBold, Inter, sans-serif; --lx-body: MatterLight, Inter, sans-serif; ${brandCss(site.theme, "#E0FD60")} ${themeFontCss(site.theme, ["--lx-display","--lx-body"])} }
+    :root { --lx-display: MatterSemiBold, sans-serif; --lx-body: MatterLight, sans-serif; ${brandCss(site.theme, "#E0FD60")} ${themeFontCss(site.theme, ["--lx-display","--lx-body"])} }
     html { scroll-behavior: smooth; }
     ${themeFontBodyCss(site.theme)}
     ${LX_CSS}

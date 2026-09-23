@@ -78,7 +78,7 @@ export function SarahfolioSite({
       style={{
         ...brandStyle(site?.theme, "#FFBF38"),
         ...faces.style,
-        fontFamily: "var(--sf-body), Inter, ui-sans-serif, system-ui, sans-serif",
+        fontFamily: "var(--sf-body), ui-sans-serif, system-ui, sans-serif",
         color: SF.ink,
         backgroundColor: SF.bg,
         ...themeFontStyle(site?.theme, ["--sf-display", "--sf-body"]),

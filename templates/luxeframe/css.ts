@@ -3,9 +3,9 @@ import { LX } from "./tokens";
 const A = "/templates/luxeframe";
 
 export const LX_CSS = `
-@font-face { font-family: MatterLight; src: url(${A}/Matter-Light.ttf); font-weight: 300; font-display: swap; }
-@font-face { font-family: MatterMedium; src: url(${A}/Matter-Medium.ttf); font-weight: 500; font-display: swap; }
-@font-face { font-family: MatterSemiBold; src: url(${A}/Matter-SemiBold.ttf); font-weight: 600; font-display: swap; }
+@font-face { font-family: MatterLight; src: url(${A}/Matter-Light.ttf); font-weight: 300; font-display: block; }
+@font-face { font-family: MatterMedium; src: url(${A}/Matter-Medium.ttf); font-weight: 500; font-display: block; }
+@font-face { font-family: MatterSemiBold; src: url(${A}/Matter-SemiBold.ttf); font-weight: 600; font-display: block; }
 
 .lx-root {
   --lx-green: ${LX.brand};
@@ -17,7 +17,7 @@ export const LX_CSS = `
   --lx-soft: ${LX.surface};
   color: var(--lx-ink);
   background: var(--lx-black);
-  font-family: MatterLight, Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: MatterLight, ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -25,9 +25,9 @@ export const LX_CSS = `
 .lx-root img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .lx-main { display: flex; flex-direction: column; gap: 200px; padding-bottom: 200px; overflow-x: hidden; }
 .lx-wrap { padding: 0 40px; }
-.lx-font90 { font-size: 90px; text-transform: uppercase; font-family: MatterSemiBold, Inter, sans-serif; line-height: 0.95; }
+.lx-font90 { font-size: 90px; text-transform: uppercase; font-family: MatterSemiBold, sans-serif; line-height: 0.95; }
 .lx-font36 { font-size: 36px; line-height: 130%; letter-spacing: 0.03em; }
-.lx-font24 { font-size: 24px; line-height: 150%; letter-spacing: 0.01em; font-family: MatterMedium, Inter, sans-serif; font-weight: 400; }
+.lx-font24 { font-size: 24px; line-height: 150%; letter-spacing: 0.01em; font-family: MatterMedium, sans-serif; font-weight: 400; }
 .lx-font20 { font-size: 20px; letter-spacing: 0.02em; }
 .lx-font16 { font-size: 16px; letter-spacing: 0.05em; }
 
@@ -43,9 +43,9 @@ export const LX_CSS = `
   mix-blend-mode: difference;
   color: #fff;
 }
-.lx-logo { font-size: 22px; text-transform: uppercase; font-family: MatterSemiBold, Inter, sans-serif; letter-spacing: 0.1em; }
+.lx-logo { font-size: 22px; text-transform: uppercase; font-family: MatterSemiBold, sans-serif; letter-spacing: 0.1em; }
 .lx-ham { cursor: pointer; display: flex; align-items: center; gap: 15px; background: none; border: 0; color: inherit; font: inherit; }
-.lx-ham p { font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; font-family: MatterMedium, Inter, sans-serif; margin: 0; }
+.lx-ham p { font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; font-family: MatterMedium, sans-serif; margin: 0; }
 .lx-circle {
   background: #fff; width: 50px; height: 50px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 7px; padding: 10px;
@@ -85,7 +85,7 @@ export const LX_CSS = `
   display: flex; flex-direction: column; justify-content: center;
   box-sizing: border-box;
 }
-.lx-menu-top a { font-size: 40px; font-family: MatterSemiBold, Inter, sans-serif; display: block; }
+.lx-menu-top a { font-size: 40px; font-family: MatterSemiBold, sans-serif; display: block; }
 .lx-menu-bottom { display: flex; flex-direction: column; gap: 5px; margin-top: 5vw; }
 .lx-under { position: relative; width: fit-content; overflow: hidden; text-transform: uppercase; display: block; }
 .lx-under::before {
@@ -99,7 +99,7 @@ export const LX_CSS = `
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   width: 60vw; text-align: center; z-index: 4; color: #fff;
 }
-.lx-hero-text h1 { font-size: 5.2vw; font-family: MatterSemiBold, Inter, sans-serif; text-transform: uppercase; line-height: 1; margin: 0; }
+.lx-hero-text h1 { font-size: 5.2vw; font-family: MatterSemiBold, sans-serif; text-transform: uppercase; line-height: 1; margin: 0; }
 .lx-scroll { position: absolute; left: 50%; transform: translateX(-50%); bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 5px; text-transform: uppercase; z-index: 4; }
 .lx-arrow { height: 22px; width: 22px; animation: lx-bob 1s linear infinite alternate; }
 .lx-arrow img { transform: rotate(-90deg); }
@@ -219,7 +219,7 @@ export const LX_CSS = `
 .lx-ben-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 70px; }
 .lx-ben { border-top: 1px solid ${LX.line}; padding-top: 40px; }
 .lx-ben p { color: ${LX.body}; }
-.lx-marquee { position: relative; width: 100%; height: 150px; overflow: hidden; font-size: 150px; text-transform: uppercase; font-family: MatterSemiBold, Inter, sans-serif; letter-spacing: -1px; line-height: 90%; }
+.lx-marquee { position: relative; width: 100%; height: 150px; overflow: hidden; font-size: 150px; text-transform: uppercase; font-family: MatterSemiBold, sans-serif; letter-spacing: -1px; line-height: 90%; }
 .lx-marquee-track { position: absolute; white-space: nowrap; animation: lx-marquee 80s linear infinite; }
 .lx-team { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; row-gap: 50px; margin-top: 70px; }
 .lx-team img { height: 50vh; }
@@ -240,7 +240,7 @@ export const LX_CSS = `
 .lx-foot-col { width: 100%; display: flex; }
 .lx-foot-col:first-child { flex-direction: column; gap: 8px; }
 .lx-foot-links { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-.lx-giant { font-size: 21.4vw; letter-spacing: -0.8vw; line-height: 85%; color: #323232; margin: 100px 0 0; font-family: MatterSemiBold, Inter, sans-serif; text-transform: uppercase; }
+.lx-giant { font-size: 21.4vw; letter-spacing: -0.8vw; line-height: 85%; color: #323232; margin: 100px 0 0; font-family: MatterSemiBold, sans-serif; text-transform: uppercase; }
 
 @keyframes lx-bob { from { transform: translateY(0); } to { transform: translateY(12px); } }
 @keyframes lx-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }

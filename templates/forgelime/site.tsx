@@ -68,8 +68,8 @@ const NAV = [
   { label: "FAQ", href: "#fl-faq" },
 ];
 
-const DISPLAY_STACK = "'Barlow Condensed', 'Oswald', ui-sans-serif, system-ui, sans-serif";
-const BODY_STACK = "'Onest', 'Inter', ui-sans-serif, system-ui, sans-serif";
+const DISPLAY_STACK = "'Barlow Condensed', ui-sans-serif, system-ui, sans-serif";
+const BODY_STACK = "'Onest', ui-sans-serif, system-ui, sans-serif";
 
 /**
  * Forge Lime is a single-page high-contrast design; copy and media can change,

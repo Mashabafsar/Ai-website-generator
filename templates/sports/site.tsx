@@ -11,7 +11,7 @@ const faces = templateFaces([
   { family: "Bebas Neue", variable: "--sp-wordmark", weights: ["400"] },
 ]);
 
-const DISPLAY_STACK = "'Clash Grotesk', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif";
+const DISPLAY_STACK = "'Clash Grotesk', ui-sans-serif, system-ui, sans-serif";
 
 const HERO_FALLBACK = "/templates/sports/hero.jpg";
 const ABOUT_FALLBACK = "/templates/sports/about.jpg";
@@ -186,7 +186,7 @@ export function SportsSite({
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
         rel="stylesheet"
-        href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=swap"
+        href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@300,400,500,600,700&display=block"
       />
       {/* Hero — full-bleed action photo with the nav overlaid on top */}
       <section className="relative w-full min-h-[92vh] overflow-hidden" style={sectionBandStyle(hero.theme)}>
