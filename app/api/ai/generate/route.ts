@@ -1,4 +1,4 @@
-import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
+import { requireUser, jsonError, readJson } from "@/lib/http";
 import { getOwnedProject } from "@/lib/projects/projects";
 import {
   generateWebsite,
@@ -8,8 +8,41 @@ import {
 } from "@/lib/agents/orchestrator";
 import { InsufficientCreditsError } from "@/lib/credits/credits";
 import { rateLimit } from "@/lib/rate-limit";
+import type { GenerationStepId } from "@/lib/ai/generation-steps";
 
 export const maxDuration = 300;
+
+type StreamEvent =
+  | { type: "step"; id: GenerationStepId }
+  | { type: "done"; result: unknown }
+  | { type: "error"; error: string; code?: string };
+
+function streamGeneration(work: (send: (event: StreamEvent) => void) => Promise<void>): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (event: StreamEvent) => {
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+      };
+      try {
+        await work(send);
+      } catch (err) {
+        console.error("Generation stream error:", err);
+        send({ type: "error", error: "We couldn't write your website. Your credits were returned.", code: "GENERATION_FAILED" });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
 
 export async function POST(req: Request) {
   const { user, response } = await requireUser();
@@ -28,28 +61,41 @@ export async function POST(req: Request) {
   const project = await getOwnedProject(user.id, body.projectId);
   if (!project) return jsonError("We couldn't find that website project.", 404, "NOT_FOUND");
 
-  try {
-    const result = await generateWebsite({ userId: user.id, projectId: project.id });
-    return jsonOk(result);
-  } catch (err) {
-    if (err instanceof InsufficientCreditsError) {
-      return jsonError(
-        "Not enough credits to write your website. Please buy more.",
-        402,
-        "INSUFFICIENT_CREDITS",
-        { required: err.required, available: err.available }
-      );
+  return streamGeneration(async (send) => {
+    try {
+      const result = await generateWebsite({
+        userId: user.id,
+        projectId: project.id,
+        onProgress: (id) => send({ type: "step", id }),
+      });
+      send({ type: "done", result });
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        send({
+          type: "error",
+          error: "Not enough credits to write your website. Please buy more.",
+          code: "INSUFFICIENT_CREDITS",
+        });
+        return;
+      }
+      if (err instanceof AlreadyGeneratedError) {
+        send({ type: "error", error: err.message, code: "ALREADY_GENERATED" });
+        return;
+      }
+      if (err instanceof GenerationInProgressError) {
+        send({ type: "error", error: err.message, code: "IN_PROGRESS" });
+        return;
+      }
+      if (err instanceof NoQuestionnaireError) {
+        send({ type: "error", error: err.message, code: "NO_QUESTIONNAIRE" });
+        return;
+      }
+      console.error("Generation error:", err);
+      send({
+        type: "error",
+        error: "We couldn't write your website. Your credits were returned.",
+        code: "GENERATION_FAILED",
+      });
     }
-    if (err instanceof AlreadyGeneratedError) {
-      return jsonError(err.message, 409, "ALREADY_GENERATED");
-    }
-    if (err instanceof GenerationInProgressError) {
-      return jsonError(err.message, 409, "IN_PROGRESS");
-    }
-    if (err instanceof NoQuestionnaireError) {
-      return jsonError(err.message, 400, "NO_QUESTIONNAIRE");
-    }
-    console.error("Generation error:", err);
-    return jsonError("We couldn't write your website. Your credits were returned.", 500, "GENERATION_FAILED");
-  }
+  });
 }

@@ -36,6 +36,7 @@ import { recordAiIncidents } from "@/lib/ai/incidents";
 import type { AiFailure } from "@/lib/ai/failure";
 import { trySyncPaidProjectToGitHub } from "@/lib/github/github";
 import { slugify } from "@/lib/utils";
+import type { GenerationStepId } from "@/lib/ai/generation-steps";
 
 export class AlreadyGeneratedError extends Error {
   constructor() {
@@ -89,8 +90,9 @@ export type GenerateResult = {
 export async function generateWebsite(params: {
   userId: string;
   projectId: string;
+  onProgress?: (id: GenerationStepId) => void;
 }): Promise<GenerateResult> {
-  const { userId, projectId } = params;
+  const { userId, projectId, onProgress } = params;
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId },
@@ -133,6 +135,7 @@ export async function generateWebsite(params: {
     template,
     answers,
     spendKey: await nextGenerationSpendKey(projectId),
+    onProgress,
   });
 }
 
@@ -252,9 +255,14 @@ async function runGeneration(params: {
   spendKey: string;
   designVersion?: number;
   keepPaidStatus?: boolean;
+  onProgress?: (id: GenerationStepId) => void;
 }): Promise<GenerateResult> {
-  const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus } = params;
+  const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus, onProgress } =
+    params;
+  const report = (id: GenerationStepId) => onProgress?.(id);
 
+  report("answers");
+  report("plan");
   const plannedAnswers = await answersWithPlannedLayout({
     userId,
     projectId,
@@ -287,6 +295,7 @@ async function runGeneration(params: {
   let incidentsLogged = false;
 
   try {
+    report("copy");
     const provider = getAiProvider();
     const { result: generated, events } = await withUsageCapture(() =>
       withAiDiagnostics(failureLog, () => provider.generateBlueprint(requirements))
@@ -322,6 +331,7 @@ async function runGeneration(params: {
 
     let blueprint = generated;
 
+    report("check");
     // The model only writes copy — snap its output back onto the locked layout.
     blueprint = conformToTemplate(blueprint, requirements);
     blueprint = sanitizeBlueprint(blueprint);
@@ -353,7 +363,9 @@ async function runGeneration(params: {
       customColors: useImportedLook ? undefined : requirements.customColors,
     });
     blueprint = selectIcons(blueprint);
+    report("images");
     blueprint = await sourceImages(blueprint, assets.images);
+    report("preview");
     const site = {
       ...assembleSite(blueprint, theme),
       contact: requirements.contact,

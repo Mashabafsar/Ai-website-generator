@@ -6,6 +6,9 @@ import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
+import { GenerationLog } from "@/components/app/generation-log";
+import { GenerationStreamError, streamWebsiteGeneration } from "@/lib/ai/generation-stream";
+import type { GenerationStepId } from "@/lib/ai/generation-steps";
 
 /**
  * Shown on a website whose copy came from its design's starter content because
@@ -26,25 +29,15 @@ export function GenerationNotice({
 }) {
   const router = useRouter();
   const [retrying, setRetrying] = useState(false);
+  const [buildStep, setBuildStep] = useState<GenerationStepId | "done" | null>(null);
 
   async function retry() {
     setRetrying(true);
+    setBuildStep("answers");
     try {
-      const res = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
-      });
-      const data = await res.json();
+      const data = await streamWebsiteGeneration(projectId, setBuildStep);
+      setBuildStep("done");
       notifyCreditsChanged();
-      if (!res.ok) {
-        if (data.code === "INSUFFICIENT_CREDITS") {
-          toast.error("Not enough credits — opening the credits page.");
-          router.push("/app/credits");
-          return;
-        }
-        throw new Error(data.error || "We couldn't rebuild your content.");
-      }
       if (data.fromTemplate) {
         toast.error("Our writing tools are still unavailable. You were not charged.");
       } else {
@@ -52,6 +45,12 @@ export function GenerationNotice({
       }
       router.refresh();
     } catch (err) {
+      setBuildStep(null);
+      if (err instanceof GenerationStreamError && err.code === "INSUFFICIENT_CREDITS") {
+        toast.error("Not enough credits — opening the credits page.");
+        router.push("/app/credits");
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "We couldn't rebuild your content.");
     } finally {
       setRetrying(false);
@@ -75,6 +74,11 @@ export function GenerationNotice({
           to your balance.
         </p>
       </div>
+      {buildStep ? (
+        <div className="w-full basis-full">
+          <GenerationLog activeId={buildStep} />
+        </div>
+      ) : null}
       {canRetry && (
         <Button variant="brand" size="sm" onClick={retry} disabled={retrying}>
           {retrying ? (

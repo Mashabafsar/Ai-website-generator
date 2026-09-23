@@ -36,6 +36,9 @@ import { cn } from "@/lib/utils";
 import { hasImportedBrand, hasImportedTheme, parseImportedBrand } from "@/lib/branding/imported-brand";
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
+import { GenerationLog } from "@/components/app/generation-log";
+import { GenerationStreamError, streamWebsiteGeneration } from "@/lib/ai/generation-stream";
+import type { GenerationStepId } from "@/lib/ai/generation-steps";
 import { isMultiPageTemplate } from "@/lib/agents/site-layout";
 import type { SitePlanView } from "@/lib/agents/website-planner";
 import type { TemplatePageDef } from "@/lib/templates/types";
@@ -131,6 +134,7 @@ export function QuestionnaireWizard({
   const [step, setStep] = useState(() => resumeStep(initialAnswers));
   const STEPS = STEPS_BASE;
   const [submitting, setSubmitting] = useState(false);
+  const [buildStep, setBuildStep] = useState<GenerationStepId | "done" | null>(null);
   const [planning, setPlanning] = useState(false);
   const [sitePlan, setSitePlan] = useState<SitePlanView | null>(
     () => initialAnswers?.layoutPlan ?? null
@@ -388,24 +392,9 @@ export function QuestionnaireWizard({
         return;
       }
 
-      toast.loading("Writing your content…", { id: "gen" });
-      const genRes = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
-      });
-      const data = await genRes.json();
-      toast.dismiss("gen");
-
-      notifyCreditsChanged();
-      if (!genRes.ok) {
-        if (data.code === "INSUFFICIENT_CREDITS") {
-          toast.error("Not enough credits — opening the credits page.");
-          router.push("/app/credits");
-          return;
-        }
-        throw new Error(data.error || "We couldn't write your website");
-      }
+      setBuildStep("answers");
+      const data = await streamWebsiteGeneration(projectId, setBuildStep);
+      setBuildStep("done");
 
       notifyCreditsChanged();
       if (data.fromTemplate) {
@@ -418,7 +407,12 @@ export function QuestionnaireWizard({
       router.push(`/app/project/${projectId}/preview`);
       router.refresh();
     } catch (err) {
-      toast.dismiss("gen");
+      setBuildStep(null);
+      if (err instanceof GenerationStreamError && err.code === "INSUFFICIENT_CREDITS") {
+        toast.error("Not enough credits — opening the credits page.");
+        router.push("/app/credits");
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
@@ -427,6 +421,22 @@ export function QuestionnaireWizard({
 
   const progress = ((step + 1) / STEPS.length) * 100;
   const err = formState.errors;
+
+  if (buildStep) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div>
+              <p className="font-medium">Creating your website</p>
+              <p className="text-sm text-muted-foreground">This usually takes a minute. You can stay on this page.</p>
+            </div>
+            <GenerationLog activeId={buildStep} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
