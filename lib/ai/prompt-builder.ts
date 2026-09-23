@@ -22,7 +22,26 @@ const GUARDRAILS = `You are a website COPYWRITER and art director. Follow these 
 - Do NOT generate any frontend code, HTML, CSS, or scripts.
 - Do NOT include API keys, secrets, or external tracking code.
 - Do NOT copy copyrighted text from other sources; write original copy.
-- Write SHORT, punchy copy only — headlines, one-line subheads, brief bullets.`;
+- Write SHORT, punchy copy only — headlines, one-line subheads, brief bullets.
+
+SEARCH PHRASES — the words are how this business gets found:
+- Choose 3 to 6 phrases a real customer would type. Each one names the service
+  or product, and the city or area when a location is known.
+  Good: "custom sugar cookies in Austin". Bad: "sweet little moments".
+- Put the strongest phrase at the front of seo.title, then the business name.
+  Keep the title under 70 characters.
+- seo.description states that phrase once, what they offer, and who it is for.
+  Keep it under 160 characters.
+- seo.keywords is exactly those phrases. No filler words like "quality" or "best".
+- The home hero headline uses the main service in plain words, still inside the
+  headline character limit. Service, product, and feature titles are the names
+  people search, not slogans.
+- FAQ questions are questions people type into search. The answer names the
+  business once.
+- Use the business name and the location a few times, in natural sentences.
+  Do not repeat a phrase in every line.
+- Do not claim rankings, awards, "SEO certified", or "#1" unless the
+  questionnaire states that fact.`;
 
 const OUTPUT_SHAPE = `Output JSON must match this TypeScript shape:
 {
@@ -164,6 +183,7 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
     JSON.stringify(requirements, null, 2),
     "",
     `Write original, on-brand copy in a ${req.tone} tone for ${req.audience || "this audience"}.`,
+    "Every headline and service name should be a phrase this customer can be found for.",
     req.goals ? `Website goals: ${req.goals}` : "",
     `Choose the typeface and palette that suit a ${req.visualStyle.toLowerCase()},`,
     `${req.tone.toLowerCase()} ${req.business.industry} brand${req.brandingNotes ? ` (${req.brandingNotes})` : ""}.`,
@@ -198,6 +218,8 @@ export function buildLightPrompt(params: {
     "- Do not change facts (names, emails, phone) unless asked.",
     "- Never introduce dollar amounts or prices. Send visitors to Contact our sales instead.",
     "- Do not add code, HTML, or secrets. Write original copy.",
+    "- Keep the business name, the service, and the place in the copy. Use words a customer would type into search, not vague slogans, unless the instruction asks for a different phrase.",
+    "- Do not add ranking or award claims that are not already in the section.",
     `- Brand tone: ${brandTone}.`,
     limitsForPrompt(),
     "",
