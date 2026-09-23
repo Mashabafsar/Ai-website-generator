@@ -131,7 +131,7 @@ export function SportsSite({
   const eventImage = photoFor(event.image, photoPool, 2, demoChrome, EVENT_FALLBACK);
   const pricingBg = photoFor(undefined, photoPool, 3, demoChrome, PRICING_BG);
   const footerCard = photoFor(undefined, photoPool, 4, demoChrome, FOOTER_CARD);
-  const faces = demoChrome ? AVATARS : photoPool;
+  const portraits = demoChrome ? AVATARS : photoPool;
 
   const featureTitles = list(
     features.content,
@@ -297,7 +297,7 @@ export function SportsSite({
           <div className="flex flex-col gap-6 pb-6">
             <div className="flex items-center gap-3">
               <div className="flex items-center">
-                {faces.slice(0, 4).map((src, i) => (
+                {portraits.slice(0, 4).map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={`${src}-${i}`}
@@ -658,7 +658,7 @@ export function SportsSite({
         <SectionHeader label="Testimonials" index={7} />
         <div className="mt-10 flex flex-col items-center gap-5 text-center">
           <div className="flex items-center -space-x-3">
-            {faces.slice(0, 5).map((src, i) => (
+            {portraits.slice(0, 5).map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={`${src}-${i}`} src={src} alt="" className="size-12 rounded-full border-2 border-white object-cover" />
             ))}
@@ -691,8 +691,8 @@ export function SportsSite({
                     </blockquote>
                     <figcaption className="flex items-center gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {faces.length ? (
-                      <img src={faces[i % faces.length]} alt="" className="size-10 rounded-full object-cover" />
+                      {portraits.length ? (
+                      <img src={portraits[i % portraits.length]} alt="" className="size-10 rounded-full object-cover" />
                       ) : null}
                       <div>
                         <div className="text-sm font-medium" style={{ color: SP.ink }}>{authors[i] || (demoChrome ? "Athlo member" : businessName)}</div>
@@ -818,7 +818,7 @@ export function SportsSite({
           {demoChrome ? (
           <div className="absolute bottom-8 right-8 hidden items-center gap-3 lg:flex">
             <div className="flex -space-x-3">
-              {faces.slice(0, 4).map((src, i) => (
+              {portraits.slice(0, 4).map((src, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img key={`${src}-${i}`} src={src} alt="" className="size-12 rounded-full border-2 border-white object-cover" />
               ))}
