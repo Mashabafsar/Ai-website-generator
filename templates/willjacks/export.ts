@@ -22,6 +22,14 @@ const HERO = `${A}/hero.jpg`;
 const ARROW = `${A}/arrow.svg`;
 const WORK = [`${A}/work-1.jpg`, `${A}/work-2.png`, `${A}/work-3.jpg`, `${A}/work-4.png`];
 
+function isWilljacksDemo(businessName: string) {
+  return businessName.trim().toLowerCase() === "will jacks";
+}
+
+function indexLabel(i: number) {
+  return `(${String(i + 1).padStart(2, "0")})`;
+}
+
 function pageHref(slug: string): string {
   return slug === "home" ? "/" : `/${slug}/`;
 }
@@ -70,22 +78,32 @@ function toolsBand(heading: string, titles: string[], bodies: string[]): string 
   </div>`;
 }
 
-function workList(work: TemplateSlot): string {
-  const titles = list(work.content, "itemTitles", ["Banking", "Financilux", "Stride", "Wine & Donuts"]);
-  const indexes = list(work.content, "itemBodies", ["(01)", "(02)", "(03)", "(04)"]);
-  const previews = titles
+function workList(work: TemplateSlot, services: TemplateSlot, demo: boolean): string {
+  const portfolioTitles = list(work.content, "itemTitles");
+  const titles = (portfolioTitles.length ? portfolioTitles : list(services.content, "itemTitles")).slice(0, 4);
+  const shown = titles.length ? titles : demo ? ["Banking", "Financilux", "Stride", "Wine & Donuts"] : [];
+  if (!shown.length) return "";
+  const fromPortfolio = portfolioTitles.length > 0;
+  const images = fromPortfolio ? work.itemImages : services.itemImages;
+  const indexes =
+    demo && fromPortfolio
+      ? list(work.content, "itemBodies", shown.map((_, i) => indexLabel(i)))
+      : shown.map((_, i) => indexLabel(i));
+  const preview = (i: number) => images[i] || (demo ? WORK[i] || HERO : "");
+  const previews = shown
     .map((_, i) => {
+      const src = preview(i);
+      if (!src) return "";
       const w = i === 3 ? 752 : 1024;
       const h = i === 3 ? 564 : 768;
-      const src = work.itemImages[i] || WORK[i] || HERO;
       return `<div class="wj-prev wj-prev-${i} relative w-[500px]" style="top:${-500 + i * 500}px;transform:rotate(10deg)">
         <img src="${esc(src)}" alt="" width="${w}" height="${h}" class="h-auto w-[500px] object-cover" />
       </div>`;
     })
     .join("");
-  const items = titles
+  const items = shown
     .map((title, i) => {
-      const last = i === titles.length - 1 ? "border-b-0" : "";
+      const last = i === shown.length - 1 ? "border-b-0" : "";
       return `<a href="#wj-end" class="wj-item wj-item-${i} relative flex w-full items-center gap-8 border-b border-[rgba(198,198,198,0.5)] py-8 max-md:gap-8 max-md:py-4 ${last}">
         <div class="flex gap-5">
           <span class="text-[14px]">${esc(indexes[i] || `(${String(i + 1).padStart(2, "0")})`)}</span>
@@ -104,19 +122,19 @@ function workList(work: TemplateSlot): string {
   </div>`;
 }
 
-function homeBody(slots: TemplateSlot[]): string {
+function homeBody(slots: TemplateSlot[], demo: boolean, businessName: string): string {
   const hero = slotAt(slots, "hero");
   const about = slotAt(slots, "about");
   const services = slotAt(slots, "services");
   const work = slotAt(slots, "portfolio");
-  const heroImage = hero.image || HERO;
-  const marquee = text(hero.content, "ctaSecondary", "UIUX Designer — Frontend Developer —");
+  const heroImage = hero.image || (demo ? HERO : services.itemImages[0] || "");
+  const marquee = text(hero.content, "ctaSecondary", demo ? "UIUX Designer — Frontend Developer —" : businessName);
   const marqueeLine = `${marquee} ${marquee} ${marquee} ${marquee}`;
   return `<section class="relative flex h-screen items-end overflow-hidden px-[35px] max-md:h-auto max-md:px-[15px] max-md:pt-[200px]">
     <div class="flex w-full gap-[6vw] max-md:flex-col-reverse">
       <img src="${esc(heroImage)}" alt="" width="2000" height="2668" class="h-[80vh] w-[60%] object-cover max-md:h-auto max-md:w-full max-[560px]:h-[60vh] max-[560px]:object-cover" />
       <div class="mt-[6vw] flex w-full flex-col gap-[6vw] max-md:gap-[2vw] max-[560px]:gap-[8vw]">
-        <p class="w-full max-w-[200px] text-[16px] tracking-[-0.3px]">${esc(text(hero.content, "eyebrow", "Currently available for freelance projects"))}</p>
+        <p class="w-full max-w-[200px] text-[16px] tracking-[-0.3px]">${esc(text(hero.content, "eyebrow", demo ? "Currently available for freelance projects" : ""))}</p>
         <p class="w-full max-w-[400px] text-[16px] tracking-[-0.3px]">${esc(text(hero.content, "subheadline"))}</p>
       </div>
     </div>
@@ -132,7 +150,7 @@ function homeBody(slots: TemplateSlot[]): string {
       <p class="w-1/4 text-[16px] tracking-[-0.3px] max-[1068px]:w-full">${esc(text(about.content, "body"))}</p>
       <h3 class="w-3/4 text-[5vw] font-normal leading-[0.95] tracking-[-0.15vw] max-md:text-[7vw] max-[1068px]:w-full max-[560px]:text-[12vw]" style="${dFont()}">${esc(text(about.content, "subheadline"))}</h3>
     </div>
-    ${toolsBand(text(services.content, "heading", "Core Tools"), list(services.content, "itemTitles", ["Javascript", "WebGL", "NodeJs", "Framer"]), list(services.content, "itemBodies"))}
+    ${toolsBand(text(services.content, "heading", demo ? "Core Tools" : "What we offer"), list(services.content, "itemTitles", demo ? ["Javascript", "WebGL", "NodeJs", "Framer"] : []), list(services.content, "itemBodies"))}
   </section>
   <section class="wj-works overflow-hidden">
     <div class="px-[35px] pb-[10vw] pt-[10vw] max-md:px-[15px] max-[560px]:pb-[20vw] max-[560px]:pt-[20vw]">
@@ -142,17 +160,22 @@ function homeBody(slots: TemplateSlot[]): string {
       </div>
       <p class="mt-[5vw] max-w-[600px] text-[16px] tracking-[-0.3px] max-[560px]:mt-[10vw]">${esc(text(work.content, "body"))}</p>
     </div>
-    ${workList(work)}
+    ${workList(work, services, demo)}
   </section>`;
 }
 
-function aboutBody(slots: TemplateSlot[]): string {
+function aboutBody(slots: TemplateSlot[], demo: boolean): string {
   const hero = slotAt(slots, "hero");
   const services = slotAt(slots, "services");
   const about = slotAt(slots, "about");
   const process = slotAt(slots, "process");
-  const serviceTitles = list(services.content, "itemTitles", ["Web Design", "Motion Design", "Web Development", "No Code Development"]);
-  const disciplineTitles = list(about.content, "itemTitles", ["Creative Developer", "Modern Designer"]);
+  const serviceTitles = list(services.content, "itemTitles", demo ? ["Web Design", "Motion Design", "Web Development", "No Code Development"] : []);
+  const disciplineTitles = list(about.content, "itemTitles", demo ? ["Creative Developer", "Modern Designer"] : []);
+  const wroteItems = list(process.content, "itemTitles").length > 0;
+  const processTitles = wroteItems
+    ? list(process.content, "itemTitles")
+    : list(process.content, "stepTitles", demo ? ["Art Direction", "Design", "Development", "No - Code"] : []);
+  const processBodies = wroteItems ? list(process.content, "itemBodies") : list(process.content, "stepBodies");
   return `<section class="flex h-screen w-full items-end px-[35px] pb-[35px] max-md:px-[15px] max-md:pb-5">
     <h2 class="w-[70%] text-[5vw] font-normal leading-[0.95] tracking-[-0.15vw] max-md:w-full max-md:text-[7vw] max-[560px]:text-[12vw]" style="${dFont()}">${esc(text(hero.content, "headline"))}</h2>
   </section>
@@ -173,15 +196,15 @@ function aboutBody(slots: TemplateSlot[]): string {
     </div>
   </section>
   <section class="px-[35px] pb-[10vw] max-md:px-[15px]">
-    ${toolsBand(text(process.content, "heading", "Process"), list(process.content, "itemTitles", ["Art Direction", "Design", "Development", "No - Code"]), list(process.content, "itemBodies"))}
+    ${toolsBand(text(process.content, "heading", "Process"), processTitles, processBodies)}
   </section>`;
 }
 
-function footerBlock(slots: TemplateSlot[], businessName: string, contactEmail: string, location: string): string {
+function footerBlock(slots: TemplateSlot[], businessName: string, contactEmail: string, location: string, demo: boolean): string {
   const contact = slotAt(slots, "contact");
   const footer = slotAt(slots, "footer");
-  const socials = list(footer.content, "itemTitles", ["Instagram", "Facebook", "Twitter", "LinkedIn"]);
-  const links = list(footer.content, "linkLabels", ["Behance", "Dribbble", "Contra", "Pinterest"]);
+  const socials = list(footer.content, "itemTitles", demo ? ["Instagram", "Facebook", "Twitter", "LinkedIn"] : []);
+  const links = list(footer.content, "linkLabels", demo ? ["Behance", "Dribbble", "Contra", "Pinterest"] : []);
   const row1 = socials.slice(0, 1);
   const row2 = socials.slice(1, 3);
   const row3 = socials.slice(3, 4);
@@ -196,7 +219,7 @@ function footerBlock(slots: TemplateSlot[], businessName: string, contactEmail: 
         <h2 class="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style="${dFont()}">${esc(text(contact.content, "heading", "Reach"))}</h2>
         <h2 class="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style="${dFont()}">${esc(text(contact.content, "subheading", "Out"))}</h2>
       </div>
-      <p class="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">${esc(text(footer.content, "tagline", "Currently available for freelance projects"))}</p>
+      <p class="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">${esc(text(footer.content, "tagline", demo ? "Currently available for freelance projects" : ""))}</p>
       <div class="flex gap-[6vw] py-[10vw] max-md:flex-col max-md:gap-[10vw] max-md:py-[20vw]">
         <p class="w-1/4 whitespace-pre-line text-[16px] tracking-[-0.3px] max-md:w-full">${esc(location.replace(/^(Based in)\s+/i, "$1\n"))}</p>
         <div class="w-3/4 max-w-[750px] max-md:w-full">
@@ -270,10 +293,11 @@ export function renderWilljacksPage(site: AssembledSite, pageSlug?: string): str
   const slots = toSlots(null, site, active);
   const footer = slotAt(slots, "footer");
   const businessName = text(footer.content, "businessName") || site.businessName || "Will Jacks";
+  const demo = isWilljacksDemo(businessName);
   const customLogo = site.theme?.logoUrl?.trim() || "";
   const contactEmail = site.contact?.email?.trim() || "";
-  const location = text(footer.content, "location", "Based in London, UK");
-  const body = active === "about" ? aboutBody(slots) : homeBody(slots);
+  const location = text(footer.content, "location", site.contact?.address?.trim() || (demo ? "Based in London, UK" : ""));
+  const body = active === "about" ? aboutBody(slots, demo) : homeBody(slots, demo, businessName);
 
   return `<!doctype html>
 <html lang="en">
@@ -304,7 +328,7 @@ export function renderWilljacksPage(site: AssembledSite, pageSlug?: string): str
 <body>
 ${nav(pages, active, businessName, customLogo, location)}
 <main>${body}</main>
-${footerBlock(slots, businessName, contactEmail, location)}
+${footerBlock(slots, businessName, contactEmail, location, demo)}
 </body>
 </html>`;
 }

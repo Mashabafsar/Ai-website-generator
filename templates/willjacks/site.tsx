@@ -17,6 +17,15 @@ const HERO = `${A}/hero.jpg`;
 const ARROW = `${A}/arrow.svg`;
 const WORK = [`${A}/work-1.jpg`, `${A}/work-2.png`, `${A}/work-3.jpg`, `${A}/work-4.png`] as const;
 
+/** Gallery sample only. A generated business must not inherit Will Jacks' projects. */
+function isWilljacksDemo(businessName: string) {
+  return businessName.trim().toLowerCase() === "will jacks";
+}
+
+function indexLabel(i: number) {
+  return `(${String(i + 1).padStart(2, "0")})`;
+}
+
 /**
  * Will Jacks — personal designer-developer portfolio from the Figma file.
  * Inter stands in for TT Hoves. `pageSlug` switches Index (home) / Approach (about).
@@ -45,7 +54,14 @@ export function WilljacksSite({
   const customLogo = site?.theme?.logoUrl?.trim() || "";
   const details = contact ?? site?.contact;
   const contactEmail = details?.email?.trim() || "";
-  const location = text(footer.content, "location", blueprint?.business.location ? `Based in ${blueprint.business.location}` : "Based in London, UK");
+  const demo = isWilljacksDemo(businessName);
+  const location = text(
+    footer.content,
+    "location",
+    blueprint?.business.location
+      ? `Based in ${blueprint.business.location}`
+      : details?.address?.trim() || (demo ? "Based in London, UK" : "")
+  );
 
   return (
     <div
@@ -63,17 +79,17 @@ export function WilljacksSite({
       {themeFontHref(site?.theme) ? <link rel="stylesheet" href={themeFontHref(site?.theme)!} /> : null}
       <style>{WJ_CSS}</style>
       <SiteNav pages={pages} active={active} businessName={businessName} customLogo={customLogo} location={location} />
-      <main>{renderPageBody(active, slots, { businessName, contactEmail, location })}</main>
-      <SiteFooter slots={slots} businessName={businessName} contactEmail={contactEmail} location={location} />
+      <main>{renderPageBody(active, slots, { businessName, contactEmail, location }, demo)}</main>
+      <SiteFooter slots={slots} businessName={businessName} contactEmail={contactEmail} location={location} demo={demo} />
     </div>
   );
 }
 
 type PageMeta = { businessName: string; contactEmail: string; location: string };
 
-function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta) {
-  if (active === "about") return <AboutBody slots={slots} />;
-  return <HomeBody slots={slots} meta={meta} />;
+function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta, demo: boolean) {
+  if (active === "about") return <AboutBody slots={slots} demo={demo} />;
+  return <HomeBody slots={slots} meta={meta} demo={demo} />;
 }
 
 function pageHref(slug: string): string {
@@ -131,13 +147,13 @@ function SiteNav({
   );
 }
 
-function HomeBody({ slots, meta }: { slots: TemplateSlot[]; meta: PageMeta }) {
+function HomeBody({ slots, meta, demo }: { slots: TemplateSlot[]; meta: PageMeta; demo: boolean }) {
   const hero = slotAt(slots, "hero");
   const about = slotAt(slots, "about");
   const services = slotAt(slots, "services");
   const work = slotAt(slots, "portfolio");
-  const heroImage = hero.image || HERO;
-  const marquee = text(hero.content, "ctaSecondary", "UIUX Designer — Frontend Developer —");
+  const heroImage = hero.image || (demo ? HERO : services.itemImages[0] || "");
+  const marquee = text(hero.content, "ctaSecondary", demo ? "UIUX Designer — Frontend Developer —" : meta.businessName);
   const marqueeLine = `${marquee} ${marquee} ${marquee} ${marquee}`;
 
   return (
@@ -152,7 +168,7 @@ function HomeBody({ slots, meta }: { slots: TemplateSlot[]; meta: PageMeta }) {
             className="h-[80vh] w-[60%] object-cover max-md:h-auto max-md:w-full max-[560px]:h-[60vh] max-[560px]:object-cover"
           />
           <div className="mt-[6vw] flex w-full flex-col gap-[6vw] max-md:gap-[2vw] max-[560px]:gap-[8vw]">
-            <p className="w-full max-w-[200px] text-[16px] tracking-[-0.3px]">{text(hero.content, "eyebrow", "Currently available for freelance projects")}</p>
+            <p className="w-full max-w-[200px] text-[16px] tracking-[-0.3px]">{text(hero.content, "eyebrow", demo ? "Currently available for freelance projects" : "")}</p>
             <p className="w-full max-w-[400px] text-[16px] tracking-[-0.3px]">{text(hero.content, "subheadline")}</p>
           </div>
         </div>
@@ -175,7 +191,11 @@ function HomeBody({ slots, meta }: { slots: TemplateSlot[]; meta: PageMeta }) {
             {text(about.content, "subheadline")}
           </h3>
         </div>
-        <ToolsBand heading={text(services.content, "heading", "Core Tools")} titles={list(services.content, "itemTitles", ["Javascript", "WebGL", "NodeJs", "Framer"])} bodies={list(services.content, "itemBodies")} />
+        <ToolsBand
+          heading={text(services.content, "heading", demo ? "Core Tools" : "What we offer")}
+          titles={list(services.content, "itemTitles", demo ? ["Javascript", "WebGL", "NodeJs", "Framer"] : [])}
+          bodies={list(services.content, "itemBodies")}
+        />
       </section>
 
       <section className="wj-works overflow-hidden">
@@ -190,20 +210,30 @@ function HomeBody({ slots, meta }: { slots: TemplateSlot[]; meta: PageMeta }) {
           </div>
           <p className="mt-[5vw] max-w-[600px] text-[16px] tracking-[-0.3px] max-[560px]:mt-[10vw]">{text(work.content, "body")}</p>
         </div>
-        <WorkList work={work} />
+        <WorkList work={work} services={services} demo={demo} />
       </section>
       <span className="sr-only">{meta.businessName}</span>
     </>
   );
 }
 
-function AboutBody({ slots }: { slots: TemplateSlot[] }) {
+function AboutBody({ slots, demo }: { slots: TemplateSlot[]; demo: boolean }) {
   const hero = slotAt(slots, "hero");
   const services = slotAt(slots, "services");
   const about = slotAt(slots, "about");
   const process = slotAt(slots, "process");
-  const serviceTitles = list(services.content, "itemTitles", ["Web Design", "Motion Design", "Web Development", "No Code Development"]);
-  const disciplineTitles = list(about.content, "itemTitles", ["Creative Developer", "Modern Designer"]);
+  const serviceTitles = list(
+    services.content,
+    "itemTitles",
+    demo ? ["Web Design", "Motion Design", "Web Development", "No Code Development"] : []
+  );
+  const disciplineTitles = list(about.content, "itemTitles", demo ? ["Creative Developer", "Modern Designer"] : []);
+  const processTitles = list(process.content, "itemTitles").length
+    ? list(process.content, "itemTitles")
+    : list(process.content, "stepTitles", demo ? ["Art Direction", "Design", "Development", "No - Code"] : []);
+  const processBodies = list(process.content, "itemTitles").length
+    ? list(process.content, "itemBodies")
+    : list(process.content, "stepBodies");
 
   return (
     <>
@@ -237,7 +267,7 @@ function AboutBody({ slots }: { slots: TemplateSlot[] }) {
         </div>
       </section>
       <section className="px-[35px] pb-[10vw] max-md:px-[15px]">
-        <ToolsBand heading={text(process.content, "heading", "Process")} titles={list(process.content, "itemTitles", ["Art Direction", "Design", "Development", "No - Code"])} bodies={list(process.content, "itemBodies")} />
+        <ToolsBand heading={text(process.content, "heading", "Process")} titles={processTitles} bodies={processBodies} />
       </section>
     </>
   );
@@ -266,29 +296,42 @@ function ToolsBand({ heading, titles, bodies }: { heading: string; titles: strin
   );
 }
 
-function WorkList({ work }: { work: TemplateSlot }) {
-  const titles = list(work.content, "itemTitles", ["Banking", "Financilux", "Stride", "Wine & Donuts"]);
-  const indexes = list(work.content, "itemBodies", ["(01)", "(02)", "(03)", "(04)"]);
+function WorkList({ work, services, demo }: { work: TemplateSlot; services: TemplateSlot; demo: boolean }) {
+  const portfolioTitles = list(work.content, "itemTitles");
+  const titles = (portfolioTitles.length ? portfolioTitles : list(services.content, "itemTitles")).slice(0, 4);
+  const shown = titles.length ? titles : demo ? ["Banking", "Financilux", "Stride", "Wine & Donuts"] : [];
+  if (!shown.length) return null;
+  const fromPortfolio = portfolioTitles.length > 0;
+  const images = fromPortfolio ? work.itemImages : services.itemImages;
+  const indexes =
+    demo && fromPortfolio
+      ? list(work.content, "itemBodies", shown.map((_, i) => indexLabel(i)))
+      : shown.map((_, i) => indexLabel(i));
+  const preview = (i: number) => images[i] || (demo ? WORK[i] || HERO : "");
   return (
     <div className="wj-work relative w-full overflow-hidden px-[35px] py-[10vw] max-md:px-[15px] max-[560px]:py-[20vw]">
       <div className="wj-overlay pointer-events-none absolute left-[15.25%] top-0 flex h-full w-full items-center justify-center gap-[1em] opacity-0 transition-opacity duration-1000">
-        {titles.map((_, i) => (
+        {shown.map((_, i) => {
+          const src = preview(i);
+          if (!src) return null;
+          return (
           <div key={i} className={`wj-prev wj-prev-${i} relative w-[500px]`} style={{ top: `${-500 + i * 500}px`, transform: "rotate(10deg)" }}>
             <img
-              src={work.itemImages[i] || WORK[i] || HERO}
+              src={src}
               alt=""
               width={i === 3 ? 752 : 1024}
               height={i === 3 ? 564 : 768}
               className="h-auto w-[500px] object-cover"
             />
           </div>
-        ))}
+          );
+        })}
       </div>
-      {titles.map((title, i) => (
+      {shown.map((title, i) => (
         <a
           key={title}
           href="#wj-end"
-          className={`wj-item wj-item-${i} relative flex w-full items-center gap-8 border-b border-[rgba(198,198,198,0.5)] py-8 max-md:gap-8 max-md:py-4 ${i === titles.length - 1 ? "border-b-0" : ""}`}
+          className={`wj-item wj-item-${i} relative flex w-full items-center gap-8 border-b border-[rgba(198,198,198,0.5)] py-8 max-md:gap-8 max-md:py-4 ${i === shown.length - 1 ? "border-b-0" : ""}`}
         >
           <div className="flex gap-5">
             <span className="text-[14px]">{indexes[i] || `(${String(i + 1).padStart(2, "0")})`}</span>
@@ -315,16 +358,18 @@ function SiteFooter({
   businessName,
   contactEmail,
   location,
+  demo,
 }: {
   slots: TemplateSlot[];
   businessName: string;
   contactEmail: string;
   location: string;
+  demo: boolean;
 }) {
   const contact = slotAt(slots, "contact");
   const footer = slotAt(slots, "footer");
-  const socials = list(footer.content, "itemTitles", ["Instagram", "Facebook", "Twitter", "LinkedIn"]);
-  const links = list(footer.content, "linkLabels", ["Behance", "Dribbble", "Contra", "Pinterest"]);
+  const socials = list(footer.content, "itemTitles", demo ? ["Instagram", "Facebook", "Twitter", "LinkedIn"] : []);
+  const links = list(footer.content, "linkLabels", demo ? ["Behance", "Dribbble", "Contra", "Pinterest"] : []);
   return (
     <footer id="wj-end">
       <div className="px-[35px] py-[10vw] max-md:px-[15px] max-md:py-[20vw] max-[560px]:pb-[10vw]">
@@ -336,7 +381,7 @@ function SiteFooter({
             {text(contact.content, "subheading", "Out")}
           </h2>
         </div>
-        <p className="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">{text(footer.content, "tagline", "Currently available for freelance projects").replace(" for ", "\nfor ")}</p>
+        <p className="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">{text(footer.content, "tagline", demo ? "Currently available for freelance projects" : "").replace(" for ", "\nfor ")}</p>
         <div className="flex gap-[6vw] py-[10vw] max-md:flex-col max-md:gap-[10vw] max-md:py-[20vw]">
           <p className="w-1/4 whitespace-pre-line text-[16px] tracking-[-0.3px] max-md:w-full">{location.replace(/^(Based in)\s+/i, "$1\n")}</p>
           <div className="w-3/4 max-w-[750px] max-md:w-full">
