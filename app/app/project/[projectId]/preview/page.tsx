@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Pencil, Repeat } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
+import { withCustomerPhotos } from "@/lib/projects/customer-photos";
 import { ProjectStatus, PAID_PROJECT_STATUSES } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { GenerationNotice } from "@/components/app/generation-notice";
@@ -30,7 +31,7 @@ export default async function PreviewPage({
     redirect(`/app/project/${projectId}/questionnaire`);
   }
 
-  const project = parseProject(raw);
+  const project = await withCustomerPhotos(parseProject(raw));
   const site = project.assembledPages;
 
   return (

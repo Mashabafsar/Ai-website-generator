@@ -4,6 +4,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { ownPhotos, photoFor } from "./photos";
 
 // The design's display/body face is Clash Grotesk (Fontshare — not on Google
 // Fonts), so we load it via a stylesheet and expose it through --sp-display.
@@ -116,9 +117,21 @@ export function SportsSite({
   const sample = (demoText: string, plain = "") => (demoChrome ? demoText : plain);
   const customLogo = site?.theme.logoUrl?.trim() || "";
 
-  const heroImage = hero.image || HERO_FALLBACK;
-  const aboutImage = about.image || ABOUT_FALLBACK;
-  const eventImage = event.image || EVENT_FALLBACK;
+  const featureImages = features.itemImages;
+  const catImages = categories.itemImages;
+  const photoPool = ownPhotos([
+    hero.image,
+    about.image,
+    event.image,
+    ...featureImages,
+    ...catImages,
+  ]);
+  const heroImage = photoFor(hero.image, photoPool, 0, demoChrome, HERO_FALLBACK);
+  const aboutImage = photoFor(about.image, photoPool, 1, demoChrome, ABOUT_FALLBACK);
+  const eventImage = photoFor(event.image, photoPool, 2, demoChrome, EVENT_FALLBACK);
+  const pricingBg = photoFor(undefined, photoPool, 3, demoChrome, PRICING_BG);
+  const footerCard = photoFor(undefined, photoPool, 4, demoChrome, FOOTER_CARD);
+  const faces = demoChrome ? AVATARS : photoPool;
 
   const featureTitles = list(
     features.content,
@@ -132,8 +145,8 @@ export function SportsSite({
       : [],
   );
   const featureBodies = list(features.content, "itemBodies");
-  const featureImages = features.itemImages;
-  const fImg = (i: number) => featureImages[i] || FEATURE_FALLBACKS[i % FEATURE_FALLBACKS.length];
+  const fImg = (i: number) =>
+    photoFor(featureImages[i], photoPool, i, demoChrome, FEATURE_FALLBACKS[i % FEATURE_FALLBACKS.length]);
 
   const catTitles = list(
     categories.content,
@@ -148,8 +161,8 @@ export function SportsSite({
       : [],
   );
   const catBodies = list(categories.content, "itemBodies");
-  const catImages = categories.itemImages;
-  const cImg = (i: number) => catImages[i] || CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length];
+  const cImg = (i: number) =>
+    photoFor(catImages[i], photoPool, i + 3, demoChrome, CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length]);
   const wordmarks = demoChrome
     ? []
     : catTitles
@@ -230,12 +243,14 @@ export function SportsSite({
       <section className="relative w-full min-h-[92vh] overflow-hidden" style={sectionBandStyle(hero.theme)}>
         <div className="absolute inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
+          {heroImage ? (
           <img
             src={heroImage}
             alt=""
             data-parallax="0.12"
             className="h-[112%] w-full object-cover object-center"
           />
+          ) : null}
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/70" />
         </div>
 
@@ -282,10 +297,10 @@ export function SportsSite({
           <div className="flex flex-col gap-6 pb-6">
             <div className="flex items-center gap-3">
               <div className="flex items-center">
-                {AVATARS.slice(0, 4).map((src, i) => (
+                {faces.slice(0, 4).map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    key={src}
+                    key={`${src}-${i}`}
                     src={src}
                     alt=""
                     className={`h-9 w-9 rounded-full border-2 border-white object-cover ${i > 0 ? "-ml-3" : ""}`}
@@ -408,7 +423,9 @@ export function SportsSite({
           <div className="relative w-full flex-1 lg:min-h-[600px]">
             <div className="relative h-[26rem] w-full overflow-hidden rounded-[24px] lg:h-full lg:min-h-[26rem]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
+              {aboutImage ? (
               <img src={aboutImage} alt="" data-parallax="0.06" className="absolute inset-0 h-[112%] w-full object-cover" />
+              ) : null}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/55" />
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <span
@@ -463,7 +480,9 @@ export function SportsSite({
             {featureTitles.map((title, i) => (
               <article key={`${title}-${i}`} className="relative h-[27rem] overflow-hidden rounded-[17px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                {fImg(i) ? (
                 <img src={fImg(i)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/80" />
                 <div className="absolute inset-x-0 bottom-0 p-6">
                   <span
@@ -512,7 +531,9 @@ export function SportsSite({
             return (
               <div key={`${title}-${i}`} className="relative h-[31rem] overflow-hidden rounded-[22px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                {cImg(i) ? (
                 <img src={cImg(i)} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-7 px-6">
                   <div className="text-base font-medium text-white">{title}</div>
@@ -528,7 +549,9 @@ export function SportsSite({
       <section id="sp-pricing" className="relative isolate overflow-hidden" style={sectionBandStyle(pricing.theme)}>
         <div aria-hidden className="absolute inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={PRICING_BG} alt="" className="h-full w-full object-cover opacity-60" />
+          {pricingBg ? (
+          <img src={pricingBg} alt="" className="h-full w-full object-cover opacity-60" />
+          ) : null}
           <div className="absolute inset-0" style={{ backgroundColor: `color-mix(in oklab, ${SP.inverse} 86%, transparent)` }} />
         </div>
         <div className="relative z-10 mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
@@ -635,9 +658,9 @@ export function SportsSite({
         <SectionHeader label="Testimonials" index={7} />
         <div className="mt-10 flex flex-col items-center gap-5 text-center">
           <div className="flex items-center -space-x-3">
-            {AVATARS.slice(0, 5).map((src) => (
+            {faces.slice(0, 5).map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={src} src={src} alt="" className="size-12 rounded-full border-2 border-white object-cover" />
+              <img key={`${src}-${i}`} src={src} alt="" className="size-12 rounded-full border-2 border-white object-cover" />
             ))}
           </div>
           <h2
@@ -668,7 +691,9 @@ export function SportsSite({
                     </blockquote>
                     <figcaption className="flex items-center gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={AVATARS[i % AVATARS.length]} alt="" className="size-10 rounded-full object-cover" />
+                      {faces.length ? (
+                      <img src={faces[i % faces.length]} alt="" className="size-10 rounded-full object-cover" />
+                      ) : null}
                       <div>
                         <div className="text-sm font-medium" style={{ color: SP.ink }}>{authors[i] || (demoChrome ? "Athlo member" : businessName)}</div>
                         {roles[i] && <div className="text-[0.8rem]" style={{ color: SP.muted }}>{roles[i]}</div>}
@@ -743,7 +768,9 @@ export function SportsSite({
       <section id="sp-event" className="mx-auto max-w-[90rem] px-4 pb-16 lg:px-[3.75rem] lg:pb-20" style={sectionBandStyle(event.theme)}>
         <div className="relative overflow-hidden rounded-[24px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
+          {eventImage ? (
           <img src={eventImage} alt="" data-parallax="0.08" className="h-[38rem] w-full object-cover lg:h-[44rem]" />
+          ) : null}
           <div className="absolute inset-0 bg-black/50" />
           <div className="absolute inset-x-6 bottom-6 lg:inset-x-8 lg:bottom-8 lg:right-auto lg:w-[32rem]">
             <div className="flex flex-col gap-6 rounded-[20px] p-6 lg:p-8" style={{ backgroundColor: SP.card }}>
@@ -791,9 +818,9 @@ export function SportsSite({
           {demoChrome ? (
           <div className="absolute bottom-8 right-8 hidden items-center gap-3 lg:flex">
             <div className="flex -space-x-3">
-              {AVATARS.slice(0, 4).map((src) => (
+              {faces.slice(0, 4).map((src, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={src} src={src} alt="" className="size-12 rounded-full border-2 border-white object-cover" />
+                <img key={`${src}-${i}`} src={src} alt="" className="size-12 rounded-full border-2 border-white object-cover" />
               ))}
             </div>
             <div>
@@ -812,7 +839,9 @@ export function SportsSite({
             <div className="flex flex-col items-start gap-8 lg:flex-row">
               <div className="relative h-[13rem] w-full overflow-hidden rounded-[24px] lg:h-[17rem] lg:w-[14rem]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={FOOTER_CARD} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                {footerCard ? (
+                <img src={footerCard} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                ) : null}
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute inset-0 flex flex-col items-center justify-end p-4">
                   <div className="mb-2 flex items-center gap-1.5">

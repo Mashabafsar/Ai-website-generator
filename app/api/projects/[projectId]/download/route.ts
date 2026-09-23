@@ -1,5 +1,6 @@
 import { requireUser, jsonError } from "@/lib/http";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
+import { withCustomerPhotos } from "@/lib/projects/customer-photos";
 import { hasPaidPackage } from "@/lib/payments/access";
 import { generateProjectFiles } from "@/lib/export/generate-project";
 import { filesToZip } from "@/lib/export/zip";
@@ -24,7 +25,7 @@ export async function GET(_req: Request, { params }: Ctx) {
     return jsonError("Pay for your package first so you can download your website files.", 402, "PAYMENT_REQUIRED");
   }
 
-  const project = parseProject(raw);
+  const project = await withCustomerPhotos(parseProject(raw));
   if (!project.blueprint || !project.assembledPages) {
     return jsonError("Write your website first, then you can download the files.", 409, "NOT_GENERATED");
   }

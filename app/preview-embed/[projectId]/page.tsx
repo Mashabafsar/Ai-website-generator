@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
+import { withCustomerPhotos } from "@/lib/projects/customer-photos";
 import { ProjectStatus } from "@/lib/constants";
 import { PreviewFrameContent } from "@/components/editor/preview-frame-content";
 
@@ -24,7 +25,7 @@ export default async function PreviewEmbedPage({
     notFound();
   }
 
-  const project = parseProject(raw);
+  const project = await withCustomerPhotos(parseProject(raw));
   const site = project.assembledPages;
   if (!site) notFound();
 

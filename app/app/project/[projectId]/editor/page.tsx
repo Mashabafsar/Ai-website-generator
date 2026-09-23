@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getOwnedProject, parseProject } from "@/lib/projects/projects";
+import { withCustomerPhotos } from "@/lib/projects/customer-photos";
 import { ProjectStatus, PAID_PROJECT_STATUSES } from "@/lib/constants";
 import { ProjectTabs } from "@/components/app/project-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
@@ -41,7 +42,7 @@ export default async function EditorPage({
     redirect(`/app/project/${projectId}/questionnaire`);
   }
 
-  const project = parseProject(raw);
+  const project = await withCustomerPhotos(parseProject(raw));
   if (!project.blueprint) redirect(`/app/project/${projectId}/questionnaire`);
 
   const theme = project.theme ?? project.assembledPages?.theme ?? FALLBACK_THEME;

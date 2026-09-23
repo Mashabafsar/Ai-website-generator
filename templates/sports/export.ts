@@ -3,6 +3,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
+import { ownPhotos, photoFor } from "./photos";
 
 // Static HTML twin of templates/sports/site.tsx. Exported and deployed sites
 // must look like the design the customer chose, so the Athlo layout is mirrored
@@ -122,9 +123,15 @@ export function renderSportsPage(site: AssembledSite): string {
   const sample = (demoText: string, plain = "") => (demoChrome ? demoText : plain);
   const customLogo = site.theme.logoUrl?.trim() || "";
 
-  const heroImage = hero.image || HERO_FALLBACK;
-  const aboutImage = about.image || ABOUT_FALLBACK;
-  const eventImage = event.image || EVENT_FALLBACK;
+  const featureImages = features.itemImages;
+  const catImages = categories.itemImages;
+  const photoPool = ownPhotos([hero.image, about.image, event.image, ...featureImages, ...catImages]);
+  const heroImage = photoFor(hero.image, photoPool, 0, demoChrome, HERO_FALLBACK);
+  const aboutImage = photoFor(about.image, photoPool, 1, demoChrome, ABOUT_FALLBACK);
+  const eventImage = photoFor(event.image, photoPool, 2, demoChrome, EVENT_FALLBACK);
+  const pricingBg = photoFor(undefined, photoPool, 3, demoChrome, PRICING_BG);
+  const footerCard = photoFor(undefined, photoPool, 4, demoChrome, FOOTER_CARD);
+  const faces = demoChrome ? AVATARS : photoPool;
 
   const featureTitles = list(
     features.content,
@@ -138,8 +145,8 @@ export function renderSportsPage(site: AssembledSite): string {
       : [],
   );
   const featureBodies = list(features.content, "itemBodies");
-  const featureImages = features.itemImages;
-  const fImg = (i: number) => featureImages[i] || FEATURE_FALLBACKS[i % FEATURE_FALLBACKS.length];
+  const fImg = (i: number) =>
+    photoFor(featureImages[i], photoPool, i, demoChrome, FEATURE_FALLBACKS[i % FEATURE_FALLBACKS.length]);
 
   const catTitles = list(
     categories.content,
@@ -154,8 +161,8 @@ export function renderSportsPage(site: AssembledSite): string {
       : [],
   );
   const catBodies = list(categories.content, "itemBodies");
-  const catImages = categories.itemImages;
-  const cImg = (i: number) => catImages[i] || CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length];
+  const cImg = (i: number) =>
+    photoFor(catImages[i], photoPool, i + 3, demoChrome, CATEGORY_FALLBACKS[i % CATEGORY_FALLBACKS.length]);
   const wordmarks = demoChrome
     ? []
     : catTitles
@@ -212,7 +219,7 @@ export function renderSportsPage(site: AssembledSite): string {
   const body = `
 <section class="relative w-full min-h-[92vh] overflow-hidden" style="${sectionBandCss(hero.theme)}">
   <div class="absolute inset-0 overflow-hidden">
-    <img src="${esc(heroImage)}" alt="" data-parallax="0.12" class="h-[112%] w-full object-cover object-center" />
+    ${heroImage ? `<img src="${esc(heroImage)}" alt="" data-parallax="0.12" class="h-[112%] w-full object-cover object-center" />` : ""}
     <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/70"></div>
   </div>
   <div class="relative z-10 mx-auto flex min-h-[92vh] max-w-[90rem] flex-col justify-between px-4 py-6 lg:px-10 lg:py-8">
@@ -229,7 +236,7 @@ export function renderSportsPage(site: AssembledSite): string {
     <div class="flex flex-col gap-6 pb-6">
       <div class="flex items-center gap-3">
         <div class="flex items-center">
-          ${AVATARS.slice(0, 4).map((src, i) => `<img src="${src}" alt="" class="h-9 w-9 rounded-full border-2 border-white object-cover ${i > 0 ? "-ml-3" : ""}" />`).join("")}
+          ${faces.slice(0, 4).map((src, i) => `<img src="${esc(src)}" alt="" class="h-9 w-9 rounded-full border-2 border-white object-cover ${i > 0 ? "-ml-3" : ""}" />`).join("")}
         </div>
         <div>
           <div class="text-sm font-medium uppercase tracking-wide text-white">${esc(text(hero.content, "eyebrow", sample("12k+ memberships")))}</div>
@@ -273,7 +280,7 @@ ${demoChrome || wordmarks.length > 0 ? `<section class="border-y" style="border-
     </div>
     <div class="relative w-full flex-1 lg:min-h-[600px]">
       <div class="relative h-[26rem] w-full overflow-hidden rounded-[24px] lg:h-full lg:min-h-[26rem]">
-        <img src="${esc(aboutImage)}" alt="" data-parallax="0.06" class="absolute inset-0 h-[112%] w-full object-cover" />
+        ${aboutImage ? `<img src="${esc(aboutImage)}" alt="" data-parallax="0.06" class="absolute inset-0 h-[112%] w-full object-cover" />` : ""}
         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/55"></div>
         <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"><span class="rounded-full px-4 py-2 text-sm" style="background:${SP.brand};color:${SP.ink}">${esc(demoChrome ? "Sport Center" : businessName)}</span></div>
         <div class="absolute inset-x-0 bottom-8 px-6 text-center"><div class="font-semibold uppercase leading-none tracking-[-0.4px] text-white text-[clamp(1.75rem,4vw,3rem)]" style="font-family:var(--sp-display)">${demoChrome ? "Mind power<br />sport strength" : esc(text(about.content, "heading", businessName))}</div></div>
@@ -291,7 +298,7 @@ ${demoChrome || wordmarks.length > 0 ? `<section class="border-y" style="border-
     </div>
     <div class="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-3">
       ${featureTitles.map((title, i) => `<article class="relative h-[27rem] overflow-hidden rounded-[17px]">
-        <img src="${esc(fImg(i))}" alt="" class="absolute inset-0 h-full w-full object-cover" />
+        ${fImg(i) ? `<img src="${esc(fImg(i))}" alt="" class="absolute inset-0 h-full w-full object-cover" />` : ""}
         <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/80"></div>
         <div class="absolute inset-x-0 bottom-0 p-6">
           <span class="mb-3 inline-block size-2.5 rounded-full" style="background:${SP.brand}"></span>
@@ -314,7 +321,7 @@ ${demoChrome || wordmarks.length > 0 ? `<section class="border-y" style="border-
       const blurb = catBlurb(i);
       const overlay = blurb ? `<div class="mt-1 text-sm text-white/80">${esc(blurb)}</div>` : "";
       return `<div class="relative h-[31rem] overflow-hidden rounded-[22px]">
-      <img src="${esc(cImg(i))}" alt="${esc(title)}" class="absolute inset-0 h-full w-full object-cover" />
+      ${cImg(i) ? `<img src="${esc(cImg(i))}" alt="${esc(title)}" class="absolute inset-0 h-full w-full object-cover" />` : ""}
       <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
       <div class="absolute inset-x-0 bottom-7 px-6"><div class="text-base font-medium text-white">${esc(title)}</div>${overlay}</div>
     </div>`;
@@ -324,7 +331,7 @@ ${demoChrome || wordmarks.length > 0 ? `<section class="border-y" style="border-
 
 ${pricing.type ? `<section id="sp-pricing" class="relative isolate overflow-hidden">
   <div class="absolute inset-0 overflow-hidden">
-    <img src="${PRICING_BG}" alt="" class="h-full w-full object-cover opacity-60" />
+    ${pricingBg ? `<img src="${esc(pricingBg)}" alt="" class="h-full w-full object-cover opacity-60" />` : ""}
     <div class="absolute inset-0" style="background:rgba(14,18,27,0.86)"></div>
   </div>
   <div class="relative z-10 mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-24">
@@ -367,7 +374,7 @@ ${pricing.type ? `<section id="sp-pricing" class="relative isolate overflow-hidd
 <section id="sp-testimonials" class="mx-auto max-w-[90rem] px-4 py-16 lg:px-[3.75rem] lg:py-20">
   ${sectionHeader("Testimonials", false, 7)}
   <div class="mt-10 flex flex-col items-center gap-5 text-center">
-    <div class="flex items-center -space-x-3">${AVATARS.slice(0, 5).map((src) => `<img src="${src}" alt="" class="size-12 rounded-full border-2 border-white object-cover" />`).join("")}</div>
+    <div class="flex items-center -space-x-3">${faces.slice(0, 5).map((src) => `<img src="${esc(src)}" alt="" class="size-12 rounded-full border-2 border-white object-cover" />`).join("")}</div>
     <h2 class="max-w-[42rem] font-semibold uppercase leading-none tracking-[-0.6px] text-[clamp(1.75rem,5vw,3.75rem)]" style="font-family:var(--sp-display)">${esc(text(testimonials.content, "heading", sample("Here's why athletes trust us", "What people say")))}</h2>
     ${sample("A supportive community where passion, movement, and discipline come together to inspire lasting change.") ? `<p class="max-w-[47rem] text-lg leading-relaxed lg:text-xl" style="color:${SP.muted}">${esc(sample("A supportive community where passion, movement, and discipline come together to inspire lasting change."))}</p>` : ""}
   </div>
@@ -376,7 +383,7 @@ ${pricing.type ? `<section id="sp-pricing" class="relative isolate overflow-hidd
       ${testimonialCols.map((col, c) => `<div class="flex flex-col gap-5 ${c % 2 === 1 ? "lg:-mt-10" : ""}">
         ${col.map((i) => `<figure class="flex flex-col justify-between gap-6 rounded-xl p-6" style="background:${SP.surface}">
           <blockquote class="text-[0.95rem] leading-relaxed" style="color:${SP.body}">&ldquo;${esc(quotes[i])}&rdquo;</blockquote>
-          <figcaption class="flex items-center gap-3"><img src="${AVATARS[i % AVATARS.length]}" alt="" class="size-10 rounded-full object-cover" /><div><div class="text-sm font-medium" style="color:${SP.ink}">${esc(authors[i] || (demoChrome ? "Athlo member" : businessName))}</div>${roles[i] ? `<div class="text-[0.8rem]" style="color:${SP.muted}">${esc(roles[i])}</div>` : ""}</div></figcaption>
+          <figcaption class="flex items-center gap-3">${faces.length ? `<img src="${esc(faces[i % faces.length])}" alt="" class="size-10 rounded-full object-cover" />` : ""}<div><div class="text-sm font-medium" style="color:${SP.ink}">${esc(authors[i] || (demoChrome ? "Athlo member" : businessName))}</div>${roles[i] ? `<div class="text-[0.8rem]" style="color:${SP.muted}">${esc(roles[i])}</div>` : ""}</div></figcaption>
         </figure>`).join("\n        ")}
       </div>`).join("\n      ")}
     </div>
@@ -406,7 +413,7 @@ ${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px
 
 <section id="sp-event" class="mx-auto max-w-[90rem] px-4 pb-16 lg:px-[3.75rem] lg:pb-20">
   <div class="relative overflow-hidden rounded-[24px]">
-    <img src="${esc(eventImage)}" alt="" data-parallax="0.08" class="h-[38rem] w-full object-cover lg:h-[44rem]" />
+    ${eventImage ? `<img src="${esc(eventImage)}" alt="" data-parallax="0.08" class="h-[38rem] w-full object-cover lg:h-[44rem]" />` : ""}
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="absolute inset-x-6 bottom-6 lg:inset-x-8 lg:bottom-8 lg:right-auto lg:w-[32rem]">
       <div class="flex flex-col gap-6 rounded-[20px] p-6 lg:p-8" style="background-color:${SP.card}">
@@ -418,7 +425,7 @@ ${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px
       </div>
     </div>
     ${demoChrome ? `<div class="absolute bottom-8 right-8 hidden items-center gap-3 lg:flex">
-      <div class="flex -space-x-3">${AVATARS.slice(0, 4).map((src) => `<img src="${src}" alt="" class="size-12 rounded-full border-2 border-white object-cover" />`).join("")}</div>
+      <div class="flex -space-x-3">${faces.slice(0, 4).map((src) => `<img src="${esc(src)}" alt="" class="size-12 rounded-full border-2 border-white object-cover" />`).join("")}</div>
       <div><div class="text-xl font-medium tracking-[-0.4px] text-white">4.9 / 5 Rated</div><div class="text-lg text-white/80">Over 9.2k members</div></div>
     </div>` : ""}
   </div>
@@ -429,7 +436,7 @@ ${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px
     <div class="flex flex-col items-start gap-10 lg:flex-row lg:gap-24">
       <div class="flex flex-col items-start gap-8 lg:flex-row">
         <div class="relative h-[13rem] w-full overflow-hidden rounded-[24px] lg:h-[17rem] lg:w-[14rem]">
-          <img src="${FOOTER_CARD}" alt="" class="absolute inset-0 h-full w-full object-cover" />
+          ${footerCard ? `<img src="${esc(footerCard)}" alt="" class="absolute inset-0 h-full w-full object-cover" />` : ""}
           <div class="absolute inset-0 bg-black/40"></div>
           <div class="absolute inset-0 flex flex-col items-center justify-end p-4">
             <div class="mb-2 flex items-center gap-1.5"><span class="size-2.5 rounded-full" style="background:${SP.brand}"></span>${demoChrome ? `<span class="text-xs font-medium text-white">Full game</span>` : ""}</div>

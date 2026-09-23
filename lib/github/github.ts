@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { generateProjectFiles, type ProjectFile } from "@/lib/export/generate-project";
 import { GithubSyncStatus, PAID_PROJECT_STATUSES } from "@/lib/constants";
 import { parseProject } from "@/lib/projects/projects";
+import { withCustomerPhotos } from "@/lib/projects/customer-photos";
 import { slugify } from "@/lib/utils";
 
 const SITES_README = [
@@ -198,7 +199,7 @@ export async function syncProjectToGitHub(
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new Error("Project not found");
 
-  const parsed = parseProject(project);
+  const parsed = await withCustomerPhotos(parseProject(project));
   if (!parsed.blueprint || !parsed.assembledPages) {
     throw new Error("Project has not been generated yet");
   }

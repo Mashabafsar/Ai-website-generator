@@ -7,8 +7,7 @@ import type { StockImageReference, WebsiteBlueprint } from "@/lib/blueprint/type
 // get first pick; service and product rows match on the item title when the
 // imported alt text has something in common.
 
-const SECTION_SLOTS = new Set(["hero", "about", "gallery", "cta"]);
-const ITEM_SLOTS = new Set(["services", "products", "gallery", "portfolio"]);
+const TEMPLATE_ASSET = /^\/templates\//;
 
 function words(input: string): string[] {
   return input
@@ -33,9 +32,20 @@ function toRef(img: ImportedBrandImage, alt: string): StockImageReference {
   };
 }
 
+function isCustomerPhoto(
+  img: StockImageReference | null | undefined,
+  importedUrls: Set<string>
+): boolean {
+  if (!img?.url || TEMPLATE_ASSET.test(img.url)) return false;
+  if (importedUrls.has(img.url)) return true;
+  return img.provider === "upload";
+}
+
 /**
- * Mutates the blueprint so matching empty image slots use imported photos.
- * Already-filled slots (an editor pick, a previous generate) are left alone.
+ * Mutates the blueprint so image slots use the customer's own photos.
+ * Editor uploads are left alone. When none of the imported photos are on the
+ * page yet, stock and template photos are replaced so the site actually shows
+ * the pictures pulled from the customer's website.
  */
 export function assignImportedImages(
   blueprint: WebsiteBlueprint,
@@ -43,7 +53,23 @@ export function assignImportedImages(
 ): WebsiteBlueprint {
   if (!imported.length) return blueprint;
 
+  const importedUrls = new Set(imported.map((img) => img.url));
+  const alreadyPlaced = blueprint.pages.some((page) =>
+    page.sections.some(
+      (section) =>
+        isCustomerPhoto(section.selectedImage, importedUrls) ||
+        (section.itemImages ?? []).some((img) => isCustomerPhoto(img, importedUrls))
+    )
+  );
+  const replaceForeign = !alreadyPlaced;
+
+  const open = (img: StockImageReference | null | undefined): boolean => {
+    if (!img?.url || TEMPLATE_ASSET.test(img.url)) return true;
+    return replaceForeign && !isCustomerPhoto(img, importedUrls);
+  };
+
   const available = imported.map((img) => ({ img, used: false }));
+  let cycle = 0;
 
   const take = (want: { orientation?: string; hint?: string }): ImportedBrandImage | null => {
     let best: { index: number; score: number } | null = null;
@@ -60,12 +86,21 @@ export function assignImportedImages(
     return available[best.index].img;
   };
 
+  const takeOrRepeat = (want: { orientation?: string; hint?: string }): ImportedBrandImage | null => {
+    const fresh = take(want);
+    if (fresh) return fresh;
+    if (!imported.length) return null;
+    const img = imported[cycle % imported.length];
+    cycle += 1;
+    return img;
+  };
+
   for (const page of blueprint.pages) {
     for (const section of page.sections) {
       const spec = getVariantSpec(section.variant);
       if (!spec) continue;
 
-      if (spec.needsImage && !section.selectedImage && SECTION_SLOTS.has(section.type)) {
+      if (spec.needsImage && open(section.selectedImage)) {
         const hint = [
           section.content.headline,
           section.content.heading,
@@ -74,7 +109,7 @@ export function assignImportedImages(
           .flat()
           .filter((v): v is string => typeof v === "string")
           .join(" ");
-        const img = take({
+        const img = takeOrRepeat({
           orientation: spec.imageOrientation ?? "landscape",
           hint,
         });
@@ -83,7 +118,7 @@ export function assignImportedImages(
         }
       }
 
-      if (!spec.needsItemImages || !ITEM_SLOTS.has(section.type)) continue;
+      if (!spec.needsItemImages) continue;
 
       const titles = Array.isArray(section.content.itemTitles)
         ? section.content.itemTitles.filter(
@@ -97,8 +132,8 @@ export function assignImportedImages(
       if (existing.length > titles.length) existing.length = titles.length;
 
       for (const [index, title] of titles.entries()) {
-        if (existing[index]) continue;
-        const img = take({
+        if (!open(existing[index])) continue;
+        const img = takeOrRepeat({
           orientation: spec.imageOrientation ?? "square",
           hint: title,
         });

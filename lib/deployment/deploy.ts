@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { DeploymentStatus, PackageType, ProjectStatus } from "@/lib/constants";
 import { parseProject } from "@/lib/projects/projects";
+import { withCustomerPhotos } from "@/lib/projects/customer-photos";
 import { generateProjectFiles, type ProjectFile } from "@/lib/export/generate-project";
 import { deployToVercel } from "@/lib/deployment/vercel";
 import { toHttpsUrl } from "@/lib/deployment/url";
@@ -76,7 +77,7 @@ export async function deployProject(projectId: string): Promise<{
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new Error("Project not found");
 
-  const parsed = parseProject(project);
+  const parsed = await withCustomerPhotos(parseProject(project));
   if (!parsed.blueprint || !parsed.assembledPages) {
     throw new Error("Website has not been generated yet");
   }
