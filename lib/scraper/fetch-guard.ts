@@ -40,7 +40,7 @@ export function normalizeUrl(raw: string): URL {
     throw new ScrapeError("INVALID_URL", "That doesn't look like a valid URL.");
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new ScrapeError("INVALID_URL", "Only http/https websites can be imported.");
+    throw new ScrapeError("INVALID_URL", "Please enter a website address that starts with http or https.");
   }
   url.username = "";
   url.password = "";
@@ -99,7 +99,7 @@ export async function assertPublicHost(url: URL): Promise<void> {
     }
   } catch (err) {
     if (err instanceof ScrapeError) throw err;
-    throw new ScrapeError("FETCH_FAILED", "Could not resolve that domain.");
+    throw new ScrapeError("FETCH_FAILED", "We couldn't find that website address.");
   }
 }
 
@@ -137,12 +137,12 @@ export async function fetchGuarded(
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get("location");
       await res.body?.cancel().catch(() => {});
-      if (!location) throw new ScrapeError("FETCH_FAILED", "That website responded with a broken redirect.");
+      if (!location) throw new ScrapeError("FETCH_FAILED", "That website address didn't work. Try the main page.");
       let next: URL;
       try {
         next = new URL(location, url);
       } catch {
-        throw new ScrapeError("FETCH_FAILED", "That website responded with a broken redirect.");
+        throw new ScrapeError("FETCH_FAILED", "That website address didn't work. Try the main page.");
       }
       if (next.protocol !== "http:" && next.protocol !== "https:") {
         throw new ScrapeError("BLOCKED_HOST", "That address isn't allowed.");
@@ -155,12 +155,12 @@ export async function fetchGuarded(
 
     if (!res.ok) {
       await res.body?.cancel().catch(() => {});
-      throw new ScrapeError("FETCH_FAILED", `That website responded with ${res.status}.`);
+      throw new ScrapeError("FETCH_FAILED", "That website didn't load. You can fill in the details yourself.");
     }
     return { res, finalUrl: url };
   }
 
-  throw new ScrapeError("FETCH_FAILED", "That website redirected too many times.");
+  throw new ScrapeError("FETCH_FAILED", "That website kept sending us somewhere else. Try the main page address.");
 }
 
 /** Reads a response body as text, stopping once `cap` bytes have arrived. */

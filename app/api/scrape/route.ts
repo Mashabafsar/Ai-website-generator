@@ -48,11 +48,11 @@ export async function POST(req: Request) {
     return jsonError("Enter a website URL.", 400, "INVALID_URL");
   }
   if (!projectId) {
-    return jsonError("Missing project.", 400, "INVALID_PROJECT");
+    return jsonError("We couldn't find that website project.", 400, "INVALID_PROJECT");
   }
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404, "NOT_FOUND");
+  if (!project) return jsonError("We couldn't find that website project.", 404, "NOT_FOUND");
 
   const cost = env.credits.costScrapeImport;
   const urlHash = createHash("sha256").update(url.toLowerCase()).digest("hex").slice(0, 16);
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return jsonError(
-        "Not enough credits to import a website. Please top up.",
+        "Not enough credits to read a website. Please buy more.",
         402,
         "INSUFFICIENT_CREDITS",
         { required: err.required, available: err.available }

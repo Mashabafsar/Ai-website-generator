@@ -16,17 +16,17 @@ export async function GET(_req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const raw = await getOwnedProject(user.id, projectId);
-  if (!raw) return jsonError("Project not found", 404);
+  if (!raw) return jsonError("We couldn't find that website project.", 404);
 
   // Payment-gated: ZIP export requires a completed website-package payment.
   const paid = await hasPaidPackage(projectId);
   if (!paid) {
-    return jsonError("Purchase a package to download your source code.", 402, "PAYMENT_REQUIRED");
+    return jsonError("Pay for your package first so you can download your website files.", 402, "PAYMENT_REQUIRED");
   }
 
   const project = parseProject(raw);
   if (!project.blueprint || !project.assembledPages) {
-    return jsonError("Website has not been generated yet", 409, "NOT_GENERATED");
+    return jsonError("Write your website first, then you can download the files.", 409, "NOT_GENERATED");
   }
 
   const files = await generateProjectFiles({

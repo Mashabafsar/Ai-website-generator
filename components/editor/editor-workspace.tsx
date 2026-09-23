@@ -150,12 +150,12 @@ export function EditorWorkspace({
         body: JSON.stringify({ blueprint, theme }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not save");
+      if (!res.ok) throw new Error(data.error || "We couldn't save your site");
       setDirty(false);
-      toast.success("Saved & synced to GitHub");
+      toast.success("Your site is saved");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Save failed");
+      toast.error(err instanceof Error ? err.message : "We couldn't save your site");
     } finally {
       setSaving(false);
     }
@@ -169,7 +169,7 @@ export function EditorWorkspace({
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-medium">{templateName}</span>
-            <span className="text-muted-foreground">layout locked</span>
+            <span className="text-muted-foreground">look stays the same</span>
             <Link
               href="/app/templates"
               className="text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
@@ -215,7 +215,7 @@ export function EditorWorkspace({
             </div>
             <p className="text-xs text-muted-foreground">
               Editing the <span className="font-medium text-foreground">{activePage?.title}</span> page.
-              Its sections are locked to this design.
+              This design keeps these sections in this order.
             </p>
           </div>
         )}
@@ -247,8 +247,8 @@ export function EditorWorkspace({
         </div>
 
         <p className="rounded-xl border border-dashed bg-card p-4 text-sm text-muted-foreground">
-          This design ships as a complete website, so sections can&apos;t be added, removed, or
-          reordered. Edit any section&apos;s text and images above, or ask AI to rewrite one.
+          This design is a complete website, so you can&apos;t add, remove, or rearrange
+          sections. You can still change the words and photos, or ask us to rewrite a section.
         </p>
       </div>
 
@@ -298,15 +298,15 @@ function ThemeEditor({
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4">
       <div>
-        <div className="mb-3 text-sm font-semibold">Site theme</div>
-        <Label className="text-xs">Palette</Label>
+        <div className="mb-3 text-sm font-semibold">Site colors</div>
+        <Label className="text-xs">Color set</Label>
         <Select value={theme.palette || "__template"} onValueChange={(v) => applyPalette(v)}>
-          <SelectTrigger className="mt-1 h-9" aria-label="Website palette">
-            <span>{theme.palette || "Template default"}</span>
+          <SelectTrigger className="mt-1 h-9" aria-label="Website colors">
+            <span>{theme.palette || "This design's colors"}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__template" disabled>
-              Template default
+              This design's colors
             </SelectItem>
             {PALETTE_NAMES.map((name) => (
               <SelectItem key={name} value={name}>
@@ -317,18 +317,28 @@ function ThemeEditor({
           </SelectContent>
         </Select>
         <p className="mt-2 text-xs text-muted-foreground">
-          A chosen palette repaints the whole site — canvas, bands, cards, and buttons.
-          Type a hex or name if the color you want is not in the list.
+          These colors apply to the whole site — the background, cards, and buttons.
+          Type a color code if you have one.
         </p>
       </div>
 
       <div>
-        <div className="mb-2 text-sm font-semibold">Brand colors</div>
+        <div className="mb-2 text-sm font-semibold">Your colors</div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(["primary", "secondary", "accent", "background", "foreground"] as const).map((key) => (
             <ColorField
               key={key}
-              label={key}
+              label={
+                key === "primary"
+                  ? "Main"
+                  : key === "secondary"
+                    ? "Second"
+                    : key === "accent"
+                      ? "Highlight"
+                      : key === "background"
+                        ? "Background"
+                        : "Text"
+              }
               value={theme.colors[key]}
               onChange={(hex) => set(key, hex)}
             />
@@ -389,7 +399,7 @@ function FontPicker({
       <link rel="stylesheet" href={FONT_CATALOG_HREF} />
       <div className="mb-1 text-sm font-semibold">Font</div>
       <p className="mb-3 text-xs text-muted-foreground">
-        One typeface for the whole website — headings, body, and buttons.
+        One font for the whole website — headings, body, and buttons.
       </p>
       {/* Radix portals the list, so it is never clipped by the scrolling panel. */}
       <Select
@@ -398,11 +408,11 @@ function FontPicker({
       >
         <SelectTrigger className="h-10 rounded-none" aria-label="Website font">
           <span style={selected ? { fontFamily: selected.stack } : undefined}>
-            {selected ? selected.name : "Template default"}
+            {selected ? selected.name : "This design's font"}
           </span>
         </SelectTrigger>
         <SelectContent className="max-h-80 rounded-none">
-          <SelectItem value={FONT_DEFAULT}>Template default</SelectItem>
+          <SelectItem value={FONT_DEFAULT}>This design's font</SelectItem>
           {THEME_FONTS.map((f) => (
             <SelectItem key={f.id} value={f.id} className="text-[15px]">
               <span style={{ fontFamily: f.stack }}>{f.name}</span>
@@ -558,25 +568,25 @@ function SectionEditor({
       const data = await res.json();
       if (!res.ok) {
         if (data.code === "INSUFFICIENT_CREDITS") {
-          toast.error("Not enough credits for an AI edit.");
+          toast.error("Not enough credits to rewrite this section.");
           router.push("/app/credits");
           return;
         }
         notifyCreditsChanged();
-        throw new Error(data.error || "AI edit failed");
-      }
-      onAiEdit(data.content);
-      setInstruction("");
-      setAiOpen(false);
-      notifyCreditsChanged();
-      if (data.fromTemplate) {
-        toast.error("Our writing tools are unavailable. You were not charged.");
-      } else {
-        toast.success(`Section updated · ${data.balanceAfter} credits left`);
-      }
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "AI edit failed");
+          throw new Error(data.error || "We couldn't rewrite this section");
+        }
+        onAiEdit(data.content);
+        setInstruction("");
+        setAiOpen(false);
+        notifyCreditsChanged();
+        if (data.fromTemplate) {
+          toast.error("Our writing tools are unavailable. You were not charged.");
+        } else {
+          toast.success(`Section updated · ${data.balanceAfter} credits left`);
+        }
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "We couldn't rewrite this section");
     } finally {
       setAiLoading(false);
     }
@@ -604,7 +614,7 @@ function SectionEditor({
           size="icon"
           className="h-7 w-7 shrink-0"
           onClick={() => setAiOpen((o) => !o)}
-          title="AI rewrite"
+          title="Rewrite this section"
         >
           <Wand2 className={cn("h-3.5 w-3.5", aiOpen && "text-primary")} />
         </Button>
@@ -613,7 +623,7 @@ function SectionEditor({
       {aiOpen && (
         <div className="space-y-2 border-b bg-primary/5 p-4">
           <Label className="flex items-center gap-1 text-xs">
-            <Sparkles className="h-3 w-3 text-primary" /> AI rewrite ({editCost} credits)
+            <Sparkles className="h-3 w-3 text-primary" /> Rewrite this section ({editCost} credits)
           </Label>
           <Textarea
             rows={2}
@@ -699,7 +709,7 @@ function SectionEditor({
             <div className="space-y-2 border-t pt-3">
               <Label className="text-xs font-semibold">Item images</Label>
               <p className="text-[11px] opacity-60">
-                Upload your own photo or search Pexels / Shutterstock for each item.
+                Upload your own photo or search our photo library for each item.
               </p>
               {(Array.isArray(section.content.itemTitles) ? section.content.itemTitles : []).map(
                 (itemTitle, itemIndex) => (
@@ -749,10 +759,10 @@ function SectionThemeControls({
             className="text-[11px] text-muted-foreground underline-offset-2 hover:underline"
             onClick={() => onChange(undefined)}
           >
-            Inherit site theme
+            Use the site&apos;s colors
           </button>
         ) : (
-          <span className="text-[11px] text-muted-foreground">Inherit site theme</span>
+          <span className="text-[11px] text-muted-foreground">Use the site's colors</span>
         )}
       </div>
       <div className="grid grid-cols-1 gap-2">

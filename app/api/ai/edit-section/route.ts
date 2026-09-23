@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   const limit = rateLimit(`ai_edit:${user.id}`, 20, 60_000);
   if (!limit.ok) {
-    return jsonError("Too many edit requests. Please wait a moment.", 429, "RATE_LIMITED", {
+    return jsonError("Please wait a moment, then try rewriting this section again.", 429, "RATE_LIMITED", {
       retryAfterMs: limit.retryAfterMs,
     });
   }
@@ -24,11 +24,11 @@ export async function POST(req: Request) {
     instruction: string;
   }>(req);
   if (!body?.projectId || !body?.pageSlug || !body?.sectionId || !body?.instruction) {
-    return jsonError("Missing fields", 400);
+    return jsonError("Please tell us what to change.", 400);
   }
 
   const project = await getOwnedProject(user.id, body.projectId);
-  if (!project) return jsonError("Project not found", 404);
+  if (!project) return jsonError("We couldn't find that website project.", 404);
 
   try {
     const result = await editSectionWithAi({
@@ -44,12 +44,12 @@ export async function POST(req: Request) {
       return jsonError(err.message, 404, "SECTION_NOT_FOUND");
     }
     if (err instanceof InsufficientCreditsError) {
-      return jsonError("Not enough credits for an AI edit.", 402, "INSUFFICIENT_CREDITS", {
+      return jsonError("Not enough credits to rewrite this section. Please buy more.", 402, "INSUFFICIENT_CREDITS", {
         required: err.required,
         available: err.available,
       });
     }
     console.error("Edit section error:", err);
-    return jsonError("Could not edit section. Your credits were refunded.", 500);
+    return jsonError("We couldn't rewrite this section. Your credits were returned.", 500);
   }
 }

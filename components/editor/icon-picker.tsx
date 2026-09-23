@@ -50,7 +50,7 @@ export function IconPicker({
         <div className="min-w-0 flex-1">
           <div className="truncate text-xs font-medium">{label}</div>
           <div className="truncate text-[11px] text-muted-foreground">
-            {value ? iconLabel(value) : "Template glyph"}
+            {value ? iconLabel(value) : "This design's icon"}
           </div>
         </div>
         <Button
@@ -68,7 +68,7 @@ export function IconPicker({
             size="icon"
             className="h-8 w-8 shrink-0"
             onClick={() => onChange(null)}
-            title="Use the template's own glyph"
+            title="Use this design's icon"
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -130,7 +130,7 @@ export function IconPickerList({
   values,
   onChange,
   title = "Icons",
-  note = "Pick the symbol for each item. Designs that draw their own artwork here ignore it.",
+  note = "Pick the symbol for each item. Some designs draw their own pictures here instead.",
 }: {
   items: string[];
   values: (string | null)[];

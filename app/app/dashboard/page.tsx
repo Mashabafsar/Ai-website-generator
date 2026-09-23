@@ -4,7 +4,7 @@ import {
   ArrowRight,
   CreditCard,
   FlaskConical,
-  Github,
+  Cloud,
   Image as ImageIcon,
   LayoutTemplate,
   MousePointerClick,
@@ -36,86 +36,86 @@ export const metadata: Metadata = { title: "Dashboard" };
 const STEPS = [
   {
     icon: LayoutTemplate,
-    title: "Template",
-    desc: "Pick a finished website design. The layout stays locked — AI only fills its content slots.",
+    title: "Design",
+    desc: "Pick a finished look. We keep the layout; AI fills in your words and photos.",
   },
   {
     icon: Target,
-    title: "Define",
-    desc: "Answer the questionnaire — business, audience, and goals — or import an existing site.",
+    title: "Your business",
+    desc: "Answer a few questions — or we can read your current website and fill them in.",
   },
   {
     icon: PenLine,
-    title: "Content",
-    desc: "AI writes copy, SEO, and images into your template. Edit anything by hand.",
+    title: "Your pages",
+    desc: "AI writes the words and picks photos. You can change anything by hand.",
   },
   {
     icon: CreditCard,
-    title: "Payment",
-    desc: "Review the automated quote, then pay with Stripe to unlock ZIP export or live hosting.",
+    title: "Price",
+    desc: "See a clear price, then pay to download your files or have us put the site online.",
   },
   {
-    icon: Github,
-    title: "Saved to GitHub",
-    desc: "Your project is versioned automatically after generation, whether you have paid or not.",
+    icon: Cloud,
+    title: "Saved copy",
+    desc: "We keep a saved copy of your site as soon as it’s written — even before you pay.",
   },
   {
     icon: Rocket,
-    title: "Deploy",
-    desc: "Download a ZIP to self-host, or we deploy to a live subdomain for you.",
+    title: "Go live",
+    desc: "Download your website files, or we put the site online for you.",
   },
   {
     icon: Wrench,
-    title: "Maintenance",
-    desc: "Managed hosting keeps the site live with updates and 99.9% uptime.",
+    title: "Keep it running",
+    desc: "If we host it, we keep the site online and up to date.",
   },
 ];
 
 const AGENTS = [
   {
     icon: ScanSearch,
-    title: "Website Analyst",
-    desc: "Define your objectives & business goals or analyze your current site using our agent. The analyst will recommend you template and suggest changes.",
+    title: "Website helper",
+    desc: "Tell us your goals, or let us read your current site. We’ll suggest a design and what to change.",
   },
   {
     icon: PenLine,
-    title: "Copywriter",
-    desc: "Craft a storytelling copy for your website. That engages users and create conversions for your business.",
+    title: "Writer",
+    desc: "We write clear, friendly words for your website so visitors understand you and know what to do next.",
   },
   {
     icon: ImageIcon,
-    title: "Images",
-    desc: "Explore our world class library of free and paid images or Generate AI Images using nano banana.",
+    title: "Photos",
+    desc: "Choose from our photo library, or upload your own pictures.",
   },
   {
     icon: Video,
     title: "Videos",
-    desc: "Explore our world class library of free and paid video or Generate AI Videos using omni Flash.",
+    desc: "Add video from our library, or use your own clips.",
   },
   {
     icon: Rocket,
-    title: "Deployment",
-    desc: "Deploy your website using Agentic Infrastructure in one click. Ship websites that scale from zero to millions instantly",
+    title: "Go live",
+    desc: "Put your website online in one click. We handle the technical steps.",
   },
   {
     icon: Users,
-    title: "Customer Success",
-    desc: "Get help finishing your website with our customer support. Talk to Designer, Developer, Digital Marketers, QA, DevOps Specialist",
+    title: "Human help",
+    desc: "Talk to our team if you want a person to help finish your site.",
   },
   {
     icon: Search,
-    title: "Search Engine Optimization",
-    desc: "Write SEO friendly blogs to rank higher on Google, Bing. Attract more audience to the website",
+    title: "Get found on Google",
+    desc: "We write page titles and descriptions so people can find you in search.",
   },
   {
     icon: FlaskConical,
-    title: "A/B Testing",
-    desc: "Conduct A/B Testing on two different layout. Understand user behaviors, conversions.",
+    title: "Compare two versions",
+    desc: "Try two layouts and see which one gets more visits or sign-ups.",
   },
   {
     icon: MousePointerClick,
-    title: "Heatmaps",
-    desc: "Get the heat-maps data to help understand on which section or button user spent most of the time.",
+    title: "See where people click",
+    desc: "Learn which buttons and sections visitors spend the most time on.",
   },
 ];
 
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
               <p className="text-sm leading-[1.5]">
                 It’s easier than ever before to create a new website or revamp an existing website.
                 <br />
-                Go from template to a live site in these steps.
+                Go from design to a live site in these steps.
               </p>
             </div>
             <div className="flex gap-4">
@@ -216,7 +216,7 @@ export default async function DashboardPage() {
                   className="shell-accent-chip flex h-8 shrink-0 items-center gap-1 rounded-[240px] px-3 text-[13px] leading-[22.5px] text-ink transition-colors hover:bg-primary-surface"
                 >
                   <Wand2 className="size-[17px] text-brand-blue" />
-                  {canPickDesign ? "Remix" : "Continue"}
+                  {canPickDesign ? "Use this" : "Continue"}
                 </Link>
               </div>
             </article>
@@ -227,7 +227,7 @@ export default async function DashboardPage() {
       {/* Agents */}
       <section className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold leading-[1.2] text-ink">Agents</h2>
+          <h2 className="text-2xl font-semibold leading-[1.2] text-ink">How we help</h2>
           <Link href="/app/dashboard#agents" className="text-lg font-medium text-brand-blue hover:underline">
             View All&nbsp;&nbsp;→
           </Link>
@@ -305,10 +305,9 @@ function ProjectPanel({
             <StatusBadge status={project.status} />
           </div>
           <p className="text-sm leading-[1.5] text-ink-muted">
-            /{project.slug} ·{" "}
             {hasGenerated
-              ? "Generated — continue editing, get a quote, or ship it."
-              : "Continue where you left off to generate your website."}
+              ? "Your site is ready — edit it, see the price, or put it online."
+              : "Pick up where you left off to write your website."}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

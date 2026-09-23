@@ -45,8 +45,7 @@ export function TemplateGallery({
         <LayoutTemplate className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
         <p className="font-medium">The library is empty</p>
         <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-          No designs are published yet. Run <code className="font-mono">npm run db:seed</code> to
-          populate the starter library.
+          No designs are available yet. Please check back soon.
         </p>
       </div>
     );

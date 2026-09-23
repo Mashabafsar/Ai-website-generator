@@ -36,7 +36,7 @@ export function computeQuote(input: {
 
   if (isManaged) {
     lineItems.push({
-      name: "Subdomain",
+      name: "Your site's web address",
       amount: PRICING.subdomain,
     });
   }
@@ -73,7 +73,7 @@ export function computeQuote(input: {
   const monthlyTotal = isManaged ? PRICING.managedHostingMonthly : 0;
 
   if (monthlyTotal > 0) {
-    lineItems.push({ name: "Managed hosting (monthly)", amount: monthlyTotal });
+    lineItems.push({ name: "Monthly hosting", amount: monthlyTotal });
   }
 
   return {

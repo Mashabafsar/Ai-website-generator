@@ -70,7 +70,7 @@ export default async function PreviewPage({
       {site ? (
         <PreviewShell site={site} projectId={projectId} />
       ) : (
-        <p className="text-muted-foreground">Preview data is unavailable. Try regenerating.</p>
+        <p className="text-muted-foreground">We couldn&apos;t show the preview. Try writing the site again.</p>
       )}
     </div>
   );

@@ -113,7 +113,7 @@ export async function deployProject(projectId: string): Promise<{
     await notifyOwnerSiteLive({ projectId, businessName: project.businessName, liveUrl });
     return { status: DeploymentStatus.DEPLOYED, liveUrl, subdomain };
   } catch (err) {
-    logs = log(logs, DeploymentStatus.FAILED, err instanceof Error ? err.message : "Deployment failed");
+    logs = log(logs, DeploymentStatus.FAILED, err instanceof Error ? err.message : "We couldn't put the site online");
     await saveDeployment(projectId, { status: DeploymentStatus.FAILED, subdomain, liveUrl: null, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.PAID } });
     throw err;

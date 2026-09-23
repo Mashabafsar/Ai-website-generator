@@ -71,11 +71,11 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     needsImage: true,
     imageOrientation: "landscape",
     fields: [
-      { key: "eyebrow", label: "Eyebrow", type: "string" },
+      { key: "eyebrow", label: "Small intro line", type: "string" },
       { key: "headline", label: "Headline", type: "string", required: true },
-      { key: "subheadline", label: "Subheadline", type: "text", required: true },
-      { key: "ctaPrimary", label: "Primary CTA", type: "string" },
-      { key: "ctaSecondary", label: "Secondary CTA", type: "string" },
+      { key: "subheadline", label: "Supporting line", type: "text", required: true },
+      { key: "ctaPrimary", label: "Main button", type: "string" },
+      { key: "ctaSecondary", label: "Second button", type: "string" },
     ],
     keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
@@ -94,11 +94,11 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     componentName: "HeroCentered",
     needsImage: false,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", type: "string" },
+      { key: "eyebrow", label: "Small intro line", type: "string" },
       { key: "headline", label: "Headline", type: "string", required: true },
-      { key: "subheadline", label: "Subheadline", type: "text", required: true },
-      { key: "ctaPrimary", label: "Primary CTA", type: "string" },
-      { key: "ctaSecondary", label: "Secondary CTA", type: "string" },
+      { key: "subheadline", label: "Supporting line", type: "text", required: true },
+      { key: "ctaPrimary", label: "Main button", type: "string" },
+      { key: "ctaSecondary", label: "Second button", type: "string" },
     ],
     keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
@@ -118,10 +118,10 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     needsImage: true,
     imageOrientation: "landscape",
     fields: [
-      { key: "eyebrow", label: "Eyebrow", type: "string" },
+      { key: "eyebrow", label: "Small intro line", type: "string" },
       { key: "headline", label: "Headline", type: "string", required: true },
-      { key: "subheadline", label: "Subheadline", type: "text", required: true },
-      { key: "ctaPrimary", label: "Primary CTA", type: "string" },
+      { key: "subheadline", label: "Supporting line", type: "text", required: true },
+      { key: "ctaPrimary", label: "Main button", type: "string" },
     ],
     keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({
@@ -483,7 +483,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
       { key: "email", label: "Email", type: "string" },
       { key: "phone", label: "Phone", type: "string" },
       { key: "address", label: "Address", type: "string" },
-      { key: "ctaLabel", label: "Submit label", type: "string" },
+      { key: "ctaLabel", label: "Send button text", type: "string" },
     ],
     keywords: () => [],
     defaults: (ctx) => ({
@@ -521,7 +521,7 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
   {
     type: "cta",
     variant: "cta-banner",
-    label: "CTA — banner",
+    label: "Action banner",
     description: "A bold call-to-action banner.",
     componentName: "CtaBanner",
     // Some designs (e.g. Athlo) render the CTA over a large photo, so source an
@@ -530,8 +530,8 @@ export const SECTION_REGISTRY: SectionVariantSpec[] = [
     imageOrientation: "landscape",
     fields: [
       { key: "headline", label: "Headline", type: "string", required: true },
-      { key: "subheadline", label: "Subheadline", type: "text" },
-      { key: "ctaPrimary", label: "Primary CTA", type: "string" },
+      { key: "subheadline", label: "Supporting line", type: "text" },
+      { key: "ctaPrimary", label: "Main button", type: "string" },
     ],
     keywords: (ctx) => [ctx.industry],
     defaults: (ctx) => ({

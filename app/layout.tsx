@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s | Agency Partner Interactive",
   },
   description:
-    "Answer a few questions and Agency Partner Interactive's AI builds a launch-ready website: real sections, real copy, real images — saved to GitHub and ready to deploy.",
+    "Answer a few questions and Agency Partner Interactive's AI builds a launch-ready website: real pages, real words, real photos — then download your files or we put it online.",
   icons: {
     icon: [
       { url: "/favicon.ico" },

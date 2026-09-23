@@ -40,7 +40,7 @@ import { isMultiPageTemplate } from "@/lib/agents/site-layout";
 import type { SitePlanView } from "@/lib/agents/website-planner";
 import type { TemplatePageDef } from "@/lib/templates/types";
 
-const STEPS_BASE = ["Website", "Business", "Audience", "Style", "Details", "Your site"] as const;
+const STEPS_BASE = ["Current site", "Business", "Customers", "Look", "Contact", "Review"] as const;
 
 const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   0: ["hasWebsite", "existingWebsiteUrl"],
@@ -271,7 +271,7 @@ export function QuestionnaireWizard({
       notifyCreditsChanged();
       router.refresh();
       if (res.status === 402 || data?.code === "INSUFFICIENT_CREDITS") {
-        toast.error(`Importing a website costs ${importCost} credits — redirecting to top up.`);
+        toast.error(`Importing a website costs ${importCost} credits — opening the credits page.`);
         router.push("/app/credits");
         return;
       }
@@ -400,11 +400,11 @@ export function QuestionnaireWizard({
       notifyCreditsChanged();
       if (!genRes.ok) {
         if (data.code === "INSUFFICIENT_CREDITS") {
-          toast.error("Not enough credits — redirecting to top up.");
+          toast.error("Not enough credits — opening the credits page.");
           router.push("/app/credits");
           return;
         }
-        throw new Error(data.error || "Generation failed");
+        throw new Error(data.error || "We couldn't write your website");
       }
 
       notifyCreditsChanged();
@@ -492,7 +492,7 @@ export function QuestionnaireWizard({
                   <Field
                     label="Your website URL"
                     error={err.existingWebsiteUrl?.message}
-                    hint={`We'll read the public pages and prefill this questionnaire — you can edit everything after. Importing costs ${importCost} credits (refunded if the site can't be read).`}
+                    hint={`We'll read your current website and fill in these answers — you can change anything after. Importing costs ${importCost} credits (returned if we can't read the site).`}
                   >
                     <div className="flex gap-2">
                       <Input
@@ -658,13 +658,12 @@ export function QuestionnaireWizard({
                 {importedThemeChoice === "imported" ? (
                   <p className="text-sm text-muted-foreground">
                     You chose to keep the look from your existing website. Tone and
-                    visual style still tune the writing and corner radius; colours and
-                    typeface come from the import.
+                    visual style still tune the writing; colors and font come from the import.
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Optional. Your chosen design still owns the layout. These picks only
-                    tune the writing voice, colors, and typeface.
+                    tune the writing voice, colors, and font.
                   </p>
                 )}
                 <OptionalSelect
@@ -693,7 +692,7 @@ export function QuestionnaireWizard({
                     {watch("colorPreference") === CUSTOM_COLOR_PREFERENCE && (
                       <div className="space-y-3 rounded-xl border bg-muted/30 p-3">
                         <p className="text-sm text-muted-foreground">
-                          Type a hex or CSS color name if it is not in the preset list.
+                          Type a color code if you have one, or pick a color above.
                         </p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <ColorField
@@ -769,7 +768,8 @@ export function QuestionnaireWizard({
                   </Field>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Self-hosting vs managed hosting is chosen on the quote page, just before payment.
+                  After we write your site, you&apos;ll see the price and choose whether to
+                  download the files or have us put the site online.
                 </p>
               </>
             )}
@@ -812,7 +812,7 @@ export function QuestionnaireWizard({
                   )}
                   {alreadyGenerated
                     ? "Save answers"
-                    : `Generate content (${generateCost} credits)`}
+                    : `Write your website (${generateCost} credits)`}
                 </Button>
               )}
             </div>
@@ -888,7 +888,7 @@ function FontSelect({
 }) {
   const selected = THEME_FONTS.find((f) => f.id === value) ?? null;
   return (
-    <Field label="Typeface (optional)">
+    <Field label="Font (optional)">
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={FONT_CATALOG_HREF} />
       <Select
@@ -897,11 +897,11 @@ function FontSelect({
       >
         <SelectTrigger>
           <span style={selected ? { fontFamily: selected.stack } : undefined}>
-            {selected ? selected.name : "Use this design’s typeface"}
+            {selected ? selected.name : "Use this design’s font"}
           </span>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={DESIGN_DEFAULT}>Use this design’s typeface</SelectItem>
+          <SelectItem value={DESIGN_DEFAULT}>Use this design’s font</SelectItem>
           {THEME_FONTS.map((font) => (
             <SelectItem key={font.id} value={font.id}>
               <span style={{ fontFamily: font.stack }}>{font.name}</span>

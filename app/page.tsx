@@ -5,7 +5,7 @@ import {
   Sparkles,
   FileQuestion,
   LayoutTemplate,
-  Github,
+  Globe,
   Rocket,
   Wand2,
   ImageIcon,
@@ -38,23 +38,23 @@ export default async function LandingPage() {
 const steps = [
   {
     icon: LayoutTemplate,
-    title: "Pick a template",
-    body: "Choose a finished website design. The layout stays locked — AI only fills its content slots.",
+    title: "Pick a design",
+    body: "Choose a finished look. We keep the layout; AI fills in your words and photos.",
   },
   {
     icon: FileQuestion,
-    title: "Answer the questionnaire",
-    body: "Tell us your business, audience, services, and style. Structured questions, not a blank prompt.",
+    title: "Tell us about your business",
+    body: "A few questions about what you do, who you help, and the style you want.",
   },
   {
     icon: Wand2,
-    title: "AI fills the design",
-    body: "A heavy model writes copy, SEO, and image keywords into the template you picked — validated structured data, never raw code.",
+    title: "We write your pages",
+    body: "AI writes the words, picks photos, and fills the design you chose.",
   },
   {
-    icon: Github,
-    title: "Saved to GitHub, ready to ship",
-    body: "Your code is versioned automatically. Export a ZIP or deploy to a live subdomain when you're ready.",
+    icon: Globe,
+    title: "Get your files or go live",
+    body: "Download your website files, or we put the site online for you.",
   },
 ];
 
@@ -65,7 +65,7 @@ function HowItWorks() {
         <div className="max-w-2xl">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">How it works</span>
           <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground">
-            From template to live site in four steps
+            From design to live site in four steps
           </h2>
         </div>
         <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -91,10 +91,10 @@ function HowItWorks() {
 }
 
 const capabilities = [
-  { icon: LayoutTemplate, label: "Hero, Services, About" },
-  { icon: Sparkles, label: "Testimonials & FAQ" },
-  { icon: ImageIcon, label: "Auto stock imagery" },
-  { icon: Wand2, label: "AI section rewrites" },
+  { icon: LayoutTemplate, label: "Welcome, services, about" },
+  { icon: Sparkles, label: "Reviews & common questions" },
+  { icon: ImageIcon, label: "Photos chosen for you" },
+  { icon: Wand2, label: "Rewrite any section" },
 ];
 
 function SectionsShowcase() {
@@ -103,14 +103,13 @@ function SectionsShowcase() {
       <div className="relative mx-auto max-w-7xl px-6">
         <div className="grid items-center gap-14 lg:grid-cols-2">
           <div>
-            <span className="text-sm font-semibold uppercase tracking-widest text-primary">The system</span>
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">How we build it</span>
             <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-ink">
-              AI plans it. A curated library builds it.
+              You answer. We write. You get a real website.
             </h2>
             <p className="mt-5 text-lg text-ink-muted">
-              We never let the model write raw frontend code. It returns a structured
-              blueprint, and we render it with reusable, production-grade sections — so
-              every site is consistent, accessible, and easy to edit.
+              You don’t write any code. We fill a finished design with your words, photos,
+              and colors — so every site is easy to read and easy to edit.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {capabilities.map((c) => (
@@ -153,25 +152,27 @@ function Pricing() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Pricing</span>
           <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground">
-            Generate with credits. Pay only to ship.
+            Write with credits. Pay when you’re ready to go live.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Start with free credits on signup. Generation and AI edits spend credits.
-            You only pay a package fee when you download the code or go live.
+            Sign up and get free credits. Writing your site and rewriting a section uses
+            credits. You only pay a package fee when you download your files or we put
+            the site online.
           </p>
         </div>
 
         <div className="mx-auto mt-14 grid max-w-4xl gap-6 md:grid-cols-2">
           <div className="rounded-none border border-line bg-card p-8">
             <Coins className="h-8 w-8 text-primary" />
-            <h3 className="mt-4 text-xl font-semibold">Self-hosting</h3>
+            <h3 className="mt-4 text-xl font-semibold">Download your files</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              One-time fee. Download a complete Next.js codebase and host it anywhere.
+              Pay once. Download your website files and put them online yourself — on any
+              host you like.
             </p>
             <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
-              <li>• Full source code ZIP</li>
-              <li>• Saved to your GitHub</li>
-              <li>• Deployment guide included</li>
+              <li>• Website files you can upload anywhere</li>
+              <li>• A saved copy of your site</li>
+              <li>• Simple steps to put it online</li>
             </ul>
           </div>
           <div className="relative rounded-none border-2 border-primary-border bg-card p-8">
@@ -179,14 +180,14 @@ function Pricing() {
               Managed
             </span>
             <Rocket className="h-8 w-8 text-primary" />
-            <h3 className="mt-4 text-xl font-semibold">Managed hosting</h3>
+            <h3 className="mt-4 text-xl font-semibold">We put it online</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Creation fee plus monthly hosting. We deploy to a live subdomain for you.
+              A setup fee plus a monthly hosting fee. We put your site online for you.
             </p>
             <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
-              <li>• Automatic deployment</li>
-              <li>• Live subdomain</li>
-              <li>• Managed updates</li>
+              <li>• We put it online for you</li>
+              <li>• Your site’s web address</li>
+              <li>• We keep it running</li>
             </ul>
           </div>
         </div>
@@ -206,7 +207,7 @@ function FinalCta() {
           Build your website today
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-lg text-white/80">
-          Sign up, pick a template, answer a few questions, and watch Agency Partner
+          Sign up, pick a design, answer a few questions, and watch Agency Partner
           Interactive's AI fill that design — free credits included.
         </p>
         <div className="mt-9">

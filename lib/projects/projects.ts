@@ -58,10 +58,10 @@ export function nextProjectStep(project: {
     case ProjectStatus.DRAFT:
       if (!project.templateId) return { label: "Choose a design", href: "/app/templates" };
       return project.questionnaire
-        ? { label: "Generate website", href: `${base}/questionnaire` }
-        : { label: "Continue questionnaire", href: `${base}/questionnaire` };
+        ? { label: "Write your website", href: `${base}/questionnaire` }
+        : { label: "Continue setup", href: `${base}/questionnaire` };
     case ProjectStatus.FAILED:
-      return { label: "Continue questionnaire", href: `${base}/questionnaire` };
+      return { label: "Continue setup", href: `${base}/questionnaire` };
     case ProjectStatus.GENERATING:
       return { label: "View progress", href: `${base}/preview` };
     default:

@@ -15,9 +15,9 @@ export const metadata: Metadata = { title: "Credits" };
 const REASON_LABEL: Record<string, string> = {
   SIGNUP_BONUS: "Signup bonus",
   PURCHASE: "Credit purchase",
-  HEAVY_GENERATE: "Website generation",
-  LIGHT_EDIT: "AI section edit",
-  SCRAPE_IMPORT: "Website import",
+  HEAVY_GENERATE: "Writing your website",
+  LIGHT_EDIT: "Rewriting a section",
+  SCRAPE_IMPORT: "Reading your current website",
   REFUND: "Refund",
   ADJUSTMENT: "Adjustment",
 };
@@ -70,7 +70,7 @@ export default async function CreditsPage({
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Credits</h1>
           <p className="mt-1 text-muted-foreground">
-            Credits power AI generation and edits. Buy more anytime.
+            Credits pay for writing your site and rewriting a section. Buy more anytime.
           </p>
         </div>
         <div className="inline-flex items-center gap-3 rounded-xl border bg-card px-5 py-3">
@@ -88,7 +88,7 @@ export default async function CreditsPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Transaction history</CardTitle>
+          <CardTitle className="text-base">Credit history</CardTitle>
         </CardHeader>
         <CardContent>
           {entries.length === 0 ? (

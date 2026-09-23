@@ -77,7 +77,7 @@ export function ColorField({
             e.preventDefault();
             if (!commit(draft)) setDraft(value || "");
           }}
-          placeholder="#22C55E or green"
+          placeholder="Color code or name"
           className="h-8 font-mono text-xs"
           spellCheck={false}
           autoComplete="off"

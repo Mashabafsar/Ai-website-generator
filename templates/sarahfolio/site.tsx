@@ -92,7 +92,7 @@ export function SarahfolioSite({
         .sf-cta:active { transform: scale(0.97); }
         @media (prefers-reduced-motion: reduce) { .sf-cta:active { transform: none; } }
       `}</style>
-      <main>{renderPageBody(active, slots, { businessName, customLogo, pages, active, contactEmail })}</main>
+      <main className="overflow-x-clip">{renderPageBody(active, slots, { businessName, customLogo, pages, active, contactEmail })}</main>
       <SiteFooter
         businessName={businessName}
         customLogo={customLogo}

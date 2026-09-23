@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   }>(req);
 
   const query = body?.query?.trim();
-  if (!query) return jsonError("Search query is required", 400);
+  if (!query) return jsonError("Enter a search term.", 400);
 
   const provider = body?.provider ?? "all";
   const results = await searchImages(

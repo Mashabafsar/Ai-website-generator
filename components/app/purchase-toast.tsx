@@ -27,7 +27,7 @@ export function PurchaseToast({
     shown.current = true;
 
     if (purchase === "cancelled") {
-      toast.info("Checkout cancelled — no charge was made.");
+      toast.info("Payment was cancelled — you were not charged.");
     } else if (purchase === "success") {
       if (confirmed) {
         toast.success(

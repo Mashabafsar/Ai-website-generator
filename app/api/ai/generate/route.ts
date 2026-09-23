@@ -17,16 +17,16 @@ export async function POST(req: Request) {
 
   const limit = rateLimit(`ai_generate:${user.id}`, 5, 60_000);
   if (!limit.ok) {
-    return jsonError("Too many generation requests. Please wait a moment.", 429, "RATE_LIMITED", {
+    return jsonError("Please wait a moment, then try writing your website again.", 429, "RATE_LIMITED", {
       retryAfterMs: limit.retryAfterMs,
     });
   }
 
   const body = await readJson<{ projectId: string }>(req);
-  if (!body?.projectId) return jsonError("Missing projectId", 400);
+  if (!body?.projectId) return jsonError("We couldn't find your website project.", 400);
 
   const project = await getOwnedProject(user.id, body.projectId);
-  if (!project) return jsonError("Project not found", 404, "NOT_FOUND");
+  if (!project) return jsonError("We couldn't find that website project.", 404, "NOT_FOUND");
 
   try {
     const result = await generateWebsite({ userId: user.id, projectId: project.id });
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return jsonError(
-        "Not enough credits to generate. Please top up.",
+        "Not enough credits to write your website. Please buy more.",
         402,
         "INSUFFICIENT_CREDITS",
         { required: err.required, available: err.available }
@@ -50,6 +50,6 @@ export async function POST(req: Request) {
       return jsonError(err.message, 400, "NO_QUESTIONNAIRE");
     }
     console.error("Generation error:", err);
-    return jsonError("Generation failed. Your credits were refunded.", 500, "GENERATION_FAILED");
+    return jsonError("We couldn't write your website. Your credits were returned.", 500, "GENERATION_FAILED");
   }
 }

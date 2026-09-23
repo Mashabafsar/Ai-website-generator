@@ -98,7 +98,7 @@ export function SwitchDesignDialog({
                   <p className="font-medium">Your edits to the current site will be replaced</p>
                   <p className="text-muted-foreground">
                     Your business details stay the same. Anything you have already paid for stays
-                    paid, and a live site keeps running until you redeploy it.
+                    paid, and a live site keeps running until you put the new version online.
                   </p>
                 </div>
               </div>

@@ -59,8 +59,8 @@ export function BrandImportChoice({
             {[
               brand.logoUrl ? "logo" : null,
               photoCount ? `${photoCount} photo${photoCount === 1 ? "" : "s"}` : null,
-              colors ? "brand colours" : null,
-              font ? "typeface" : null,
+              colors ? "your colors" : null,
+              font ? "font" : null,
             ]
               .filter(Boolean)
               .join(" · ") || "Text details only"}
@@ -87,7 +87,7 @@ export function BrandImportChoice({
           active={value === "imported"}
           onClick={() => onChange("imported")}
           title="Use this look"
-          desc="Keep the colours and typeface from your existing site."
+          desc="Keep the colors and font from your existing site."
         >
           <div className="mt-3 space-y-2">
             {swatches.length ? (
@@ -107,7 +107,7 @@ export function BrandImportChoice({
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                No colours detected — the design keeps its own.
+                No colors found — this design keeps its own.
               </p>
             )}
             {font ? (
@@ -121,7 +121,7 @@ export function BrandImportChoice({
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                No typeface detected — the design keeps its own.
+                No font found — this design keeps its own.
               </p>
             )}
           </div>
@@ -131,7 +131,7 @@ export function BrandImportChoice({
           active={value === "custom"}
           onClick={() => onChange("custom")}
           title="Choose a different look"
-          desc="Pick a palette and typeface in the Style step, or leave it for the generator."
+          desc="Pick colors and a font in the Style step, or leave it for us to choose."
         >
           <div className="mt-3 flex items-center gap-2">
             <span className="h-6 w-6 rounded-full bg-indigo-500" />
@@ -163,7 +163,7 @@ export function BrandImportChoice({
               </label>
               <p id="imported-asset-consent-note" className="text-xs text-muted-foreground">
                 {assetConsent
-                  ? `We'll reuse ${assetList(brand.logoUrl, photoCount)} on your new site under either option above — your theme choice only changes the colours and typeface.`
+                  ? `We'll reuse ${assetList(brand.logoUrl, photoCount)} on your new site under either option above — your look choice only changes the colors and font.`
                   : `Until you confirm this, we'll leave ${assetList(brand.logoUrl, photoCount)} out and use stock photography instead. Everything else the import filled in stays either way.`}
               </p>
             </div>

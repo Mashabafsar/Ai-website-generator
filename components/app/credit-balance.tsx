@@ -12,7 +12,7 @@ export function CreditBalance({ balance, className }: { balance: number; classNa
         low ? "border-amber-300 bg-amber-50 text-amber-700" : "border-border bg-card",
         className
       )}
-      title="Credits — click to top up"
+      title="Credits — click to buy more"
     >
       <Coins className={cn("h-4 w-4", low ? "text-amber-600" : "text-primary")} />
       <span>{balance.toLocaleString()}</span>

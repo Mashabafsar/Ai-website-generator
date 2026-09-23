@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404);
+  if (!project) return jsonError("We couldn't find that website project.", 404);
 
   const q = await prisma.questionnaire.findUnique({ where: { projectId } });
   return jsonOk({ answers: q ? JSON.parse(q.answers) : null });
@@ -32,12 +32,12 @@ export async function POST(req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404);
+  if (!project) return jsonError("We couldn't find that website project.", 404);
 
   const body = await readJson<unknown>(req);
   const parsed = questionnaireSchema.safeParse(body);
   if (!parsed.success) {
-    return jsonError("Invalid questionnaire", 400, "VALIDATION", parsed.error.flatten());
+    return jsonError("Please check your answers and try again.", 400, "VALIDATION", parsed.error.flatten());
   }
 
   const answers = parsed.data;
@@ -46,7 +46,7 @@ export async function POST(req: Request, { params }: Ctx) {
   const template =
     (await getTemplateById(answers.templateId)) ?? (await getTemplateBySlug(answers.templateId));
   if (!template || !template.published) {
-    return jsonError("Select a design from the template library", 400, "TEMPLATE_REQUIRED");
+    return jsonError("Choose a design first", 400, "TEMPLATE_REQUIRED");
   }
   answers.templateId = template.id;
   if (answers.layout?.length) {

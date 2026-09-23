@@ -246,7 +246,7 @@ export async function fetchAndParseWebsite(rawUrl: string): Promise<ScrapedSite>
   const contentType = res.headers.get("content-type") || "";
   if (!/text\/html|application\/xhtml/i.test(contentType)) {
     await res.body?.cancel().catch(() => {});
-    throw new ScrapeError("NOT_HTML", "That URL doesn't point to a web page.");
+    throw new ScrapeError("NOT_HTML", "That address isn't a web page we can read.");
   }
 
   const html = await readCappedText(res, BODY_CAP_BYTES);
@@ -300,7 +300,7 @@ export async function fetchAndParseWebsite(rawUrl: string): Promise<ScrapedSite>
   if (bodyText.length < 200) {
     throw new ScrapeError(
       "EMPTY_PAGE",
-      "That page has almost no readable text (it may need JavaScript to load)."
+      "We couldn't find enough text on that page. You can fill in the details yourself."
     );
   }
 

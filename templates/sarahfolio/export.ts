@@ -558,7 +558,7 @@ export function renderSarahfolioPage(site: AssembledSite, pageSlug?: string): st
   </style>
 </head>
 <body>
-<main>
+<main class="overflow-x-clip">
 ${pageBody(active, slots, meta)}
 </main>
 ${siteFooter(meta, tagline)}

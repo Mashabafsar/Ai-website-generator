@@ -20,8 +20,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             Your next website is a few questions away.
           </h2>
           <p className="mt-4 max-w-sm text-ink-muted">
-            Sign in to generate, edit, and ship a complete site — versioned on GitHub and
-            ready to deploy.
+            Log in to write, edit, and finish your website — then download the files or
+            put it online.
           </p>
         </div>
         <div className="relative text-sm text-ink-muted">

@@ -77,7 +77,7 @@ export function HeroSection({
   eyebrow = "AI Website Builder by Agency Partner Interactive",
   title = "A launch-ready website,",
   gradientTitle = " generated in minutes.",
-  description = "Pick a template, answer a short questionnaire, and our AI fills that design with your copy and images — a curated component system, never raw frontend code.",
+  description = "Pick a design, answer a few questions, and our AI fills it with your words and photos — a finished website, not a blank page.",
   ctaText = "Start building free",
   ctaHref = "/signup",
   gridOptions,

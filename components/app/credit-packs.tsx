@@ -21,13 +21,13 @@ export function CreditPacks() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Could not start checkout");
+        throw new Error(data.error || "We couldn't start payment");
       }
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Checkout failed");
+      toast.error(err instanceof Error ? err.message : "We couldn't start payment. Please try again.");
       setLoading(null);
     }
   }
@@ -57,10 +57,10 @@ export function CreditPacks() {
 
               <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> ~{Math.floor(pack.credits / 50)} full generations
+                  <Check className="h-4 w-4 text-primary" /> ~{Math.floor(pack.credits / 50)} complete websites
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> {Math.floor(pack.credits / 5)} AI section edits
+                  <Check className="h-4 w-4 text-primary" /> {Math.floor(pack.credits / 5)} section rewrites
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-primary" /> Never expires

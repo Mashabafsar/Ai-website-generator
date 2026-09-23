@@ -101,10 +101,10 @@ export default async function AdminUsagePage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">AI usage ledger</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight">AI usage</h1>
         <p className="mt-1 text-muted-foreground">
-          Real LLM token consumption per generation and edit. Credits are a fixed
-          price; this shows the underlying model cost.
+          How much the writing tools used per website and edit. Credits stay a fixed
+          price; this is the underlying usage.
         </p>
       </div>
 
@@ -116,9 +116,9 @@ export default async function AdminUsagePage({
               <p className="font-semibold">Generation is degraded</p>
               {recentFallbacks > 0 && (
                 <p className="text-sm text-ink-soft">
-                  {fmt(recentFallbacks)} build{recentFallbacks === 1 ? "" : "s"} in the last
-                  24 hours were written by the deterministic template because no model
-                  answered. Those generations were refunded, not billed.
+                  {fmt(recentFallbacks)} site{recentFallbacks === 1 ? "" : "s"} in the last
+                  24 hours used starter content because the writing tools didn&apos;t
+                  answer. Those builds were refunded, not billed.
                 </p>
               )}
               {openMisconfigurations.map((m) => (
@@ -158,7 +158,7 @@ export default async function AdminUsagePage({
               className={`h-5 w-5 ${fallbackTotal > 0 ? "text-error-main" : "text-primary"}`}
             />
           }
-          label="Template fallbacks"
+          label="Starter content used"
           value={fmt(fallbackTotal)}
         />
       </div>
@@ -209,7 +209,7 @@ export default async function AdminUsagePage({
         <CardContent>
           {incidents.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No failures or template fallbacks recorded.
+              No failures or starter-content fallbacks recorded.
             </p>
           ) : (
             <div className="overflow-x-auto">

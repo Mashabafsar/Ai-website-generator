@@ -48,14 +48,14 @@ export default async function TemplatesPage() {
         <p className="mt-2 text-muted-foreground">
           {hasSite ? (
             <>
-              Open any design to scroll the whole thing before you commit. Switching rebuilds your
-              website on the new layout and rewrites your content to fit it, for {cost} credits.
+              Open any design to scroll through it before you choose. Switching rebuilds your
+              website on the new look and rewrites your words to fit it, for {cost} credits.
             </>
           ) : (
             <>
               Every design below is a complete, finished website — open one to scroll through the
               entire thing. Choose it, answer a few questions about your business, and our AI writes
-              all the content to fit. Generation costs {cost} credits.
+              all the content to fit. Writing your website costs {cost} credits.
             </>
           )}
         </p>

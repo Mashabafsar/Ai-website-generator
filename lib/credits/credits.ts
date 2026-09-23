@@ -6,7 +6,7 @@ export class InsufficientCreditsError extends Error {
   required: number;
   available: number;
   constructor(required: number, available: number) {
-    super(`Insufficient credits: need ${required}, have ${available}`);
+    super(`Not enough credits. You need ${required}, you have ${available}.`);
     this.name = "InsufficientCreditsError";
     this.required = required;
     this.available = available;

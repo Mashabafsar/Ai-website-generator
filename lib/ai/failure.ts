@@ -51,7 +51,7 @@ export const FAILURE_LABEL: Record<AiFailureKind | typeof TEMPLATE_FALLBACK, str
   invalid_output: "Unusable response",
   unavailable: "Provider unavailable",
   unknown: "Unclassified failure",
-  [TEMPLATE_FALLBACK]: "Fell back to template",
+  [TEMPLATE_FALLBACK]: "Used starter content",
 };
 
 function messageOf(err: unknown): string {

@@ -48,7 +48,7 @@ const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
 
 export const questionnaireSchema = z.object({
   // Selected website design (Template.id). Validated against the DB server-side.
-  templateId: z.string().min(1, "Choose a design from the template library"),
+  templateId: z.string().min(1, "Choose a design first"),
 
   // Existing website (step 0). When "yes", the URL is scraped to prefill answers.
   hasWebsite: z.enum(["yes", "no"]).optional().or(z.literal("")),
@@ -61,8 +61,8 @@ export const questionnaireSchema = z.object({
   location: z.string().max(80).optional().or(z.literal("")),
 
   // Audience & offering
-  targetAudience: z.string().min(3, "Describe your target audience").max(200),
-  demographics: z.string().min(3, "Describe who you serve").max(200),
+  targetAudience: z.string().min(3, "Tell us who this website is for").max(200),
+  demographics: z.string().min(3, "Tell us who you help most").max(200),
   goals: z.string().min(5, "Tell us what this website should achieve").max(400),
   services: z
     .array(z.string().min(1))

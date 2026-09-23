@@ -32,7 +32,7 @@ export async function notifyOwnerSiteLive(params: {
 }
 
 /**
- * Email the account owner that their ZIP package is ready to download.
+ * Email the account owner that their website files are ready to download.
  */
 export async function notifyOwnerZipReady(params: {
   projectId: string;
@@ -42,9 +42,9 @@ export async function notifyOwnerZipReady(params: {
   if (!to) return;
 
   const appLink = `${env.appUrl.replace(/\/$/, "")}/app/project/${params.projectId}/quote`;
-  const subject = `${params.businessName} source ZIP is ready`;
+  const subject = `${params.businessName} website files are ready`;
   const text = [
-    `Your ${params.businessName} website ZIP is ready to download.`,
+    `Your ${params.businessName} website files are ready to download.`,
     `Open your project: ${appLink}`,
   ].join("\n");
 
@@ -52,7 +52,7 @@ export async function notifyOwnerZipReady(params: {
     to,
     subject,
     text,
-    html: `<p>Your <strong>${escapeHtml(params.businessName)}</strong> website ZIP is ready to download.</p>
+    html: `<p>Your <strong>${escapeHtml(params.businessName)}</strong> website files are ready to download.</p>
 <p><a href="${escapeHtml(appLink)}">Open your project</a></p>`,
   });
 }

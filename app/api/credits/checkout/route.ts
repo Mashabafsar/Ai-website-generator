@@ -9,15 +9,15 @@ export async function POST(req: Request) {
   if (!user) return response;
 
   const body = await readJson<{ packId: CreditPackId }>(req);
-  if (!body?.packId) return jsonError("Missing packId", 400);
+  if (!body?.packId) return jsonError("Choose a credit pack.", 400);
 
   const pack = getCreditPack(body.packId);
-  if (!pack) return jsonError("Unknown credit pack", 400);
+  if (!pack) return jsonError("That credit pack isn't available.", 400);
 
   const stripe = getStripe();
   if (!stripe) {
     return jsonError(
-      "Payments are not configured on this environment.",
+      "Payments aren't set up yet. Please try again later.",
       503,
       "STRIPE_NOT_CONFIGURED"
     );

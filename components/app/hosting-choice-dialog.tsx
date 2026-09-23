@@ -18,14 +18,14 @@ const OPTIONS = [
   {
     type: PackageType.SELF_HOSTING,
     icon: FolderDown,
-    title: "Self-hosting",
-    desc: "Download a ZIP of the full site and host it yourself. No monthly fee.",
+    title: "Download your files",
+    desc: "Get your website files and put them online yourself. No monthly fee.",
   },
   {
     type: PackageType.MANAGED_HOSTING,
     icon: Cloud,
-    title: "Managed hosting",
-    desc: "We publish the site to a live URL for you. No files to download or upload.",
+    title: "We put it online",
+    desc: "We put the site online for you. No files to download or upload.",
   },
 ] as const;
 
@@ -63,10 +63,9 @@ export function HostingChoiceDialog({
     <Dialog open={open} onOpenChange={(next) => !submitting && onOpenChange(next)}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">How should we deliver this site?</DialogTitle>
+          <DialogTitle className="font-display text-xl">How do you want to get this site?</DialogTitle>
           <DialogDescription>
-            This choice sets the quote. Pages, sections, and add-ons are calculated the same way on
-            either package.
+            This choice sets the price. Extra pages and extras cost the same on either option.
           </DialogDescription>
         </DialogHeader>
 

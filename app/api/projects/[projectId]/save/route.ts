@@ -16,14 +16,14 @@ export async function POST(req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404);
+  if (!project) return jsonError("We couldn't find that website project.", 404);
 
   const body = await readJson<{ blueprint: WebsiteBlueprint; theme: ThemeTokens }>(req);
-  if (!body?.blueprint || !body?.theme) return jsonError("Missing blueprint or theme", 400);
+  if (!body?.blueprint || !body?.theme) return jsonError("We couldn't find your site's content or colors.", 400);
 
   const theme = themeSchema.safeParse(body.theme);
   if (!theme.success) {
-    return jsonError("Invalid theme", 400, "VALIDATION", theme.error.issues);
+    return jsonError("Those colors don't look right. Please try again.", 400, "VALIDATION", theme.error.issues);
   }
 
   try {
@@ -31,12 +31,12 @@ export async function POST(req: Request, { params }: Ctx) {
     return jsonOk({ ok: true });
   } catch (err) {
     if (err instanceof BlueprintInvalidError) {
-      return jsonError("Invalid content", 400, "VALIDATION", err.errors);
+      return jsonError("We couldn't save those changes.", 400, "VALIDATION", err.errors);
     }
     if (err instanceof TemplateStructureError) {
       return jsonError(err.message, 400, "TEMPLATE_LOCKED");
     }
     console.error("Save error:", err);
-    return jsonError("Could not save changes", 500);
+    return jsonError("We couldn't save your changes.", 500);
   }
 }

@@ -579,7 +579,7 @@ export function renderMainfilePage(site: AssembledSite, pageSlug?: string): stri
 </head>
 <body>
 ${header(pages, active, businessName, customLogo)}
-<main>
+<main class="overflow-x-clip">
 ${pageBody(active, slots, contactEmail, contactPhone)}
 </main>
 ${footer(pages, businessName, customLogo, tagline, contactEmail, contactPhone, footerSlot.theme)}

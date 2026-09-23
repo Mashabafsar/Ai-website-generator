@@ -8,8 +8,8 @@ export function SiteFooter() {
         <div className="space-y-3">
           <Logo />
           <p className="max-w-sm text-sm text-ink-muted">
-            AI-generated websites, assembled from a curated component system — built,
-            versioned on GitHub, and ready to ship.
+            AI-written websites from a finished design — built for you, saved for you,
+            and ready to go live.
           </p>
         </div>
         <div className="flex flex-wrap gap-x-10 gap-y-4 text-sm text-ink-muted">

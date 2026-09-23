@@ -41,7 +41,7 @@ export function QuotePanel({
       body: JSON.stringify({ packageType }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Could not calculate quote");
+    if (!res.ok) throw new Error(data.error || "We couldn't calculate the price");
     setQuote(data);
     router.refresh();
     return data as Quote;
@@ -74,10 +74,16 @@ export function QuotePanel({
         body: JSON.stringify({ projectId, packageType }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not start checkout");
+      if (!res.ok) throw new Error(data.error || "We couldn't start payment");
       if (data.url) window.location.href = data.url;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : paying ? "Checkout failed" : "Quote failed");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : paying
+            ? "We couldn't start payment. Please try again."
+            : "We couldn't update your quote. Please try again."
+      );
       setCheckingOut(false);
     } finally {
       setCalculating(false);
@@ -96,15 +102,15 @@ export function QuotePanel({
             <p className="text-sm text-muted-foreground">
               {quote
                 ? isManaged
-                  ? "Managed hosting + subdomain"
-                  : "Self-hosting (ZIP export)"
-                : "Choose hosting to calculate your quote"}
+                  ? "We host it for you"
+                  : "Download your files"
+                : "Choose how you'll get your site to see the price"}
             </p>
           </div>
           {!isPaid && (
             <Button variant="outline" size="sm" onClick={recalc} disabled={submitting}>
               {calculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {quote ? "Change package" : "Calculate"}
+              {quote ? "Change how you get it" : "See the price"}
             </Button>
           )}
         </div>
@@ -123,7 +129,7 @@ export function QuotePanel({
           </ul>
         ) : (
           <div className="px-6 py-10 text-center text-sm text-muted-foreground">
-            Choose self-hosting or managed hosting to generate a quote.
+            Choose whether you'll download the files or we'll put the site online.
           </div>
         )}
       </div>
@@ -159,9 +165,9 @@ export function QuotePanel({
 
         <p className="px-1 text-xs text-muted-foreground">
           {isManaged
-            ? "Payment unlocks Make it live — we publish and host the site for you."
-            : "Payment unlocks a downloadable ZIP of your full source code."}{" "}
-          Pick hosting just before checkout — the quote updates to match.
+            ? "After you pay, we put the site online and host it for you."
+            : "After you pay, you can download your website files and upload them anywhere."}{" "}
+          Pick how you'll get the site just before payment — the price updates to match.
         </p>
       </div>
 

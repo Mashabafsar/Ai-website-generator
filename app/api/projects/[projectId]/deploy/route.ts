@@ -14,13 +14,13 @@ export async function POST(_req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404);
-  if (!project.blueprint) return jsonError("Generate your website first", 409, "NOT_GENERATED");
+  if (!project) return jsonError("We couldn't find that website project.", 404);
+  if (!project.blueprint) return jsonError("Write your website first", 409, "NOT_GENERATED");
 
   // Payment-gated: live deployment requires a managed-hosting package payment.
   const paid = await hasPaidPackage(projectId, PackageType.MANAGED_HOSTING);
   if (!paid) {
-    return jsonError("Managed hosting payment required to deploy.", 402, "PAYMENT_REQUIRED");
+    return jsonError("Pay for hosting first so we can put your site online.", 402, "PAYMENT_REQUIRED");
   }
 
   try {
@@ -35,7 +35,7 @@ export async function POST(_req: Request, { params }: Ctx) {
         "HOSTING_NOT_CONFIGURED"
       );
     }
-    const message = err instanceof Error ? err.message : "Deployment failed";
+    const message = err instanceof Error ? err.message : "We couldn't put your site online.";
     return jsonError(message.slice(0, 240), 500);
   }
 }

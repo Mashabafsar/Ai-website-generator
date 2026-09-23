@@ -15,7 +15,7 @@ export function jsonOk<T>(data: T, status = 200) {
 export async function requireUser() {
   const session = await getCurrentSession();
   if (!session?.user) {
-    return { user: null, response: jsonError("Unauthorized", 401, "UNAUTHORIZED") };
+    return { user: null, response: jsonError("Please log in to continue.", 401, "UNAUTHORIZED") };
   }
   return { user: session.user, response: null };
 }

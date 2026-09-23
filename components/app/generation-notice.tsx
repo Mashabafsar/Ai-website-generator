@@ -39,7 +39,7 @@ export function GenerationNotice({
       notifyCreditsChanged();
       if (!res.ok) {
         if (data.code === "INSUFFICIENT_CREDITS") {
-          toast.error("Not enough credits — redirecting to top up.");
+          toast.error("Not enough credits — opening the credits page.");
           router.push("/app/credits");
           return;
         }
@@ -66,7 +66,7 @@ export function GenerationNotice({
         <p className="text-sm text-ink-soft">
           We couldn&apos;t reach the tools that write your copy, so your site was filled
           in with its design&apos;s example text instead of words written for your
-          business. Everything else — your layout, colours and contact details — is
+          business. Everything else — your layout, colors, and contact details — is
           yours.
         </p>
         <p className="text-sm text-ink-soft">

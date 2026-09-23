@@ -96,7 +96,7 @@ export function MainfileSite({
       ) : null}
       <Header pages={pages} active={active} businessName={businessName} customLogo={customLogo} />
 
-      <main>{renderPageBody(active, slots, { businessName, contactEmail, contactPhone })}</main>
+      <main className="overflow-x-clip">{renderPageBody(active, slots, { businessName, contactEmail, contactPhone })}</main>
 
       <Footer
         pages={pages}

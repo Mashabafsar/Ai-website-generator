@@ -29,12 +29,12 @@ export async function POST(req: Request, { params }: Ctx) {
   }
 
   const body = await readJson<{ templateId: string }>(req);
-  if (!body?.templateId) return jsonError("Missing templateId", 400);
+  if (!body?.templateId) return jsonError("Choose a design.", 400);
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404, "NOT_FOUND");
+  if (!project) return jsonError("We couldn't find that website project.", 404, "NOT_FOUND");
   if (!project.blueprint) {
-    return jsonError("Generate your website first", 409, "NOT_GENERATED");
+    return jsonError("Write your website first", 409, "NOT_GENERATED");
   }
   if (!(await isPublishedTemplate(body.templateId))) {
     return jsonError("That design is not available", 400, "UNKNOWN_TEMPLATE");
@@ -50,7 +50,7 @@ export async function POST(req: Request, { params }: Ctx) {
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return jsonError(
-        "Not enough credits to switch designs. Please top up.",
+        "Not enough credits to switch designs. Please buy more.",
         402,
         "INSUFFICIENT_CREDITS",
         { required: err.required, available: err.available }

@@ -9,6 +9,15 @@ import { PackageType } from "@/lib/constants";
 
 type DeploymentLog = { at: string; status: string; message: string };
 
+const LOG_STATUS: Record<string, string> = {
+  PENDING: "Starting",
+  BUILD_STARTED: "Building",
+  DEPLOYED: "Live",
+  FAILED: "Couldn't go live",
+  CANCELLED: "Cancelled",
+  REPOSITORY_CREATED: "Saved",
+};
+
 export function DeliveryPanel({
   projectId,
   packageType,
@@ -28,7 +37,7 @@ export function DeliveryPanel({
   useEffect(() => {
     const checkout = searchParams.get("checkout");
     if (checkout === "success") toast.success("Payment successful — your delivery is unlocked.");
-    if (checkout === "cancelled") toast.info("Checkout cancelled.");
+    if (checkout === "cancelled") toast.info("Payment was cancelled.");
     if (checkout) {
       const url = new URL(window.location.href);
       url.searchParams.delete("checkout");
@@ -73,7 +82,7 @@ export function DeliveryPanel({
           Your website is generated. Complete payment to{" "}
           {isManaged
             ? "publish it live with one click. We host it for you — no files to download or upload."
-            : "download the full source code as a ZIP"}
+            : "download your website files"}
           .
         </p>
         <Button variant="brand" className="mt-5" onClick={() => router.push(`/app/project/${projectId}/quote`)}>
@@ -98,15 +107,15 @@ export function DeliveryPanel({
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {deploying
-                  ? "Publishing now — this usually takes under a minute. Keep this tab open."
+                  ? "Going live — this usually takes under a minute. Keep this tab open."
                   : isLive
-                    ? "We host this for you. Re-publish after you make edits."
-                    : "We'll publish this to Vercel automatically. You never download files, open GitHub, or log into Vercel."}
+                    ? "We host this for you. Update the live site after you make edits."
+                    : "We'll put the site online for you. You don't need to download files or sign up for anything else."}
               </p>
             </div>
             <Button variant="brand" onClick={deploy} disabled={deploying}>
               {deploying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-              {deploying ? "Publishing…" : isLive ? "Re-publish" : "Make it live"}
+              {deploying ? "Going live…" : isLive ? "Update live site" : "Make it live"}
             </Button>
           </div>
 
@@ -127,13 +136,13 @@ export function DeliveryPanel({
           {deployment?.logs && deployment.logs.length > 0 && (
             <div className="mt-5 rounded-lg border bg-muted/40 p-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Publish log
+                What's happening
               </div>
               <ul className="space-y-1 text-xs text-muted-foreground">
                 {deployment.logs.map((l, i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="font-mono opacity-60">{new Date(l.at).toLocaleTimeString()}</span>
-                    <span className="font-medium">{l.status}</span>
+                    <span className="opacity-60">{new Date(l.at).toLocaleTimeString()}</span>
+                    <span className="font-medium">{LOG_STATUS[l.status] ?? l.status}</span>
                     <span>{l.message}</span>
                   </li>
                 ))}
@@ -143,13 +152,13 @@ export function DeliveryPanel({
         </div>
       ) : (
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="font-display text-lg font-semibold">Self-hosting</h2>
+          <h2 className="font-display text-lg font-semibold">Download your files</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Download your complete website source as a ZIP and host it anywhere.
+            Download your website files and put them online anywhere you like.
           </p>
           <Button variant="brand" className="mt-5" asChild>
             <a href={`/api/projects/${projectId}/download`}>
-              <Download className="h-4 w-4" /> Download ZIP
+              <Download className="h-4 w-4" /> Get your files
             </a>
           </Button>
         </div>

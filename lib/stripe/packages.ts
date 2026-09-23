@@ -47,7 +47,7 @@ export function buildPackageCheckout(quote: QuoteResult): {
               currency: quote.currency.toLowerCase(),
               unit_amount: quote.monthlyTotal * 100,
               recurring: { interval: "month" },
-              product_data: { name: "Managed hosting (monthly)" },
+              product_data: { name: "Monthly hosting" },
             },
           }
     );

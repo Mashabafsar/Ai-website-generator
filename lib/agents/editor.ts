@@ -32,7 +32,7 @@ import type {
 export class BlueprintInvalidError extends Error {
   errors: string[];
   constructor(errors: string[]) {
-    super("Invalid blueprint");
+    super("We couldn't save those changes.");
     this.name = "BlueprintInvalidError";
     this.errors = errors;
   }
@@ -41,7 +41,7 @@ export class BlueprintInvalidError extends Error {
 /** Raised when an edit targets a section that isn't part of the site. */
 export class SectionNotFoundError extends Error {
   constructor() {
-    super("Section not found");
+    super("We couldn't find that section.");
     this.name = "SectionNotFoundError";
   }
 }

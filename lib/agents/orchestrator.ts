@@ -39,25 +39,25 @@ import { slugify } from "@/lib/utils";
 
 export class AlreadyGeneratedError extends Error {
   constructor() {
-    super("This website has already been generated.");
+    super("This website has already been written.");
     this.name = "AlreadyGeneratedError";
   }
 }
 export class GenerationInProgressError extends Error {
   constructor() {
-    super("Generation is already in progress.");
+    super("We're still writing your website. Please wait a moment.");
     this.name = "GenerationInProgressError";
   }
 }
 export class NoQuestionnaireError extends Error {
   constructor() {
-    super("Complete the questionnaire before generating.");
+    super("Finish the questions first, then we can write your website.");
     this.name = "NoQuestionnaireError";
   }
 }
 export class NoTemplateError extends Error {
   constructor() {
-    super("Choose a website design before generating.");
+    super("Choose a website design first.");
     this.name = "NoTemplateError";
   }
 }

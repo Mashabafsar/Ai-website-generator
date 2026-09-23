@@ -12,16 +12,16 @@ export async function POST(req: Request) {
   if (!user) return response;
 
   const body = await readJson<{ projectId: string; packageType?: unknown }>(req);
-  if (!body?.projectId) return jsonError("Missing projectId", 400);
+  if (!body?.projectId) return jsonError("We couldn't find your website project.", 400);
   const packageType = isPackageType(body.packageType) ? body.packageType : undefined;
 
   const project = await getOwnedProject(user.id, body.projectId);
-  if (!project) return jsonError("Project not found", 404);
-  if (!project.blueprint) return jsonError("Generate your website first", 409, "NOT_GENERATED");
+  if (!project) return jsonError("We couldn't find that website project.", 404);
+  if (!project.blueprint) return jsonError("Write your website first", 409, "NOT_GENERATED");
 
   const stripe = getStripe();
   if (!stripe) {
-    return jsonError("Payments are not configured on this environment.", 503, "STRIPE_NOT_CONFIGURED");
+    return jsonError("Payments aren't set up yet. Please try again later.", 503, "STRIPE_NOT_CONFIGURED");
   }
 
   // Recompute the quote server-side so the charged amount is always authoritative.

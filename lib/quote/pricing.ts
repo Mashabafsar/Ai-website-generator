@@ -36,6 +36,6 @@ export const PRICING = {
 } as const;
 
 export const PACKAGE_LABELS: Record<string, string> = {
-  [PackageType.SELF_HOSTING]: "Self-hosting (ZIP export)",
-  [PackageType.MANAGED_HOSTING]: "Managed hosting + subdomain",
+  [PackageType.SELF_HOSTING]: "Download your files",
+  [PackageType.MANAGED_HOSTING]: "We host it for you",
 };

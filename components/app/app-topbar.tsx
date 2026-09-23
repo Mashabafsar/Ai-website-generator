@@ -17,9 +17,9 @@ const TITLES: [RegExp, string][] = [
   [/^\/app\/credits/, "Credits"],
   [/^\/app\/new-project/, "New Website"],
   [/^\/app\/project\/[^/]+\/editor/, "Editor"],
-  [/^\/app\/project\/[^/]+\/questionnaire/, "Questionnaire"],
+  [/^\/app\/project\/[^/]+\/questionnaire/, "Your business"],
   [/^\/app\/project\/[^/]+\/quote/, "Quote"],
-  [/^\/app\/project\/[^/]+\/deployment/, "Deployment"],
+  [/^\/app\/project\/[^/]+\/deployment/, "Deliver"],
   [/^\/app\/project\/[^/]+\/preview/, "Preview"],
   [/^\/app\/project/, "Project"],
   [/^\/app\/admin/, "Admin"],
@@ -84,10 +84,10 @@ export function AppTopbar({
         <Link
           href="/app/credits"
           className="flex items-center gap-3.5 text-black transition-opacity hover:opacity-70"
-          title="Tokens — click to top up"
+          title="Credits — click to buy more"
         >
           <Coins className="size-[26px] text-brand-blue" />
-          <span className="text-lg leading-[1.2]">{balance.toLocaleString()} Tokens Remaining</span>
+          <span className="text-lg leading-[1.2]">{balance.toLocaleString()} Credits left</span>
         </Link>
         <Divider />
         <UserMenu name={user.name} email={user.email} />

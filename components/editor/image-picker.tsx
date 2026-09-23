@@ -53,13 +53,13 @@ export function ImagePicker({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Search failed");
+      if (!res.ok) throw new Error(data.error || "We couldn't search photos");
       setResults(data.results || []);
       if (!(data.results || []).length) {
-        toast.message("No images found — try another keyword or upload your own.");
+        toast.message("No photos found — try another search, or upload your own.");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Search failed");
+      toast.error(err instanceof Error ? err.message : "We couldn't search photos");
     } finally {
       setSearching(false);
     }

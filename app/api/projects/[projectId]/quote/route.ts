@@ -12,8 +12,8 @@ export async function POST(req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404);
-  if (!project.blueprint) return jsonError("Generate your website first", 409, "NOT_GENERATED");
+  if (!project) return jsonError("We couldn't find that website project.", 404);
+  if (!project.blueprint) return jsonError("Write your website first", 409, "NOT_GENERATED");
 
   const body = await readJson<{ packageType?: unknown }>(req);
   const packageType = isPackageType(body?.packageType) ? body.packageType : undefined;
@@ -30,6 +30,6 @@ export async function POST(req: Request, { params }: Ctx) {
     return jsonOk(quote);
   } catch (err) {
     console.error("Quote error:", err);
-    return jsonError("Could not calculate quote", 500);
+    return jsonError("We couldn't calculate the price.", 500);
   }
 }

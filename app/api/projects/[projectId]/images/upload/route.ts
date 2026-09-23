@@ -14,7 +14,7 @@ export async function POST(req: Request, { params }: Ctx) {
   const { projectId } = await params;
 
   const project = await getOwnedProject(user.id, projectId);
-  if (!project) return jsonError("Project not found", 404);
+  if (!project) return jsonError("We couldn't find that website project.", 404);
 
   const form = await req.formData();
   const file = form.get("file");
