@@ -197,11 +197,10 @@ function defaultSummary(
 ): string {
   const name = answers.businessName.trim() || "this business";
   const multi = isMultiPageTemplate(templatePages);
-  const n = layout.length;
   if (multi) {
-    return `We'll build a ${n}-page site for ${name} that matches who you serve — no need to pick pages yourself.`;
+    return `We'll write all ${layout.length} pages of this design for ${name}, using the details you gave us.`;
   }
-  return `We'll put the right sections on one page for ${name}, based on who you serve.`;
+  return `We'll write every section of this design for ${name}, using the details you gave us.`;
 }
 
 function defaultPageWhy(slug: string): string {
@@ -260,8 +259,9 @@ function buildPlannerPrompt(answers: PlanAnswers, templatePages: TemplatePageDef
 
   return [
     "You are planning a small business website for a non-technical owner.",
-    "They should not have to choose pages or sections. You decide, based on",
-    "who they serve and what the site should do.",
+    "The design is already chosen. Your job is to explain it in everyday",
+    "language and to list every page and every section so each one can be",
+    "written from their business details.",
     "",
     "Return ONLY valid JSON — no markdown, no commentary.",
     '{ "audience": string (1-2 sentences, everyday language),',
@@ -270,16 +270,12 @@ function buildPlannerPrompt(answers: PlanAnswers, templatePages: TemplatePageDef
     "",
     "Rules:",
     "- Use only the page slugs and section variant ids listed below.",
-    '- Always include the "home" page.',
-    "- Keep hero and footer variants on any page that has them.",
-    "- Prefer a smaller, clearer site over including everything.",
-    "- Do not include a blog unless they clearly publish articles or news.",
-    "- Do not include a portfolio unless they have visual work, projects, or a gallery to show.",
-    "- Include contact (or a contact section) so visitors can reach them.",
-    "- A pricing page/section is only for packages, memberships, or product tiers — not a typical local service list.",
+    "- Include EVERY page and EVERY section variant listed. Do not drop a page or a band.",
+    "- Copy each page's section variants in the listed order.",
+    "- Write each section from this business even when the brief did not mention that band.",
     multi
-      ? "- This design is multi-page. Pick only the pages this audience needs."
-      : "- This design is a single page. Return only slug \"home\" and pick the sections that page needs.",
+      ? "- This design is multi-page. Return every page in the catalog."
+      : '- This design is a single page. Return slug "home" with every listed section.',
     "",
     "Business:",
     JSON.stringify({

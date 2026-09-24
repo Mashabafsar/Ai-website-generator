@@ -10,7 +10,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: getAuthBaseURL(),
-  trustedOrigins: getAuthTrustedOrigins(),
+  trustedOrigins: (request) => getAuthTrustedOrigins(request),
   emailAndPassword: {
     enabled: true,
     // Keep the MVP friction-free; email verification can be layered on later.

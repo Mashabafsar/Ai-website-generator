@@ -40,7 +40,7 @@ export type NormalizedRequirements = {
     /** Every page the design supports, each with its locked ordered slots. */
     pages: TemplatePageDef[];
   };
-  /** Pages and section variants the Website Planner chose for this audience. */
+  /** Every page and section of the chosen design, in template order. */
   layout: TemplatePageDef[];
 };
 

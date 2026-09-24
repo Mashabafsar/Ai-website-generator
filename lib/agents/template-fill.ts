@@ -11,8 +11,8 @@ import type {
 import type { TemplatePageDef } from "@/lib/templates/types";
 
 /**
- * Forces AI output onto the selected template's locked variants, keeping only
- * the pages and sections the customer asked for in the questionnaire.
+ * Forces AI output onto every locked page and section of the chosen design.
+ * Missing copy falls back to wording built from the customer's answers.
  */
 export function conformToTemplate(
   blueprint: WebsiteBlueprint,

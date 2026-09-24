@@ -1,12 +1,7 @@
-import { pageTitle, type PageType } from "@/lib/blueprint/page-catalog";
+import { pageTitle } from "@/lib/blueprint/page-catalog";
 import { getVariantSpec } from "@/lib/sections/registry";
 import type { TemplatePageDef } from "@/lib/templates/types";
-import {
-  decideSitePages,
-  isStructuralSection,
-  shouldKeepSectionType,
-  type ContentSignals,
-} from "@/lib/agents/site-structure";
+import type { ContentSignals } from "@/lib/agents/site-structure";
 
 /** One page the customer asked us to build, with the section variants to keep. */
 export type SiteLayoutPage = {
@@ -59,84 +54,35 @@ export function sectionPickerLabel(variant: string, occurrence = 0): string {
   return occurrence > 0 ? `${base} ${occurrence + 1}` : base;
 }
 
-function allowedOnPage(pageDef: TemplatePageDef, variant: string): boolean {
-  return pageDef.sections.includes(variant);
-}
-
 /**
- * Rule-based plan used when the Website Planner model is unavailable.
- * Home is always on. Optional pages follow who they serve and what they offer.
+ * Every page and every locked section of the chosen design. The model writes
+ * copy for the whole template; it does not drop bands the brief did not name.
  */
 export function suggestedSiteLayout(
   templatePages: TemplatePageDef[],
-  signals: ContentSignals
+  _signals?: ContentSignals
 ): SiteLayoutPage[] {
   const pages = templatePages.length
     ? templatePages
     : [{ slug: "home", title: pageTitle("home"), sections: [] as string[] }];
-  const keepPages = decideSitePages(signals, pages);
 
   return pages
-    .filter((page) => page.slug === "home" || keepPages.includes(page.slug as PageType))
+    .filter((page) => page.sections.length > 0)
     .map((page) => ({
       slug: page.slug,
-      sections: page.sections.filter((variant) => {
-        if (isStructuralSection(variant)) return true;
-        const spec = getVariantSpec(variant);
-        if (!spec) return false;
-        return shouldKeepSectionType(spec.type, signals);
-      }),
-    }))
-    .filter((page) => page.sections.length > 0);
+      sections: [...page.sections],
+    }));
 }
 
 /**
- * Pins the customer's pick to slots this design actually has. Home stays.
- * Selecting a pricing band also keeps Contact when the design has that page,
- * so "Contact our sales" has somewhere to go.
+ * Expands any planned subset to the full design. A saved or model plan can
+ * only name slots this template has; generation still fills every one.
  */
 export function clampSiteLayout(
   templatePages: TemplatePageDef[],
-  chosen: SiteLayoutPage[] | undefined | null
+  _chosen?: SiteLayoutPage[] | undefined | null
 ): SiteLayoutPage[] {
-  const pages = templatePages.length
-    ? templatePages
-    : [{ slug: "home", title: pageTitle("home"), sections: [] as string[] }];
-  const bySlug = new Map(pages.map((p) => [p.slug, p]));
-  const picked = new Map<string, Set<string>>();
-
-  for (const page of chosen ?? []) {
-    const def = bySlug.get(page.slug);
-    if (!def) continue;
-    const variants = new Set(
-      page.sections.filter((variant) => allowedOnPage(def, variant) || isStructuralSection(variant))
-    );
-    for (const variant of def.sections) {
-      if (isStructuralSection(variant)) variants.add(variant);
-    }
-    picked.set(page.slug, variants);
-  }
-
-  if (!picked.has("home") && bySlug.has("home")) {
-    const home = bySlug.get("home")!;
-    picked.set("home", new Set(home.sections.filter((v) => isStructuralSection(v) || home.sections.includes(v))));
-  }
-
-  const hasPricing = [...picked.values()].some((variants) =>
-    [...variants].some((v) => getVariantSpec(v)?.type === "pricing")
-  );
-  if (hasPricing && bySlug.has("contact") && !picked.has("contact")) {
-    const contact = bySlug.get("contact")!;
-    picked.set("contact", new Set(contact.sections));
-  }
-
-  return pages
-    .filter((page) => picked.has(page.slug))
-    .map((page) => ({
-      slug: page.slug,
-      sections: page.sections.filter((variant) => picked.get(page.slug)?.has(variant)),
-    }))
-    .filter((page) => page.sections.length > 0);
+  return suggestedSiteLayout(templatePages);
 }
 
 /** Final page list generation should fill, with template titles preserved. */
@@ -159,17 +105,13 @@ export function layoutToPageDefs(
 }
 
 /**
- * Turn a saved or AI-planned layout into locked pages. Empty records fall
- * back to the content-based suggestion so generation still runs.
+ * Locked pages generation should fill: the whole design, even when an older
+ * plan saved only some of the bands.
  */
 export function resolveSiteLayout(
   templatePages: TemplatePageDef[],
-  chosen: SiteLayoutPage[] | undefined | null,
-  signals: ContentSignals
+  _chosen?: SiteLayoutPage[] | undefined | null,
+  _signals?: ContentSignals
 ): TemplatePageDef[] {
-  const source =
-    chosen && chosen.length ? clampSiteLayout(templatePages, chosen) : suggestedSiteLayout(templatePages, signals);
-  const defs = layoutToPageDefs(templatePages, source);
-  if (defs.length) return defs;
-  return layoutToPageDefs(templatePages, suggestedSiteLayout(templatePages, signals));
+  return layoutToPageDefs(templatePages, suggestedSiteLayout(templatePages));
 }

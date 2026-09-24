@@ -9,8 +9,8 @@ import type { WebsiteSection } from "@/lib/blueprint/types";
 
 const GUARDRAILS = `You are a website COPYWRITER and art director. Follow these rules strictly:
 - Return ONLY valid JSON. No prose, no markdown fences, no comments.
-- The Website Planner already chose which pages and sections this audience needs.
-  Fill those slots. Do not add extra pages. Do not drop a listed page or slot.
+- The chosen design lists every page and every section. Fill all of them from
+  this business. Do not add extra pages. Do not drop a listed page or slot.
 - Always include the "home" page as listed. Do not invent new slugs, types,
   variants, or content fields.
 - PRICING sections list the customer's services or products as plan names. Never
@@ -142,8 +142,9 @@ export function buildHeavyPrompt(req: NormalizedRequirements): string {
   const multi = pages.some((p) => p.slug !== "home");
   const pageChoice = multi
     ? [
-        `These pages were planned for this audience: ${pages.map((p) => `"${p.slug}"`).join(", ")}.`,
-        "Fill every listed slot. Do not add or drop pages.",
+        `These pages are the whole design: ${pages.map((p) => `"${p.slug}"`).join(", ")}.`,
+        "Fill every listed slot on every page. Do not add or drop pages or sections.",
+        "Write each section from this business, even when the brief did not mention that band.",
         `Pricing cards use the customer's services as names, empty planPrices, and a "${QUOTE_CTA_LABEL}" button to Contact — never dollar amounts.`,
       ].join("\n")
     : 'This design is a single page. Return exactly one page with slug "home" and fill every listed slot.';

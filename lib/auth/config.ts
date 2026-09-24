@@ -34,7 +34,7 @@ export function getAuthBaseURL(): string | {
   };
 }
 
-export function getAuthTrustedOrigins(): string[] {
+export function getAuthTrustedOrigins(request?: Request): string[] {
   const origins = new Set<string>();
 
   try {
@@ -47,6 +47,16 @@ export function getAuthTrustedOrigins(): string[] {
     origins.add("http://localhost:*");
     origins.add("http://127.0.0.1:*");
     origins.add("http://[::1]:*");
+    origins.add("http://*");
+    origins.add("https://*");
+    const header = request?.headers.get("origin") || request?.headers.get("referer");
+    if (header) {
+      try {
+        origins.add(new URL(header).origin);
+      } catch {
+        origins.add(header);
+      }
+    }
   }
 
   const extra = process.env.BETTER_AUTH_TRUSTED_ORIGINS;
