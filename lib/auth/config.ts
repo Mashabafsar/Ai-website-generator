@@ -25,8 +25,10 @@ export function getAuthBaseURL(): string | {
     return fallback;
   }
 
+  // `*` covers the Network URL Next prints (a LAN address such as
+  // 172.x.x.x:3001). Signup from that address is otherwise rejected.
   return {
-    allowedHosts: ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", "[::1]", "[::1]:*"],
+    allowedHosts: ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", "[::1]", "[::1]:*", "*"],
     fallback,
     protocol: "http",
   };
