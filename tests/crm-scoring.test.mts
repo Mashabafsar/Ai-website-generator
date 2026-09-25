@@ -117,7 +117,7 @@ describe("admin client helpers", () => {
   });
 
   it("labels scoring actions for the admin ledger", () => {
-    assert.equal(scoreActionLabel(CrmScoreAction.REGISTERED), "Registered");
+    assert.equal(scoreActionLabel(CrmScoreAction.REGISTERED), "Logged in");
     assert.equal(scoreActionLabel(CrmScoreAction.QUESTIONNAIRE_COMPLETED), "Completed questionnaire");
   });
 

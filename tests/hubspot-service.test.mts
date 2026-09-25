@@ -10,10 +10,13 @@ process.env.HUBSPOT_REQUEST_RETRIES = "0";
 const {
   upsertContact,
   associateDealWithContact,
+  associateNoteWithContact,
   associateNoteWithDeal,
   upsertPurchaseDeal,
+  upsertContactNote,
   upsertDealNote,
   formatPriceBreakdown,
+  formatProgressNote,
   splitDealDescription,
 } = await import("../lib/crm/hubspot");
 
@@ -85,6 +88,16 @@ describe("contact upsert", () => {
     assert.equal(props.company, "Bright Smile");
     assert.ok(!("lead_score" in props));
     assert.ok(!("marketing_consent" in props));
+  });
+
+  it("marks a new login as a HubSpot lead", async () => {
+    calls = [];
+    stubHubSpot([(c) => (c.method === "GET" ? json({ id: "c-1" }) : undefined)]);
+
+    await upsertContact({ ...contact, lifecycleStage: "lead" });
+
+    const props = (calls[1].body as { properties: Record<string, string> }).properties;
+    assert.equal(props.lifecyclestage, "lead");
   });
 
   it("creates the contact when the email is unknown", async () => {
@@ -260,5 +273,51 @@ describe("association", () => {
     assert.deepEqual(calls[0].body, [
       { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 214 },
     ]);
+  });
+
+  it("links a progress note to the contact", async () => {
+    calls = [];
+    stubHubSpot([() => json({})]);
+
+    await associateNoteWithContact("n-1", "c-1");
+
+    assert.equal(
+      calls[0].url,
+      "https://api.hubapi.example/crm/objects/2026-09/notes/n-1/associations/contacts/c-1"
+    );
+    assert.deepEqual(calls[0].body, [
+      { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 },
+    ]);
+  });
+});
+
+describe("progress notes", () => {
+  it("writes the action, points, and running total", () => {
+    const body = formatProgressNote({
+      action: "REGISTERED",
+      points: 5,
+      total: 5,
+    });
+    assert.match(body, /Logged in/);
+    assert.match(body, /\+5 points/);
+    assert.match(body, /Lead score: 5/);
+  });
+
+  it("creates a contact note and associates it", async () => {
+    calls = [];
+    stubHubSpot([(c) => (c.method === "POST" ? json({ id: "n-login" }) : undefined)]);
+
+    const noteId = await upsertContactNote({
+      contactId: "c-1",
+      body: "Logged in\n+5 points\nLead score: 5",
+      timestamp: new Date("2026-01-02T03:04:05.000Z"),
+    });
+
+    assert.equal(noteId, "n-login");
+    const props = (calls[0].body as { properties: Record<string, string> }).properties;
+    assert.equal(props.hs_note_body, "Logged in\n+5 points\nLead score: 5");
+    assert.equal(props.hs_timestamp, "2026-01-02T03:04:05.000Z");
+    assert.equal(calls[1].method, "PUT");
+    assert.ok(calls[1].url.includes("/notes/n-login/associations/contacts/c-1"));
   });
 });

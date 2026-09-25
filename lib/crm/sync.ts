@@ -8,16 +8,18 @@
 import type { CrmOutbox } from "@prisma/client";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
-import { PackageType } from "@/lib/constants";
+import { PackageType, PaymentStatus, PaymentType } from "@/lib/constants";
 import { publicSiteUrl } from "@/lib/deployment/url";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import { CrmJobKind } from "@/lib/crm/config";
 import { drainCrmOutbox } from "@/lib/crm/outbox";
 import {
   associateDealWithContact,
+  formatProgressNote,
   isHubSpotConfigured,
   splitDealDescription,
   upsertContact,
+  upsertContactNote,
   upsertDealNote,
   upsertPurchaseDeal,
   type ContactSnapshot,
@@ -94,6 +96,17 @@ export async function buildContactSnapshot(userId: string): Promise<ContactSnaps
 
   const { firstName, lastName } = splitName(user.name || user.email.split("@")[0]);
 
+  const paidWebsite = project
+    ? await prisma.payment.findFirst({
+        where: {
+          projectId: project.id,
+          type: PaymentType.WEBSITE_PACKAGE,
+          status: PaymentStatus.PAID,
+        },
+        select: { id: true },
+      })
+    : null;
+
   return {
     email: user.email,
     firstName,
@@ -101,17 +114,54 @@ export async function buildContactSnapshot(userId: string): Promise<ContactSnaps
     company: project?.businessName || undefined,
     phone,
     website: project ? projectUrl(project.id, project.deployment) : undefined,
+    lifecycleStage: paidWebsite ? "customer" : "lead",
   };
 }
 
-/** Push an account's contact record and cache the HubSpot id we got back. */
+/**
+ * Write each unsynced scoring step onto the contact as a HubSpot note so the
+ * timeline shows login +5, theme +5, and so on, in order.
+ */
+export async function syncProgressNotes(userId: string, contactId: string): Promise<void> {
+  const events = await prisma.crmScoreEvent.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+  });
+
+  let running = 0;
+  for (const event of events) {
+    running += event.points;
+    if (event.hubspotNoteId) continue;
+
+    const noteId = await upsertContactNote({
+      contactId,
+      body: formatProgressNote({
+        action: event.action,
+        points: event.points,
+        total: running,
+      }),
+      timestamp: event.createdAt,
+    });
+    if (noteId) {
+      await prisma.crmScoreEvent.update({
+        where: { id: event.id },
+        data: { hubspotNoteId: noteId },
+      });
+    }
+  }
+}
+
+/** Push an account's contact record, then each new progress note. */
 export async function syncContact(userId: string): Promise<string | null> {
   const snapshot = await buildContactSnapshot(userId);
   if (!snapshot) return null;
 
   const profile = await prisma.crmProfile.findUnique({ where: { userId } });
   const contactId = await upsertContact(snapshot, profile?.hubspotContactId);
-  if (contactId) await markContactSynced(userId, contactId);
+  if (contactId) {
+    await syncProgressNotes(userId, contactId);
+    await markContactSynced(userId, contactId);
+  }
   return contactId;
 }
 

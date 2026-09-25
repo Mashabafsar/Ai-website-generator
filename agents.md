@@ -78,9 +78,9 @@ flowchart TD
    Images come from Shutterstock first, then Pexels, then Unsplash.
 
 7. **HubSpot syncs the platform account, never the generated site's visitors.**  
-   Upsert the account owner as a HubSpot contact using standard properties only (name, email, company, phone, website). A website-package payment additionally opens a deal with `dealname`, `amount`, and a `description` that includes the website URL and itemized price breakdown, associated to that contact. Do not create or write custom HubSpot properties. Lead score, marketing consent, and scoring history stay in our database and are visible on the admin clients page. Do not sync form leads captured by generated websites.
+   Upsert the account owner as a HubSpot contact using standard properties only (name, email, company, phone, website, lifecyclestage). Login drops the contact as a lead immediately. Each scoring step appends a Note on that contact (action, points, running total) so HubSpot shows progress in order. A website-package payment additionally opens a deal with `dealname`, `amount`, and a `description` that includes the website URL and itemized price breakdown, associated to that contact, and moves the contact to customer. Do not create or write custom HubSpot properties. Lead score, marketing consent, and scoring history also stay in our database and are visible on the admin clients page. Do not sync form leads captured by generated websites.
 
-   Contacts are synced from registration onward, not only after payment. Consent is recorded locally and is not sent to HubSpot: a contact without marketing consent is still created, and must never be marketed to from HubSpot lists.
+   Contacts are synced from login/registration onward, not only after payment. Consent is recorded locally and is not sent to HubSpot: a contact without marketing consent is still created, and must never be marketed to from HubSpot lists.
 
    All HubSpot work goes through the outbox (`lib/crm/`). No user-facing request may block on a HubSpot call.
 

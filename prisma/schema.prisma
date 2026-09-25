@@ -343,6 +343,7 @@ model CrmScoreEvent {
   action         String
   points         Int
   idempotencyKey String   @unique
+  hubspotNoteId  String?
 
   createdAt DateTime @default(now())
 

@@ -1,7 +1,7 @@
 // Lead-scoring rules and HubSpot association type ids. Everything tunable
 // about scoring lives here so the values can change without touching any
-// business logic. HubSpot receives only standard properties — score and
-// consent stay in our database.
+// business logic. HubSpot receives standard contact/deal fields plus Notes
+// for each scoring step. Numeric totals and consent also stay in our database.
 
 import { CREDIT_PACKS, type CreditPackId } from "@/lib/constants";
 
@@ -55,6 +55,21 @@ export const DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID = 3;
 
 /** HubSpot-defined association type id for note -> deal. */
 export const NOTE_TO_DEAL_ASSOCIATION_TYPE_ID = 214;
+
+/** HubSpot-defined association type id for note -> contact. */
+export const NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID = 202;
+
+/** Operator-facing labels for score events (admin UI and HubSpot notes). */
+export const SCORE_ACTION_LABELS: Record<string, string> = {
+  [CrmScoreAction.REGISTERED]: "Logged in",
+  [CrmScoreAction.THEME_SELECTED]: "Selected a theme",
+  [CrmScoreAction.QUESTIONNAIRE_COMPLETED]: "Completed questionnaire",
+  [CrmScoreAction.CREDIT_PACK_PURCHASED]: "Purchased a credit pack",
+};
+
+export function scoreActionLabel(action: string): string {
+  return SCORE_ACTION_LABELS[action] ?? action.replace(/_/g, " ").toLowerCase();
+}
 
 export function packageScore(packId: string): number {
   return PACKAGE_SCORES[packId as CreditPackId] ?? 0;

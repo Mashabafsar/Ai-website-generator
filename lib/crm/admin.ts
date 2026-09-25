@@ -4,7 +4,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CREDIT_PACKS, CreditLedgerReason, PaymentStatus, PaymentType } from "@/lib/constants";
-import { CrmScoreAction } from "@/lib/crm/config";
+import { scoreActionLabel } from "@/lib/crm/config";
 import {
   type ClientListQuery,
   parseClientListQuery,
@@ -14,18 +14,7 @@ import { env } from "@/lib/env";
 import { publicSiteUrl } from "@/lib/deployment/url";
 
 export type { ClientListQuery, ClientSort, ConsentFilter } from "@/lib/crm/admin-query";
-export { parseClientListQuery, clientListSearchParams };
-
-const SCORE_LABELS: Record<string, string> = {
-  [CrmScoreAction.REGISTERED]: "Registered",
-  [CrmScoreAction.THEME_SELECTED]: "Selected a theme",
-  [CrmScoreAction.QUESTIONNAIRE_COMPLETED]: "Completed questionnaire",
-  [CrmScoreAction.CREDIT_PACK_PURCHASED]: "Credit pack purchase",
-};
-
-export function scoreActionLabel(action: string): string {
-  return SCORE_LABELS[action] ?? action.replace(/_/g, " ").toLowerCase();
-}
+export { parseClientListQuery, clientListSearchParams, scoreActionLabel };
 
 export function creditPackFromCredits(credits: number) {
   return CREDIT_PACKS.find((pack) => pack.credits === credits) ?? null;

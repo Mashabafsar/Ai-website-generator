@@ -162,14 +162,19 @@ Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 ### HubSpot CRM
 
-Tracks platform accounts as HubSpot contacts, opens a deal for every website
-purchase, and keeps lead scores plus marketing consent in **our database**.
-Admins review that local data at `/app/admin/clients`.
+A login drops a HubSpot **lead** immediately (contact with `lifecyclestage=lead`).
+Each later scoring step appends a Note on that contact so the HubSpot timeline
+shows progress in order (logged in +5, theme +5, questionnaire +20, …). A
+website purchase opens a deal and moves the contact to `customer`.
+
+Lead scores and marketing consent also stay in **our database**. Admins review
+that local data at `/app/admin/clients`.
 
 The integration writes **standard HubSpot properties only**. Do not create custom
 contact or deal properties.
 
-**Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`  
+**Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`  
+**Progress history:** one HubSpot Note per score event, associated to the contact  
 **Deal (standard):** `dealname`, `amount`, `description` (website URL + itemized
 breakdown), optional `pipeline` / `dealstage` from env. If the description would
 overflow, the full breakdown is attached as a Note on the deal.
@@ -189,7 +194,7 @@ overflow, the full breakdown is attached as a Note on the deal.
 |---|---|
 | `crm.objects.contacts.read`, `crm.objects.contacts.write` | Contact upsert |
 | `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact association |
-| `crm.objects.notes.write` | Overflow price-breakdown notes |
+| `crm.objects.notes.write` | Progress notes on the contact, plus overflow deal notes |
 
 #### Lead scoring
 
@@ -254,11 +259,13 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 Then, with `HUBSPOT_API_KEY` pointed at a test portal:
 
-1. Sign up with the consent box **unticked**. Admin clients shows score 5 and
-   consent false. HubSpot has a contact with name/email only — no score field.
-2. Pick a design (score 10), then complete the questionnaire (score 30).
-3. Buy the Medium credit pack with card `4242 4242 4242 4242` (score 50).
-   No HubSpot deal is created for credit packs.
+1. Sign up or log in with the consent box **unticked**. HubSpot gets a **lead**
+   contact and a note: "Logged in / +5 points / Lead score: 5". Admin clients
+   shows the same score. Consent stays in our DB only.
+2. Pick a design — HubSpot gets a second note (score 10). Complete the
+   questionnaire — a third note (score 30).
+3. Buy the Medium credit pack with card `4242 4242 4242 4242` (score 50, another
+   note). No HubSpot deal is created for credit packs.
 4. Pay for a website package. A deal appears, associated with the contact,
    with the URL, charged amount, and itemized breakdown on `description`.
 5. Log in again with the box **ticked**: admin clients shows consent true; the

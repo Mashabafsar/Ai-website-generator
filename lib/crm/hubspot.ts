@@ -11,7 +11,9 @@
 import { env } from "@/lib/env";
 import {
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
+  NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID,
   NOTE_TO_DEAL_ASSOCIATION_TYPE_ID,
+  scoreActionLabel,
 } from "@/lib/crm/config";
 import {
   HubSpotError,
@@ -28,6 +30,8 @@ export type ContactSnapshot = {
   company?: string;
   phone?: string;
   website?: string;
+  /** Standard HubSpot lifecycle. Login drops a lead; a website purchase makes them a customer. */
+  lifecycleStage?: "lead" | "customer";
 };
 
 export type PurchaseDealSnapshot = {
@@ -101,7 +105,20 @@ function contactProperties(contact: ContactSnapshot): Record<string, string> {
   if (contact.company) properties.company = contact.company;
   if (contact.phone) properties.phone = contact.phone;
   if (contact.website) properties.website = contact.website;
+  if (contact.lifecycleStage) properties.lifecyclestage = contact.lifecycleStage;
   return properties;
+}
+
+export function formatProgressNote(params: {
+  action: string;
+  points: number;
+  total: number;
+}): string {
+  return [
+    scoreActionLabel(params.action),
+    `+${params.points} points`,
+    `Lead score: ${params.total}`,
+  ].join("\n");
 }
 
 /**
@@ -247,6 +264,57 @@ export async function upsertDealNote(params: {
     await associateNoteWithDeal(noteId, params.dealId);
   }
   return noteId;
+}
+
+/**
+ * Create a progress note on a contact. Used so each scoring step shows up on
+ * the HubSpot timeline without custom properties.
+ */
+export async function upsertContactNote(params: {
+  contactId: string;
+  body: string;
+  timestamp?: Date;
+  knownNoteId?: string | null;
+}): Promise<string | null> {
+  const properties = {
+    hs_timestamp: (params.timestamp ?? new Date()).toISOString(),
+    hs_note_body: params.body,
+  };
+
+  if (params.knownNoteId) {
+    try {
+      await hubspotRequest(objectPath("notes", params.knownNoteId), {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return params.knownNoteId;
+    } catch (err) {
+      const gone = err instanceof HubSpotError && (err.status === 404 || err.status === 400);
+      if (!gone) throw err;
+    }
+  }
+
+  const created = await hubspotRequest<HubSpotRecord>(objectPath("notes"), {
+    method: "POST",
+    body: JSON.stringify({ properties }),
+  });
+  const noteId = created?.id ?? null;
+  if (noteId) {
+    await associateNoteWithContact(noteId, params.contactId);
+  }
+  return noteId;
+}
+
+export async function associateNoteWithContact(noteId: string, contactId: string): Promise<void> {
+  await hubspotRequest(associationPath("notes", noteId, "contacts", contactId), {
+    method: "PUT",
+    body: JSON.stringify([
+      {
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID,
+      },
+    ]),
+  });
 }
 
 export async function associateNoteWithDeal(noteId: string, dealId: string): Promise<void> {
