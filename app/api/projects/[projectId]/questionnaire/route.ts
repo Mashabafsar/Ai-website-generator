@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getOwnedProject } from "@/lib/projects/projects";
@@ -102,7 +101,7 @@ export async function POST(req: Request, { params }: Ctx) {
   // same single event — doing it both ways is worth one award, not two.
   try {
     await awardOneTimeAction(user.id, CrmScoreAction.QUESTIONNAIRE_COMPLETED);
-    after(() => scheduleCrmDrain());
+    scheduleCrmDrain();
   } catch (err) {
     console.error("[crm] questionnaire score failed:", err instanceof Error ? err.message : err);
   }

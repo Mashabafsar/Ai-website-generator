@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { jsonError, jsonOk, readJson, requireUser } from "@/lib/http";
 import { CrmScoreAction } from "@/lib/crm/config";
 import { awardOneTimeAction, recordMarketingConsent } from "@/lib/crm/scoring";
@@ -31,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   // Push to HubSpot only after the response is on its way out.
-  after(() => scheduleCrmDrain());
+  scheduleCrmDrain();
 
   return jsonOk({ marketingConsent: granted });
 }

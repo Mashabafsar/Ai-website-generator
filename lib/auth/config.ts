@@ -7,7 +7,7 @@ export function getAuthAppUrl(): string {
     process.env.BETTER_AUTH_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     DEFAULT_APP_URL
-  );
+  ).replace(/\/+$/, "");
 }
 
 /**

@@ -238,7 +238,7 @@ request → Postgres (score / consent / payment) → outbox row → response
                                                      ↓
                             after(): immediate best-effort drain
                                                      ↓
-                            /api/cron/hubspot: durable retry every 10 min
+                            /api/cron/hubspot: durable retry daily (Hobby limit)
 ```
 
 Jobs retry with exponential backoff and jitter, honor `Retry-After` on 429 and

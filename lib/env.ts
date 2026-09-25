@@ -12,7 +12,7 @@ function bool(value: string | undefined, fallback = false): boolean {
 }
 
 export const env = {
-  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  appUrl: (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
 
   ai: {
     cursorApiKey: process.env.CURSOR_API_KEY ?? "",

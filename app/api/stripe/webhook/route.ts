@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const credit = await fulfillCreditPackCheckout(session);
   if (credit) {
-    after(() => scheduleCrmDrain());
+    scheduleCrmDrain();
     return;
   }
 
@@ -63,11 +63,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (!website) return;
 
   await trySyncProjectToGitHub(website.projectId);
-  after(() => {
-    // The HubSpot deal is already queued; this just pushes it promptly.
-    scheduleCrmDrain();
+  // The HubSpot deal is already queued; this just pushes it promptly.
+  scheduleCrmDrain();
+  after(() =>
     publishManagedSiteIfDue(website.projectId).catch((err) => {
       console.error("[deploy] auto-publish after payment failed:", err);
-    });
-  });
+    })
+  );
 }

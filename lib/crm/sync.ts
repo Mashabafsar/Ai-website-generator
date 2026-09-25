@@ -6,6 +6,7 @@
 // latest name and website URL, because it looks them up when it runs.
 
 import type { CrmOutbox } from "@prisma/client";
+import { after } from "next/server";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { PackageType, PaymentStatus, PaymentType } from "@/lib/constants";
@@ -261,7 +262,20 @@ export async function runCrmOutbox(limit?: number) {
  * swallowed; the queue rows survive and the cron picks them up.
  */
 export function scheduleCrmDrain(limit = 5): void {
-  void runCrmOutbox(limit).catch((err) => {
-    console.error("[crm] immediate drain failed:", err instanceof Error ? err.message : err);
-  });
+  const drain = () =>
+    runCrmOutbox(limit).then(
+      () => undefined,
+      (err) => {
+        console.error("[crm] immediate drain failed:", err instanceof Error ? err.message : err);
+      }
+    );
+
+  // A promise nobody awaits is frozen with the serverless function once the
+  // response is sent, so the drain has to be registered with `after`.
+  try {
+    after(drain);
+  } catch {
+    // Outside a request scope (scripts, tests) there is nothing to extend.
+    void drain();
+  }
 }

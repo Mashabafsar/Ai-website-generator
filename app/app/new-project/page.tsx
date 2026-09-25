@@ -1,4 +1,3 @@
-import { after } from "next/server";
 import { redirect } from "next/navigation";
 import type { Project } from "@prisma/client";
 import { getCurrentUserId } from "@/lib/auth/session";
@@ -60,7 +59,7 @@ export default async function NewProjectPage({
 async function recordThemeSelection(userId: string): Promise<void> {
   try {
     await awardOneTimeAction(userId, CrmScoreAction.THEME_SELECTED);
-    after(() => scheduleCrmDrain());
+    scheduleCrmDrain();
   } catch (err) {
     console.error("[crm] theme score failed:", err instanceof Error ? err.message : err);
   }
