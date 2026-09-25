@@ -84,6 +84,10 @@ flowchart TD
 
    All HubSpot work goes through the outbox (`lib/crm/`). No user-facing request may block on a HubSpot call.
 
+   Contacts are synced from registration onward, not only after payment, because scoring needs them. Consent governs marketing, not existence: a contact without `marketing_consent` is still created, and must never be marketed to.
+
+   All HubSpot work goes through the outbox (`lib/crm/`). No user-facing request may block on a HubSpot call.
+
 8. **No local AI.**  
    All AI tasks use API-based heavy or lightweight models.
 
