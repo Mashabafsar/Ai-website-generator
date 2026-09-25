@@ -69,9 +69,9 @@ export const env = {
     selfHostingPriceId: process.env.STRIPE_SELF_HOSTING_PRICE_ID ?? "",
     managedCreationPriceId: process.env.STRIPE_MANAGED_CREATION_PRICE_ID ?? "",
     managedMonthlyPriceId: process.env.STRIPE_MANAGED_MONTHLY_PRICE_ID ?? "",
-    creditPack100: process.env.STRIPE_CREDIT_PACK_100_PRICE_ID ?? "",
-    creditPack300: process.env.STRIPE_CREDIT_PACK_300_PRICE_ID ?? "",
-    creditPack1000: process.env.STRIPE_CREDIT_PACK_1000_PRICE_ID ?? "",
+    creditPackSmall: process.env.STRIPE_CREDIT_PACK_SMALL_PRICE_ID ?? "",
+    creditPackMedium: process.env.STRIPE_CREDIT_PACK_MEDIUM_PRICE_ID ?? "",
+    creditPackLarge: process.env.STRIPE_CREDIT_PACK_LARGE_PRICE_ID ?? "",
     get enabled() {
       return Boolean(process.env.STRIPE_SECRET_KEY);
     },
@@ -112,10 +112,27 @@ export const env = {
   },
 
   hubspot: {
-    accessToken: process.env.HUBSPOT_ACCESS_TOKEN ?? "",
+    /** Everything is built from these, so a portal can move API versions without a code change. */
+    apiKey: process.env.HUBSPOT_API_KEY ?? "",
+    baseUrl: (process.env.HUBSPOT_API_BASE_URL ?? "https://api.hubapi.com").replace(/\/+$/, ""),
+    apiVersion: process.env.HUBSPOT_API_VERSION ?? "2026-09",
+    associationsApiVersion: process.env.HUBSPOT_ASSOCIATIONS_API_VERSION ?? "2026-09",
+    /** Deal placement. Left blank, HubSpot drops the deal in the portal default. */
+    dealPipeline: process.env.HUBSPOT_DEAL_PIPELINE ?? "",
+    dealStage: process.env.HUBSPOT_DEAL_STAGE ?? "",
+    requestTimeoutMs: num(process.env.HUBSPOT_REQUEST_TIMEOUT_MS, 15_000),
+    /** Extra in-request tries for blips. Longer outages are the outbox's job. */
+    requestRetries: num(process.env.HUBSPOT_REQUEST_RETRIES, 2),
+    /** Outbox attempts before a job is parked as FAILED. */
+    maxJobAttempts: num(process.env.HUBSPOT_MAX_JOB_ATTEMPTS, 6),
     get enabled() {
-      return Boolean(process.env.HUBSPOT_ACCESS_TOKEN);
+      return Boolean(process.env.HUBSPOT_API_KEY);
     },
+  },
+
+  cron: {
+    /** Shared secret for the scheduled CRM drain. Blank disables the endpoint. */
+    secret: process.env.CRON_SECRET ?? "",
   },
 
   notify: {

@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Package,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { Logo, BrandMark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,11 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const explore: NavItem[] = isAdmin
-    ? [...EXPLORE, { href: "/app/admin/usage", label: "Admin", icon: ShieldCheck }]
+    ? [
+        ...EXPLORE,
+        { href: "/app/admin/clients", label: "Clients", icon: Users },
+        { href: "/app/admin/usage", label: "Usage", icon: ShieldCheck },
+      ]
     : EXPLORE;
 
   return (

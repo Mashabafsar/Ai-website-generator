@@ -9,6 +9,9 @@ import { toHttpsUrl } from "@/lib/deployment/url";
 import { slugify } from "@/lib/utils";
 import { notifyOwnerSiteLive } from "@/lib/notify/owner";
 import { hasPaidPackage } from "@/lib/payments/access";
+import { CrmJobKind } from "@/lib/crm/config";
+import { enqueueCrmJob } from "@/lib/crm/outbox";
+import { scheduleCrmDrain } from "@/lib/crm/sync";
 
 export type DeploymentLog = { at: string; status: string; message: string };
 
@@ -112,12 +115,40 @@ export async function deployProject(projectId: string): Promise<{
     await saveDeployment(projectId, { status: DeploymentStatus.DEPLOYED, subdomain, liveUrl, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.LIVE } });
     await notifyOwnerSiteLive({ projectId, businessName: project.businessName, liveUrl });
+    await refreshCrmAfterGoingLive(projectId, project.userId);
     return { status: DeploymentStatus.DEPLOYED, liveUrl, subdomain };
   } catch (err) {
     logs = log(logs, DeploymentStatus.FAILED, err instanceof Error ? err.message : "We couldn't put the site online");
     await saveDeployment(projectId, { status: DeploymentStatus.FAILED, subdomain, liveUrl: null, logs });
     await prisma.project.update({ where: { id: projectId }, data: { status: ProjectStatus.PAID } });
     throw err;
+  }
+}
+
+/**
+ * The CRM was written at payment time, when the only URL that existed was the
+ * preview. Now that there's a real address, re-queue the contact and every
+ * purchase deal for this project so they point at the live site.
+ */
+async function refreshCrmAfterGoingLive(projectId: string, userId: string): Promise<void> {
+  try {
+    await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId });
+
+    const payments = await prisma.payment.findMany({
+      where: { projectId, hubspotDealId: { not: null } },
+      select: { id: true },
+    });
+    for (const payment of payments) {
+      await enqueueCrmJob({
+        kind: CrmJobKind.PURCHASE_DEAL,
+        userId,
+        projectId,
+        paymentId: payment.id,
+      });
+    }
+    scheduleCrmDrain();
+  } catch (err) {
+    console.error("[crm] live-URL refresh failed:", err instanceof Error ? err.message : err);
   }
 }
 

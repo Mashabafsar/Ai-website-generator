@@ -1,7 +1,11 @@
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import type { Project } from "@prisma/client";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { CrmScoreAction } from "@/lib/crm/config";
+import { awardOneTimeAction } from "@/lib/crm/scoring";
+import { scheduleCrmDrain } from "@/lib/crm/sync";
 import {
   canChangeProjectDesign,
   createProjectForUser,
@@ -31,6 +35,10 @@ export default async function NewProjectPage({
     (await getTemplateById(templateId)) ?? (await getTemplateBySlug(templateId));
   if (!template || !template.published) redirect("/app/templates");
 
+  // Landing here with a real published design is the moment a theme is chosen.
+  // Scored once per account, so later design switches don't keep adding points.
+  await recordThemeSelection(userId);
+
   const existing = await getUserProject(userId);
   if (existing) {
     redirect(await continueExistingProject(existing, template.id));
@@ -46,6 +54,16 @@ export default async function NewProjectPage({
 
   if (!project) redirect("/app/templates");
   redirect(await continueExistingProject(project, template.id));
+}
+
+/** Score the theme choice without ever blocking the redirect into setup. */
+async function recordThemeSelection(userId: string): Promise<void> {
+  try {
+    await awardOneTimeAction(userId, CrmScoreAction.THEME_SELECTED);
+    after(() => scheduleCrmDrain());
+  } catch (err) {
+    console.error("[crm] theme score failed:", err instanceof Error ? err.message : err);
+  }
 }
 
 /**

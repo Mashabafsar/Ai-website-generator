@@ -133,8 +133,17 @@ See `.env.example` for the full list. Highlights:
 | `AI_USE_MOCK` | `true` to skip APIs and use the local template |
 | `SIGNUP_CREDIT_BONUS`, `CREDIT_COST_HEAVY_GENERATE`, `CREDIT_COST_LIGHT_EDIT` | Credit economics |
 | `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price IDs | Payments |
-| `HUBSPOT_ACCESS_TOKEN` | Upsert paying customers as HubSpot contacts |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payments |
+| `STRIPE_CREDIT_PACK_SMALL_PRICE_ID` | Small pack — 20 credits, $10. Omit to use an inline price |
+| `STRIPE_CREDIT_PACK_MEDIUM_PRICE_ID` | Medium pack — 60 credits, $29 |
+| `STRIPE_CREDIT_PACK_LARGE_PRICE_ID` | Large pack — 100 credits, $45 |
+| `STRIPE_SELF_HOSTING_PRICE_ID`, `STRIPE_MANAGED_CREATION_PRICE_ID`, `STRIPE_MANAGED_MONTHLY_PRICE_ID` | Website package prices |
+| `HUBSPOT_API_KEY` | Private-app token, sent as a Bearer token. Absent, the whole CRM integration no-ops |
+| `HUBSPOT_API_BASE_URL` | API host (default `https://api.hubapi.com`) |
+| `HUBSPOT_API_VERSION` | Objects API version (default `2026-09`) |
+| `HUBSPOT_ASSOCIATIONS_API_VERSION` | Associations API version (default `2026-09`) |
+| `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE` | Optional internal IDs for where purchase deals land |
+| `CRON_SECRET` | Shared secret for `/api/cron/hubspot`. Unset disables the scheduled drain |
 | `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
 | `GITHUB_SITES_REPO` | Optional `owner/AI-WEBSITE-BUILDER-WEBSITE` override |
@@ -151,6 +160,113 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`.
 
+### HubSpot CRM
+
+Tracks platform accounts as HubSpot contacts, opens a deal for every website
+purchase, and keeps lead scores plus marketing consent in **our database**.
+Admins review that local data at `/app/admin/clients`.
+
+The integration writes **standard HubSpot properties only**. Do not create custom
+contact or deal properties.
+
+**Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`  
+**Deal (standard):** `dealname`, `amount`, `description` (website URL + itemized
+breakdown), optional `pipeline` / `dealstage` from env. If the description would
+overflow, the full breakdown is attached as a Note on the deal.
+
+#### Setup
+
+1. Create a HubSpot private app with the scopes below.
+2. Set `HUBSPOT_API_KEY`, `HUBSPOT_API_BASE_URL=https://api.hubapi.com`,
+   `HUBSPOT_API_VERSION=2026-09`, `HUBSPOT_ASSOCIATIONS_API_VERSION=2026-09`.
+   Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `CRON_SECRET`.
+3. Apply the Prisma schema (`npx prisma migrate dev` or `npx prisma db push`).
+4. `npm run hubspot:verify` — confirms the token can read contacts. Never prints the key.
+
+#### Private app scopes
+
+| Scope | Needed for |
+|---|---|
+| `crm.objects.contacts.read`, `crm.objects.contacts.write` | Contact upsert |
+| `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact association |
+| `crm.objects.notes.write` | Overflow price-breakdown notes |
+
+#### Lead scoring
+
+Point values and package definitions live in `lib/crm/config.ts` and
+`lib/constants.ts`; change them there, never in business logic. The running
+total and the event log are stored in `CrmProfile` / `CrmScoreEvent`.
+
+| Action | Points | Frequency |
+|---|---|---|
+| Registers or logs in | 5 | Once per account |
+| Selects a theme | 5 | Once per account |
+| Completes the questionnaire | 20 | Once per account |
+| Buys the Small pack (20 credits, $10) | 10 | Every purchase |
+| Buys the Medium pack (60 credits, $29) | 20 | Every purchase |
+| Buys the Large pack (100 credits, $45) | 40 | Every purchase |
+
+Filling the questionnaire by hand and importing it with the scraper are the same
+event: together they are worth 20 points, not 40.
+
+#### Marketing consent
+
+The checkbox on the login and signup pages starts unchecked. The answer and its
+timestamp are stored in `CrmProfile` and are **not** sent to HubSpot.
+
+Ticking it on a later login opts in; leaving it unticked at login preserves an
+existing opt-in rather than silently withdrawing it.
+
+**Contacts without consent are still created in HubSpot** so scoring and purchase
+deals work. Marketing must be driven from `/app/admin/clients`, not HubSpot
+lists. The app never marks a contact as a marketing contact and never calls
+HubSpot's marketing APIs.
+
+#### How syncing works
+
+Nothing calls HubSpot on the request path. Handlers write a row to the
+`CrmOutbox` table and return, so a slow or broken HubSpot can never block
+signup, the questionnaire, checkout, or deployment.
+
+```
+request → Postgres (score / consent / payment) → outbox row → response
+                                                     ↓
+                            after(): immediate best-effort drain
+                                                     ↓
+                            /api/cron/hubspot: durable retry every 10 min
+```
+
+Jobs retry with exponential backoff and jitter, honor `Retry-After` on 429 and
+477, and give up after `HUBSPOT_MAX_JOB_ATTEMPTS` (default 6) with the reason in
+`CrmOutbox.lastError` and `CrmProfile.hubspotLastError`. Authentication and
+validation errors are not retried.
+
+Deploy note: the Vercel cron in `vercel.json` needs `CRON_SECRET` set in the
+project environment. Without it the endpoint returns 503 and the queue is only
+drained by the post-response nudge.
+
+#### Testing it
+
+```bash
+npm test                                  # HubSpot client, service, and scoring
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+Then, with `HUBSPOT_API_KEY` pointed at a test portal:
+
+1. Sign up with the consent box **unticked**. Admin clients shows score 5 and
+   consent false. HubSpot has a contact with name/email only — no score field.
+2. Pick a design (score 10), then complete the questionnaire (score 30).
+3. Buy the Medium credit pack with card `4242 4242 4242 4242` (score 50).
+   No HubSpot deal is created for credit packs.
+4. Pay for a website package. A deal appears, associated with the contact,
+   with the URL, charged amount, and itemized breakdown on `description`.
+5. Log in again with the box **ticked**: admin clients shows consent true; the
+   score does not move; HubSpot is unchanged on those fields.
+
+To inspect the queue: `select kind, status, attempts, "lastError" from "CrmOutbox";`
+Re-run a parked job by setting `status` back to `PENDING`.
+
 ### Paid sites repo
 
 Create the GitHub repository **AI-WEBSITE-BUILDER-WEBSITE** (already done in this setup). Grant `GITHUB_TOKEN` write access. Set `GITHUB_ORG` to the owner, or set `GITHUB_SITES_REPO` to `owner/AI-WEBSITE-BUILDER-WEBSITE`.
@@ -166,6 +282,8 @@ After a website-package payment succeeds (Stripe webhook or checkout reconcile),
 | `npm run start` | Start the production server |
 | `npm run db:push` | Sync the Prisma schema to Postgres |
 | `npm run db:studio` | Open Prisma Studio |
+| `npm test` | HubSpot client, CRM service, and lead-scoring tests |
+| `npm run hubspot:verify` | Check HubSpot config and that the token can read contacts |
 | `npm run validate` | Template, icon, and lock checks |
 
 ---

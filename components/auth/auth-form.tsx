@@ -17,6 +17,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Opt-in must be a deliberate act, so this starts unchecked every time.
+  const [marketingConsent, setMarketingConsent] = useState(false);
 
   const isSignup = mode === "signup";
 
@@ -41,6 +43,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         });
         if (error) throw new Error(error.message || "Invalid email or password");
       }
+
+      // Consent is recorded after the session exists, and never gates sign-in:
+      // a CRM hiccup must not strand someone who just authenticated.
+      try {
+        await fetch("/api/crm/consent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            marketingConsent,
+            mode: isSignup ? "register" : "login",
+          }),
+        });
+      } catch {
+        // The registration score is also awarded server-side on account
+        // creation, so the only thing lost here is a same-visit consent write.
+      }
+
       // A full page load is what makes the new session cookie visible to the
       // server on the very next render. A client-side router.push() races with
       // the cookie write and silently leaves the user sitting on this form.
@@ -89,6 +108,22 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           onChange={(e) => setPassword(e.target.value)}
           autoComplete={isSignup ? "new-password" : "current-password"}
         />
+      </div>
+
+      <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3">
+        <input
+          id="marketing-consent"
+          type="checkbox"
+          checked={marketingConsent}
+          onChange={(e) => setMarketingConsent(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-input accent-primary"
+        />
+        <Label
+          htmlFor="marketing-consent"
+          className="cursor-pointer text-sm font-normal leading-snug text-muted-foreground"
+        >
+          I agree that my email and information may be used for marketing purposes.
+        </Label>
       </div>
 
       <Button type="submit" variant="brand" className="w-full" disabled={loading} size="lg">

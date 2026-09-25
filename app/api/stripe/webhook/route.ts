@@ -2,10 +2,11 @@ import type Stripe from "stripe";
 import { after, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getStripe } from "@/lib/stripe/stripe";
-import { grantPurchase } from "@/lib/credits/credits";
-import { prisma } from "@/lib/prisma";
-import { PaymentType, PaymentStatus, ProjectStatus } from "@/lib/constants";
-import { syncPaidCustomerToHubSpot } from "@/lib/crm/hubspot";
+import {
+  fulfillCreditPackCheckout,
+  fulfillWebsiteCheckout,
+} from "@/lib/stripe/fulfillment";
+import { scheduleCrmDrain } from "@/lib/crm/sync";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { publishManagedSiteIfDue } from "@/lib/deployment/deploy";
 
@@ -34,7 +35,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    if (event.type === "checkout.session.completed") {
+    // `async_payment_succeeded` is the settlement event for delayed methods.
+    // Their `completed` event arrives unpaid and is intentionally ignored by
+    // the fulfillment guard, so without this the purchase would never land.
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
       await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
     }
   } catch (err) {
@@ -46,47 +53,21 @@ export async function POST(req: Request) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const type = session.metadata?.type;
-  const userId = session.metadata?.userId ?? session.client_reference_id ?? undefined;
-
-  if (type === PaymentType.CREDIT_PACK) {
-    const credits = Number(session.metadata?.credits ?? 0);
-    if (userId && credits > 0) {
-      await grantPurchase({ userId, credits, stripePaymentId: session.id });
-    }
+  const credit = await fulfillCreditPackCheckout(session);
+  if (credit) {
+    after(() => scheduleCrmDrain());
     return;
   }
 
-  if (type === PaymentType.WEBSITE_PACKAGE) {
-    const projectId = session.metadata?.projectId;
-    if (!projectId) return;
+  const website = await fulfillWebsiteCheckout(session);
+  if (!website) return;
 
-    await prisma.payment.updateMany({
-      where: { stripeSessionId: session.id },
-      data: {
-        status: PaymentStatus.PAID,
-        stripePaymentIntentId:
-          typeof session.payment_intent === "string" ? session.payment_intent : undefined,
-        stripeSubscriptionId:
-          typeof session.subscription === "string" ? session.subscription : undefined,
-      },
+  await trySyncProjectToGitHub(website.projectId);
+  after(() => {
+    // The HubSpot deal is already queued; this just pushes it promptly.
+    scheduleCrmDrain();
+    publishManagedSiteIfDue(website.projectId).catch((err) => {
+      console.error("[deploy] auto-publish after payment failed:", err);
     });
-
-    // Unlock delivery. Don't downgrade an already-live/exported project.
-    const project = await prisma.project.findUnique({ where: { id: projectId } });
-    if (project && ![ProjectStatus.LIVE, ProjectStatus.EXPORTED, ProjectStatus.DEPLOYING].includes(project.status as never)) {
-      await prisma.project.update({
-        where: { id: projectId },
-        data: { status: ProjectStatus.PAID },
-      });
-    }
-
-    await syncPaidCustomerToHubSpot(projectId);
-    await trySyncProjectToGitHub(projectId);
-    after(() =>
-      publishManagedSiteIfDue(projectId).catch((err) => {
-        console.error("[deploy] auto-publish after payment failed:", err);
-      })
-    );
-  }
+  });
 }

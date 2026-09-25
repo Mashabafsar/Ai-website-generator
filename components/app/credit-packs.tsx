@@ -57,10 +57,10 @@ export function CreditPacks() {
 
               <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> ~{Math.floor(pack.credits / 50)} complete websites
+                  <Check className="h-4 w-4 text-primary" /> {pack.credits} credits added to your balance
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> {Math.floor(pack.credits / 5)} section rewrites
+                  <Check className="h-4 w-4 text-primary" /> Up to {Math.floor(pack.credits / 5)} section rewrites
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-primary" /> Never expires

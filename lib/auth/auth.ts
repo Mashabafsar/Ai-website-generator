@@ -4,6 +4,8 @@ import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/prisma";
 import { grantSignupBonus } from "@/lib/credits/credits";
 import { getAuthBaseURL, getAuthTrustedOrigins } from "@/lib/auth/config";
+import { CrmScoreAction } from "@/lib/crm/config";
+import { awardOneTimeAction } from "@/lib/crm/scoring";
 
 export const auth = betterAuth({
   appName: "Agency Partner AI Website Builder",
@@ -26,6 +28,14 @@ export const auth = betterAuth({
         // Every new registration receives starter credits (idempotent per user).
         after: async (user) => {
           await grantSignupBonus(user.id);
+          // Scored here as well as from the consent call, so an account still
+          // registers a lead score if the browser never makes that request.
+          // Both paths share one idempotency key, so it only counts once.
+          try {
+            await awardOneTimeAction(user.id, CrmScoreAction.REGISTERED);
+          } catch (err) {
+            console.error("[crm] registration score failed:", err instanceof Error ? err.message : err);
+          }
         },
       },
     },

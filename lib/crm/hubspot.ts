@@ -1,173 +1,283 @@
+// HubSpot CRM service. Every call the app makes to HubSpot goes through here.
+//
+// Two rules hold throughout: the local database is the source of truth and
+// HubSpot is a mirror, and nothing in this file is allowed to decide whether a
+// user flow succeeds. Callers enqueue work (see outbox.ts) rather than calling
+// these functions inline.
+//
+// Only HubSpot standard properties are written. Lead score, marketing consent,
+// and scoring history stay in Postgres.
+
 import { env } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
-import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
-import { publicSiteUrl } from "@/lib/deployment/url";
+import {
+  DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
+  NOTE_TO_DEAL_ASSOCIATION_TYPE_ID,
+} from "@/lib/crm/config";
+import {
+  HubSpotError,
+  associationPath,
+  hubspotRequest,
+  isHubSpotConfigured,
+  objectPath,
+} from "@/lib/crm/hubspot-client";
 
-const HUBSPOT_API = "https://api.hubapi.com";
-
-export type HubSpotCustomer = {
+export type ContactSnapshot = {
   email: string;
-  name: string;
-  company: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
   phone?: string;
   website?: string;
-  packageType?: string;
-  projectId: string;
 };
 
+export type PurchaseDealSnapshot = {
+  paymentId: string;
+  projectId: string;
+  dealName: string;
+  /** Charged amount in currency units (not cents). */
+  amount: number;
+  currency: string;
+  websiteUrl: string;
+  lineItems: { name: string; amount: number }[];
+  monthlyTotal?: number;
+};
+
+type HubSpotRecord = { id?: string };
+
+/** Conservative cap under HubSpot's textarea limit so a huge quote still fits. */
+export const DEAL_DESCRIPTION_MAX_CHARS = 60_000;
+
+export function formatPriceBreakdown(deal: PurchaseDealSnapshot): string {
+  const currency = deal.currency.toUpperCase();
+  const lines = deal.lineItems.map((item) => `${item.name}: ${item.amount} ${currency}`);
+  lines.push(`Total charged: ${deal.amount} ${currency}`);
+  if (deal.monthlyTotal && deal.monthlyTotal > 0) {
+    lines.push(`Recurring: ${deal.monthlyTotal} ${currency}/month`);
+  }
+  return lines.join("\n");
+}
+
+export function formatDealDescription(deal: PurchaseDealSnapshot): string {
+  return `Website: ${deal.websiteUrl}\n\n${formatPriceBreakdown(deal)}`;
+}
+
+export function splitDealDescription(
+  deal: PurchaseDealSnapshot,
+  maxChars = DEAL_DESCRIPTION_MAX_CHARS
+): { description: string; overflowBody: string | null } {
+  const full = formatDealDescription(deal);
+  if (full.length <= maxChars) {
+    return { description: full, overflowBody: null };
+  }
+  const currency = deal.currency.toUpperCase();
+  return {
+    description: `Website: ${deal.websiteUrl}\nAmount: ${deal.amount} ${currency}\nFull itemized breakdown attached as a note.`,
+    overflowBody: full,
+  };
+}
+
 /**
- * Best-effort HubSpot contact upsert for a paying platform customer.
- * Missing token or API errors are logged and never thrown to the caller.
+ * Look up a contact by email address.
+ *
+ * Uses the read-by-unique-property endpoint rather than the search API: search
+ * is eventually consistent, so a contact created moments earlier can be missing
+ * from its results and produce a duplicate.
  */
-export async function syncPaidCustomerToHubSpot(projectId: string): Promise<void> {
+export async function findContactIdByEmail(email: string): Promise<string | null> {
+  const path = `${objectPath("contacts", encodeURIComponent(email))}?idProperty=email&properties=email`;
   try {
-    const customer = await loadCustomer(projectId);
-    if (!customer) return;
-    await upsertHubSpotContact(customer);
+    const found = await hubspotRequest<HubSpotRecord>(path, { method: "GET" });
+    return found?.id ?? null;
   } catch (err) {
-    console.error("HubSpot sync failed:", err);
+    if (err instanceof HubSpotError && err.status === 404) return null;
+    throw err;
   }
 }
 
-async function loadCustomer(projectId: string): Promise<HubSpotCustomer | null> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      user: { select: { email: true, name: true } },
-      questionnaire: true,
-      quote: { select: { packageType: true } },
-      deployment: { select: { liveUrl: true, subdomain: true } },
-    },
-  });
-  if (!project?.user?.email) return null;
+function contactProperties(contact: ContactSnapshot): Record<string, string> {
+  const properties: Record<string, string> = { email: contact.email };
+  if (contact.firstName) properties.firstname = contact.firstName;
+  if (contact.lastName) properties.lastname = contact.lastName;
+  if (contact.company) properties.company = contact.company;
+  if (contact.phone) properties.phone = contact.phone;
+  if (contact.website) properties.website = contact.website;
+  return properties;
+}
 
-  let phone: string | undefined;
-  let packageType = project.quote?.packageType;
-  if (project.questionnaire) {
+/**
+ * Create or update the contact for an account and return its HubSpot id.
+ *
+ * `knownContactId` skips the lookup when we have already cached the id. If that
+ * cached id has since been deleted or merged away in HubSpot, the 404 is
+ * absorbed and the contact is resolved by email instead.
+ */
+export async function upsertContact(
+  contact: ContactSnapshot,
+  knownContactId?: string | null
+): Promise<string | null> {
+  const properties = contactProperties(contact);
+
+  if (knownContactId) {
     try {
-      const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
-      phone = answers.contactPhone?.trim() || undefined;
-      packageType = packageType || answers.packageType;
-    } catch {
-      // Stored answers are optional context for the CRM row.
+      await hubspotRequest(objectPath("contacts", knownContactId), {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return knownContactId;
+    } catch (err) {
+      const gone = err instanceof HubSpotError && (err.status === 404 || err.status === 400);
+      if (!gone) throw err;
     }
   }
 
-  const website =
-    publicSiteUrl(project.deployment) ||
-    `${env.appUrl.replace(/\/$/, "")}/app/project/${projectId}/preview`;
-
-  return {
-    email: project.user.email,
-    name: project.user.name?.trim() || project.businessName,
-    company: project.businessName,
-    phone,
-    website,
-    packageType,
-    projectId,
-  };
-}
-
-async function upsertHubSpotContact(customer: HubSpotCustomer): Promise<void> {
-  if (!env.hubspot.enabled) {
-    console.info("HubSpot not configured — skipping customer sync.");
-    return;
-  }
-
-  const firstname = customer.name.split(/\s+/)[0] || customer.name;
-  const properties: Record<string, string> = {
-    email: customer.email,
-    firstname,
-    company: customer.company,
-    website: customer.website ?? "",
-  };
-  if (customer.phone) properties.phone = customer.phone;
-
-  const existingId = await findContactIdByEmail(customer.email);
-  const contactId = existingId
-    ? await patchContact(existingId, properties)
-    : await createContact(properties);
-
-  if (contactId) {
-    await addContactNote(
-      contactId,
-      `Website package paid. Project ${customer.projectId}${
-        customer.packageType ? ` · ${customer.packageType}` : ""
-      }.`
-    );
-  }
-}
-
-async function hubspot<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`${HUBSPOT_API}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${env.hubspot.accessToken}`,
-      "Content-Type": "application/json",
-      ...(init.headers ?? {}),
-    },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`HubSpot ${res.status} ${path}: ${body.slice(0, 300)}`);
-  }
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
-}
-
-async function findContactIdByEmail(email: string): Promise<string | null> {
-  const data = await hubspot<{ results?: { id: string }[] }>("/crm/v3/objects/contacts/search", {
-    method: "POST",
-    body: JSON.stringify({
-      filterGroups: [
-        {
-          filters: [{ propertyName: "email", operator: "EQ", value: email }],
-        },
-      ],
-      limit: 1,
-    }),
-  });
-  return data.results?.[0]?.id ?? null;
-}
-
-async function createContact(properties: Record<string, string>): Promise<string | null> {
-  const data = await hubspot<{ id?: string }>("/crm/v3/objects/contacts", {
-    method: "POST",
-    body: JSON.stringify({ properties }),
-  });
-  return data.id ?? null;
-}
-
-async function patchContact(
-  id: string,
-  properties: Record<string, string>
-): Promise<string> {
-  await hubspot(`/crm/v3/objects/contacts/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ properties }),
-  });
-  return id;
-}
-
-async function addContactNote(contactId: string, body: string): Promise<void> {
-  try {
-    const note = await hubspot<{ id?: string }>("/crm/v3/objects/notes", {
-      method: "POST",
-      body: JSON.stringify({
-        properties: {
-          hs_note_body: body,
-          hs_timestamp: new Date().toISOString(),
-        },
-        associations: [
-          {
-            to: { id: contactId },
-            types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 }],
-          },
-        ],
-      }),
+  const existingId = await findContactIdByEmail(contact.email);
+  if (existingId) {
+    await hubspotRequest(objectPath("contacts", existingId), {
+      method: "PATCH",
+      body: JSON.stringify({ properties }),
     });
-    if (!note.id) return;
+    return existingId;
+  }
+
+  try {
+    const created = await hubspotRequest<HubSpotRecord>(objectPath("contacts"), {
+      method: "POST",
+      body: JSON.stringify({ properties }),
+    });
+    return created?.id ?? null;
   } catch (err) {
-    console.error("HubSpot note failed:", err);
+    // The webhook and the checkout-return reconcile can both get here at once.
+    // HubSpot rejects the loser with 409 because email is unique, so re-resolve
+    // and update the contact the winner just created instead of failing.
+    if (err instanceof HubSpotError && err.status === 409) {
+      const raced = await findContactIdByEmail(contact.email);
+      if (raced) {
+        await hubspotRequest(objectPath("contacts", raced), {
+          method: "PATCH",
+          body: JSON.stringify({ properties }),
+        });
+        return raced;
+      }
+    }
+    throw err;
   }
 }
+
+function dealProperties(
+  deal: PurchaseDealSnapshot,
+  description: string
+): Record<string, string> {
+  const properties: Record<string, string> = {
+    dealname: deal.dealName,
+    amount: String(deal.amount),
+    description,
+  };
+  if (env.hubspot.dealPipeline) properties.pipeline = env.hubspot.dealPipeline;
+  if (env.hubspot.dealStage) properties.dealstage = env.hubspot.dealStage;
+  return properties;
+}
+
+/**
+ * Create or update the deal for a website purchase.
+ *
+ * Dedupes on the HubSpot id we cached in Postgres — we do not stamp a custom
+ * payment-id property on the deal.
+ */
+export async function upsertPurchaseDeal(
+  deal: PurchaseDealSnapshot,
+  knownDealId?: string | null,
+  description?: string
+): Promise<string | null> {
+  const resolvedDescription = description ?? splitDealDescription(deal).description;
+  const properties = dealProperties(deal, resolvedDescription);
+
+  if (knownDealId) {
+    try {
+      await hubspotRequest(objectPath("deals", knownDealId), {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return knownDealId;
+    } catch (err) {
+      const gone = err instanceof HubSpotError && (err.status === 404 || err.status === 400);
+      if (!gone) throw err;
+    }
+  }
+
+  const created = await hubspotRequest<HubSpotRecord>(objectPath("deals"), {
+    method: "POST",
+    body: JSON.stringify({ properties }),
+  });
+  return created?.id ?? null;
+}
+
+/**
+ * Create or update a note on a deal. Used when the itemized breakdown does
+ * not fit in the standard description field.
+ */
+export async function upsertDealNote(params: {
+  dealId: string;
+  body: string;
+  knownNoteId?: string | null;
+}): Promise<string | null> {
+  const properties = {
+    hs_timestamp: new Date().toISOString(),
+    hs_note_body: params.body,
+  };
+
+  if (params.knownNoteId) {
+    try {
+      await hubspotRequest(objectPath("notes", params.knownNoteId), {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return params.knownNoteId;
+    } catch (err) {
+      const gone = err instanceof HubSpotError && (err.status === 404 || err.status === 400);
+      if (!gone) throw err;
+    }
+  }
+
+  const created = await hubspotRequest<HubSpotRecord>(objectPath("notes"), {
+    method: "POST",
+    body: JSON.stringify({ properties }),
+  });
+  const noteId = created?.id ?? null;
+  if (noteId) {
+    await associateNoteWithDeal(noteId, params.dealId);
+  }
+  return noteId;
+}
+
+export async function associateNoteWithDeal(noteId: string, dealId: string): Promise<void> {
+  await hubspotRequest(associationPath("notes", noteId, "deals", dealId), {
+    method: "PUT",
+    body: JSON.stringify([
+      {
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: NOTE_TO_DEAL_ASSOCIATION_TYPE_ID,
+      },
+    ]),
+  });
+}
+
+/**
+ * Associate a deal with its contact. Uses the associations API version, which
+ * is configured separately from the objects version.
+ */
+export async function associateDealWithContact(
+  dealId: string,
+  contactId: string
+): Promise<void> {
+  await hubspotRequest(associationPath("deals", dealId, "contacts", contactId), {
+    method: "PUT",
+    body: JSON.stringify([
+      {
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
+      },
+    ]),
+  });
+}
+
+export { isHubSpotConfigured };

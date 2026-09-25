@@ -75,9 +75,11 @@ export const CreditLedgerReason = {
 export type CreditLedgerReason = (typeof CreditLedgerReason)[keyof typeof CreditLedgerReason];
 
 // Credit packs available for purchase (credits granted -> env price id key).
+// Credits and prices are authoritative here, never read back from Stripe
+// metadata — see `resolveCreditPack` in lib/stripe/stripe.ts.
 export const CREDIT_PACKS = [
-  { id: "starter", label: "Starter", credits: 100, priceEnv: "STRIPE_CREDIT_PACK_100_PRICE_ID", priceUsd: 10 },
-  { id: "growth", label: "Growth", credits: 300, priceEnv: "STRIPE_CREDIT_PACK_300_PRICE_ID", priceUsd: 25 },
-  { id: "pro", label: "Pro", credits: 1000, priceEnv: "STRIPE_CREDIT_PACK_1000_PRICE_ID", priceUsd: 75 },
+  { id: "small", label: "Small", credits: 20, priceEnv: "STRIPE_CREDIT_PACK_SMALL_PRICE_ID", priceUsd: 10 },
+  { id: "medium", label: "Medium", credits: 60, priceEnv: "STRIPE_CREDIT_PACK_MEDIUM_PRICE_ID", priceUsd: 29 },
+  { id: "large", label: "Large", credits: 100, priceEnv: "STRIPE_CREDIT_PACK_LARGE_PRICE_ID", priceUsd: 45 },
 ] as const;
 export type CreditPackId = (typeof CREDIT_PACKS)[number]["id"];

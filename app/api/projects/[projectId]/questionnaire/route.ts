@@ -1,6 +1,10 @@
+import { after } from "next/server";
 import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { getOwnedProject } from "@/lib/projects/projects";
+import { CrmScoreAction } from "@/lib/crm/config";
+import { awardOneTimeAction } from "@/lib/crm/scoring";
+import { scheduleCrmDrain } from "@/lib/crm/sync";
 import { questionnaireSchema } from "@/lib/questionnaire/schema";
 import {
   parseImportedBrand,
@@ -92,6 +96,16 @@ export async function POST(req: Request, { params }: Ctx) {
       },
     }),
   ]);
+
+  // Scored only once the full schema validated and saved. Answers typed by hand
+  // and answers filled in by the scraper both land here, and both award the
+  // same single event — doing it both ways is worth one award, not two.
+  try {
+    await awardOneTimeAction(user.id, CrmScoreAction.QUESTIONNAIRE_COMPLETED);
+    after(() => scheduleCrmDrain());
+  } catch (err) {
+    console.error("[crm] questionnaire score failed:", err instanceof Error ? err.message : err);
+  }
 
   return jsonOk({ ok: true });
 }

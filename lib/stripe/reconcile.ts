@@ -1,8 +1,12 @@
 import { getStripe } from "@/lib/stripe/stripe";
-import { grantPurchase } from "@/lib/credits/credits";
 import { prisma } from "@/lib/prisma";
-import { PaymentType, PaymentStatus, ProjectStatus, GithubSyncStatus } from "@/lib/constants";
-import { syncPaidCustomerToHubSpot } from "@/lib/crm/hubspot";
+import { PaymentType, PaymentStatus, GithubSyncStatus } from "@/lib/constants";
+import {
+  fulfillCreditPackCheckout,
+  fulfillWebsiteCheckout,
+  sessionUserId,
+} from "@/lib/stripe/fulfillment";
+import { scheduleCrmDrain } from "@/lib/crm/sync";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 
 /**
@@ -11,11 +15,11 @@ import { trySyncProjectToGitHub } from "@/lib/github/github";
  * Webhooks are the primary path, but they can't reach a local dev server (and can
  * be delayed in production), which leaves buyers without their credits. Verifying
  * the session on return guarantees credits are granted the moment the user lands
- * back on the app. `grantPurchase` is idempotent per Stripe session id, so this
+ * back on the app. Fulfillment is idempotent per Stripe session id, so this
  * and the webhook can both run without ever double-crediting.
  *
- * Returns the number of credits granted (0 if it was already granted), or null
- * when the session is not a paid credit purchase for this user.
+ * Returns the pack size once the purchase is confirmed, or null when the
+ * session is not a paid credit purchase for this user.
  */
 export async function reconcileCreditCheckout(params: {
   userId: string;
@@ -30,32 +34,22 @@ export async function reconcileCreditCheckout(params: {
   } catch {
     return null;
   }
-  if (!session || session.payment_status !== "paid") return null;
-  if (session.metadata?.type !== PaymentType.CREDIT_PACK) return null;
+  if (!session) return null;
 
   // Only ever credit the account that actually made the purchase.
-  const sessionUser = session.metadata?.userId ?? session.client_reference_id ?? undefined;
-  if (!sessionUser || sessionUser !== params.userId) return null;
+  if (sessionUserId(session) !== params.userId) return null;
 
-  const credits = Number(session.metadata?.credits ?? 0);
-  if (!(credits > 0)) return null;
-
-  await grantPurchase({ userId: params.userId, credits, stripePaymentId: session.id });
-  return { credited: credits };
+  const result = await fulfillCreditPackCheckout(session);
+  if (result) scheduleCrmDrain();
+  return result;
 }
-
-/** Statuses that already mean the website was bought — never downgrade them. */
-const DELIVERED_STATUSES: string[] = [
-  ProjectStatus.LIVE,
-  ProjectStatus.EXPORTED,
-  ProjectStatus.DEPLOYING,
-];
 
 /**
  * Reconciles a website-package checkout on the delivery-page redirect. Mirrors
- * the Stripe webhook: marks the pending Payment PAID and unlocks the project.
- * Idempotent and scoped to the paying user + this project, so it's safe to run
- * on every page load and can't collide with the webhook.
+ * the Stripe webhook: marks the pending Payment PAID, unlocks the project, and
+ * queues the HubSpot deal. Idempotent and scoped to the paying user + this
+ * project, so it's safe to run on every page load and can't collide with the
+ * webhook.
  *
  * Returns { paid: true } once the payment is confirmed, else null.
  */
@@ -74,43 +68,17 @@ export async function reconcileWebsiteCheckout(params: {
     return null;
   }
   if (!session) return null;
-  if (session.metadata?.type !== PaymentType.WEBSITE_PACKAGE) return null;
   if (session.metadata?.projectId !== params.projectId) return null;
+  if (sessionUserId(session) !== params.userId) return null;
 
-  const sessionUser = session.metadata?.userId ?? session.client_reference_id ?? undefined;
-  if (!sessionUser || sessionUser !== params.userId) return null;
-
-  // "payment" mode → payment_status "paid"; subscriptions may report
-  // "no_payment_required" while the session itself is "complete".
-  const paid =
-    session.payment_status === "paid" ||
-    session.payment_status === "no_payment_required" ||
-    session.status === "complete";
-  if (!paid) return null;
-
-  await prisma.payment.updateMany({
-    where: { stripeSessionId: session.id },
-    data: {
-      status: PaymentStatus.PAID,
-      stripePaymentIntentId:
-        typeof session.payment_intent === "string" ? session.payment_intent : undefined,
-      stripeSubscriptionId:
-        typeof session.subscription === "string" ? session.subscription : undefined,
-    },
-  });
+  const result = await fulfillWebsiteCheckout(session);
+  if (!result) return null;
 
   const project = await prisma.project.findUnique({ where: { id: params.projectId } });
-  if (project && !DELIVERED_STATUSES.includes(project.status)) {
-    await prisma.project.update({
-      where: { id: params.projectId },
-      data: { status: ProjectStatus.PAID },
-    });
-  }
-
-  await syncPaidCustomerToHubSpot(params.projectId);
   if (project?.githubSyncStatus !== GithubSyncStatus.SYNCED) {
     await trySyncProjectToGitHub(params.projectId);
   }
+  scheduleCrmDrain();
 
   return { paid: true };
 }

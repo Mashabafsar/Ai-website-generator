@@ -57,6 +57,10 @@ export async function POST(req: Request) {
       status: PaymentStatus.PENDING,
       amount: quote.oneTimeTotal,
       currency: quote.currency,
+      // Frozen here rather than read back at fulfillment: the customer can keep
+      // editing the site after paying, which would otherwise rewrite the
+      // itemization behind the price they were actually quoted.
+      breakdown: JSON.stringify(quote.lineItems),
       stripeSessionId: session.id,
     },
   });

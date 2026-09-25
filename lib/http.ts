@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth/session";
+import { isAdmin } from "@/lib/auth/admin";
 
 export type ApiError = { error: string; code?: string; details?: unknown };
 
@@ -18,6 +19,16 @@ export async function requireUser() {
     return { user: null, response: jsonError("Please log in to continue.", 401, "UNAUTHORIZED") };
   }
   return { user: session.user, response: null };
+}
+
+/** Same as requireUser, then 404 unless the account is an admin. */
+export async function requireAdmin() {
+  const { user, response } = await requireUser();
+  if (!user) return { user: null, response };
+  if (!(await isAdmin(user.id, user.email))) {
+    return { user: null, response: jsonError("Not found.", 404, "NOT_FOUND") };
+  }
+  return { user, response: null };
 }
 
 /** Safe JSON body parse. */
