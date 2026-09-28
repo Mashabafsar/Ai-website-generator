@@ -8,7 +8,7 @@ import type { UsageEvent } from "@/lib/ai/usage";
 export async function persistUsageEvents(params: {
   userId?: string;
   projectId?: string;
-  operation: "heavy_generate" | "light_edit" | "scrape_extract" | "site_plan";
+  operation: "heavy_generate" | "light_edit" | "scrape_extract" | "site_plan" | "image_analysis";
   events: UsageEvent[];
 }): Promise<void> {
   const { userId, projectId, operation, events } = params;

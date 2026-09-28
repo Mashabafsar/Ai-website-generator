@@ -17,6 +17,7 @@ import {
   ScrapeError,
 } from "@/lib/scraper/website";
 import { importBrandFromSite } from "@/lib/scraper/brand";
+import { describePhotos, visionAvailable } from "@/lib/ai/vision";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { defaultQuestionnaire } from "@/lib/questionnaire/schema";
 import {
@@ -31,7 +32,8 @@ import {
 // questionnaire fields, then pulls logo / photos / colours / typeface.
 // Importing costs credits (default 10); the charge is refunded if the site
 // can't be read. Branding/asset failures are fail-soft — the customer still
-// keeps the text prefill. Token usage still lands in the admin ledger as `scrape_extract`.
+// keeps the text prefill. Token usage still lands in the admin ledger as `scrape_extract`,
+// and the look at each imported photo as `image_analysis`.
 
 export const maxDuration = 300;
 
@@ -85,18 +87,29 @@ export async function POST(req: Request) {
 
   try {
     const site = await fetchAndParseWebsite(url);
+    // Branding, including looking at each photo, runs alongside the text
+    // extraction so the import takes no longer than before.
+    const brandTask = withUsageCapture(async (): Promise<ImportedBrand | null> => {
+      try {
+        return await withPhotoAnalysis(await importBrandFromSite({ projectId, site }), site.url);
+      } catch (err) {
+        // A bad logo / photo / theme pass must not refund the text import.
+        console.error("[scrape] branding import failed; continuing with text fields only:", err);
+        return null;
+      }
+    });
     const { result: fields, events } = await withUsageCapture(() =>
       extractQuestionnaireFields(site)
     );
     await persistUsageEvents({ userId: user.id, operation: "scrape_extract", events });
 
-    let brand: Awaited<ReturnType<typeof importBrandFromSite>> | null = null;
-    try {
-      brand = await importBrandFromSite({ projectId, site });
-    } catch (err) {
-      // A bad logo / photo / theme pass must not refund the text import.
-      console.error("[scrape] branding import failed; continuing with text fields only:", err);
-    }
+    const { result: brand, events: photoEvents } = await brandTask;
+    await persistUsageEvents({
+      userId: user.id,
+      projectId,
+      operation: "image_analysis",
+      events: photoEvents,
+    });
 
     const existing = await prisma.questionnaire.findUnique({ where: { projectId } });
     const prev = existing
@@ -176,6 +189,34 @@ const IMPORT_OVERWRITE_KEYS = [
   "contactEmail",
   "contactPhone",
 ] as const;
+
+/**
+ * Describes each imported photo so generation can put it where it belongs.
+ * Fail-soft: without an analysis, placement falls back to the alt text.
+ */
+async function withPhotoAnalysis(brand: ImportedBrand, siteUrl: string): Promise<ImportedBrand> {
+  if (!brand.images.length || !visionAvailable()) return brand;
+  let businessName = siteUrl;
+  try {
+    businessName = new URL(siteUrl).hostname.replace(/^www\./, "");
+  } catch {
+    // Keep the raw URL as the label.
+  }
+  try {
+    const analyses = await describePhotos(
+      brand.images.map((img) => img.url),
+      { businessName, industry: "the business shown on that website" },
+      env.images.vision.timeoutMs
+    );
+    return {
+      ...brand,
+      images: brand.images.map((img, i) => (analyses[i] ? { ...img, analysis: analyses[i]! } : img)),
+    };
+  } catch (err) {
+    console.warn("[scrape] photo analysis skipped:", err instanceof Error ? err.message : err);
+    return brand;
+  }
+}
 
 function mergeImportedBrand(
   next: ImportedBrand | null,

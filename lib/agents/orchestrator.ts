@@ -20,7 +20,12 @@ import { planFingerprint, planWebsiteLayout } from "@/lib/agents/website-planner
 import { createTheme, validateThemeChoice } from "@/lib/agents/theme";
 import { selectIcons } from "@/lib/agents/icon-selection";
 import { sourceImages } from "@/lib/agents/image-sourcing";
-import { parseImportedBrand, parseAssetConsent, hasImportedTheme } from "@/lib/branding/imported-brand";
+import {
+  parseImportedBrand,
+  parseAssetConsent,
+  hasImportedTheme,
+  type ImportedBrandImage,
+} from "@/lib/branding/imported-brand";
 import { resolveConsentedAssets } from "@/lib/branding/asset-consent";
 import { THEME_FONTS } from "@/templates/shared/fonts";
 import { assembleSite } from "@/lib/agents/section-assembly";
@@ -210,6 +215,45 @@ function summarizeFailure(failure: AiFailure) {
 
 const PAID_STATUSES = PAID_PROJECT_STATUSES;
 
+/** Time a generation may use before optional steps are skipped; Vercel stops at 300s. */
+const GENERATION_BUDGET_MS = 280_000;
+
+/**
+ * Keeps vision descriptions of the customer's photos made during generation,
+ * so reopening or publishing the site places them the same way without
+ * looking at them again. Best-effort: placement still works without it.
+ */
+async function saveImportedPhotoAnalysis(
+  projectId: string,
+  photos: ImportedBrandImage[]
+): Promise<void> {
+  const analysed = new Map(
+    photos.filter((p) => p.analysis).map((p) => [p.url, p.analysis!] as const)
+  );
+  if (!analysed.size) return;
+  try {
+    const row = await prisma.questionnaire.findUnique({ where: { projectId } });
+    if (!row) return;
+    const answers = JSON.parse(row.answers) as Record<string, unknown>;
+    const brand = parseImportedBrand(answers.importedBrand);
+    if (!brand) return;
+    let changed = false;
+    const images = brand.images.map((img) => {
+      const analysis = analysed.get(img.url);
+      if (!analysis || img.analysis) return img;
+      changed = true;
+      return { ...img, analysis };
+    });
+    if (!changed) return;
+    await prisma.questionnaire.update({
+      where: { projectId },
+      data: { answers: JSON.stringify({ ...answers, importedBrand: { ...brand, images } }) },
+    });
+  } catch (err) {
+    console.error("[images] could not save photo analysis:", err instanceof Error ? err.message : err);
+  }
+}
+
 async function answersWithPlannedLayout(params: {
   userId: string;
   projectId: string;
@@ -260,6 +304,8 @@ async function runGeneration(params: {
   const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus, onProgress } =
     params;
   const report = (id: GenerationStepId) => onProgress?.(id);
+  // Optional steps (photo vision) must finish inside the 300s function limit.
+  const deadline = Date.now() + GENERATION_BUDGET_MS;
 
   report("answers");
   report("plan");
@@ -364,7 +410,13 @@ async function runGeneration(params: {
     });
     blueprint = selectIcons(blueprint);
     report("images");
-    blueprint = await sourceImages(blueprint, assets.images);
+    const photos = assets.images.map((img) => ({ ...img }));
+    const { result: withImages, events: imageEvents } = await withUsageCapture(() =>
+      sourceImages(blueprint, photos, { vision: { deadline } })
+    );
+    blueprint = withImages;
+    await persistUsageEvents({ userId, projectId, operation: "image_analysis", events: imageEvents });
+    await saveImportedPhotoAnalysis(projectId, photos);
     report("preview");
     const site = {
       ...assembleSite(blueprint, theme),

@@ -54,7 +54,8 @@ async function searchPexelsMany(query: ImageQuery): Promise<StockImageReference[
       photographer: photo.photographer,
       attributionRequired: false,
       licenseInfo: "Pexels License",
-      altText: query.altText || photo.alt || query.keywords[0] || "Website image",
+      altText: photo.alt || query.altText || query.keywords[0] || "Website image",
+      description: photo.alt?.slice(0, 300) || undefined,
     }));
   } catch {
     return [];
@@ -107,7 +108,8 @@ async function searchShutterstockMany(query: ImageQuery): Promise<StockImageRefe
         url,
         attributionRequired: true,
         licenseInfo: "Shutterstock License — preview for mockups; license before commercial use",
-        altText: query.altText || photo.description || query.keywords[0] || "Website image",
+        altText: photo.description || query.altText || query.keywords[0] || "Website image",
+        description: photo.description?.slice(0, 300) || undefined,
       });
     }
     return results;
@@ -136,18 +138,23 @@ async function searchUnsplashMany(query: ImageQuery): Promise<StockImageReferenc
         id: string;
         urls: { regular: string };
         alt_description?: string;
+        description?: string | null;
         user: { name: string };
       }[];
     };
-    return (data.results ?? []).map((photo) => ({
-      provider: "unsplash" as const,
-      providerImageId: photo.id,
-      url: photo.urls.regular,
-      photographer: photo.user?.name,
-      attributionRequired: true,
-      licenseInfo: "Unsplash License",
-      altText: query.altText || photo.alt_description || query.keywords[0] || "Website image",
-    }));
+    return (data.results ?? []).map((photo) => {
+      const description = [photo.alt_description, photo.description].filter(Boolean).join(". ");
+      return {
+        provider: "unsplash" as const,
+        providerImageId: photo.id,
+        url: photo.urls.regular,
+        photographer: photo.user?.name,
+        attributionRequired: true,
+        licenseInfo: "Unsplash License",
+        altText: photo.alt_description || query.altText || query.keywords[0] || "Website image",
+        description: description.slice(0, 300) || undefined,
+      };
+    });
   } catch {
     return [];
   }
@@ -187,46 +194,57 @@ export async function searchImages(
   return merged.slice(0, query.perPage ?? 18);
 }
 
-/**
- * Image Sourcing — fallback chain: Shutterstock -> Pexels -> Unsplash -> placeholder.
- */
-export async function findImage(query: ImageQuery): Promise<StockImageReference> {
-  const [fromStock] = await searchShutterstockMany({ ...query, perPage: 1 });
-  if (fromStock) return fromStock;
-  const [fromPexels] = await searchPexelsMany({ ...query, perPage: 1 });
-  if (fromPexels) return fromPexels;
-  const [fromUnsplash] = await searchUnsplashMany({ ...query, perPage: 1 });
-  if (fromUnsplash) return fromUnsplash;
-  return placeholder(query);
-}
+export type ImageCandidate = {
+  image: StockImageReference;
+  /** Index of the query that found it; 0 is the most specific. */
+  queryRank: number;
+  /** The provider's own relevance order within that query. */
+  position: number;
+};
 
 /**
- * Sources one image from a list of candidate keyword sets, most specific first,
- * and skips URLs already taken by a sibling so a grid of services doesn't show
- * the same photo repeatedly. Falls back to a placeholder built from the most
- * specific query.
+ * Candidate photos for one slot, most specific query first. Each query goes
+ * down the provider chain (Shutterstock → Pexels → Unsplash) and stops at the
+ * first provider that answers; broader queries only run while the pool is
+ * still short. Choosing among the candidates is the caller's job.
  */
-export async function findImageForQueries(params: {
+export async function findImageCandidates(params: {
   queries: string[][];
   orientation?: ImageQuery["orientation"];
   altText?: string;
-  taken?: Set<string>;
-}): Promise<StockImageReference> {
-  const { queries, orientation, altText, taken } = params;
-  const unused = (results: StockImageReference[]) =>
-    results.find((r) => !taken?.has(r.url));
+  limit?: number;
+}): Promise<ImageCandidate[]> {
+  const { queries, orientation, altText } = params;
+  const limit = params.limit ?? 8;
+  const out: ImageCandidate[] = [];
+  const seen = new Set<string>();
 
-  for (const keywords of queries) {
+  for (const [queryRank, keywords] of queries.entries()) {
     if (!keywords.length) continue;
-    const query: ImageQuery = { keywords, orientation, altText, perPage: 8 };
+    const query: ImageQuery = { keywords, orientation, altText, perPage: limit };
 
     for (const search of [searchShutterstockMany, searchPexelsMany, searchUnsplashMany]) {
-      const hit = unused(await search(query));
-      if (hit) return hit;
+      const results = await search(query);
+      for (const [position, image] of results.entries()) {
+        if (seen.has(image.url)) continue;
+        seen.add(image.url);
+        out.push({ image, queryRank, position });
+      }
+      if (results.length) break;
     }
+    if (out.length >= limit) break;
   }
 
-  return placeholder({ keywords: queries[0] ?? [], orientation, altText });
+  return out;
+}
+
+/** Last resort when no provider returned anything for a slot. */
+export function placeholderImage(params: {
+  keywords: string[];
+  orientation?: ImageQuery["orientation"];
+  altText?: string;
+}): StockImageReference {
+  return placeholder(params);
 }
 
 export function isAllowedImageUrl(url: string): boolean {

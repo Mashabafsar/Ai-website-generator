@@ -278,8 +278,6 @@ function homeBody(slots: TemplateSlot[]): string {
     <div class="flex flex-col gap-[22px] lg:flex-row">
       <div class="relative h-[450px] w-full overflow-hidden rounded-[20px] border-[5px] border-black lg:w-[751px]">
         <img src="${esc(about.image || FALLBACK.aboutVideo)}" alt="" class="absolute inset-0 size-full object-cover" />
-        <div class="absolute inset-0 bg-black/20"></div>
-        <span class="absolute left-1/2 top-1/2 inline-flex h-[58px] w-[133px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-[33px] border-2 border-black text-[15px] font-semibold text-white" style="background-color:${RB.brand};box-shadow:-5px 5px 0 0 #fff">PLAY<img src="${A}/play-circle.svg" alt="" width="24" height="24" class="size-6" /></span>
       </div>
       <div class="flex w-full items-center justify-center rounded-[20px] px-[45px] py-[60px] lg:w-[361px]" style="background-color:${RB.inverse}">
         <div class="flex w-[271px] flex-col items-center gap-[27px] text-center">${statBlocks}</div>

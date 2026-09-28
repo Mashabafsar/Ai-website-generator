@@ -348,14 +348,6 @@ function HomeBody({ slots }: { slots: TemplateSlot[] }) {
           <div className="flex flex-col gap-[22px] lg:flex-row">
             <div className="relative h-[450px] w-full overflow-hidden rounded-[20px] border-[5px] border-black lg:w-[751px]">
               <img src={about.image || FALLBACK.aboutVideo} alt="" className="absolute inset-0 size-full object-cover" />
-              <div className="absolute inset-0 bg-black/20" />
-              <span
-                className="absolute left-1/2 top-1/2 inline-flex h-[58px] w-[133px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-[33px] border-2 border-black text-[15px] font-semibold text-white"
-                style={{ backgroundColor: RB.brand, boxShadow: "-5px 5px 0 0 #fff" }}
-              >
-                PLAY
-                <img src={`${A}/play-circle.svg`} alt="" width={24} height={24} className="size-6" />
-              </span>
             </div>
             <div className="flex w-full items-center justify-center rounded-[20px] px-[45px] py-[60px] lg:w-[361px]" style={{ backgroundColor: RB.inverse }}>
               <div className="flex w-[271px] flex-col items-center gap-[27px] text-center">

@@ -1,32 +1,31 @@
-import { getVariantSpec } from "@/lib/sections/registry";
 import type { ImportedBrandImage } from "@/lib/branding/imported-brand";
 import type { StockImageReference, WebsiteBlueprint } from "@/lib/blueprint/types";
+import { collectImageSlots, setSlotImage, slotImage, type ImageSlot } from "@/lib/agents/image-slots";
+import {
+  assignBest,
+  contentWords,
+  MIN_FIT_SCORE,
+  scorePhoto,
+  type PhotoFacts,
+} from "@/lib/images/placement";
 
 // Places photos pulled from a customer's own site into the slots they belong
-// in, before stock photography fills whatever is left. Hero / about / gallery
-// get first pick; service and product rows match on the item title when the
-// imported alt text has something in common.
+// in, before stock photography fills whatever is left. Each photo goes where
+// its content fits (a team shot to About, a treatment room to the matching
+// service), judged from the vision analysis taken at import or, failing that,
+// its alt text. A photo that fits nowhere is left out rather than forced in.
 
 const TEMPLATE_ASSET = /^\/templates\//;
 
-function words(input: string): string[] {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 2);
-}
-
-function overlap(a: string, b: string): number {
-  const right = new Set(words(b));
-  return words(a).filter((w) => right.has(w)).length;
-}
+/** Section-level slots that can take a good photo even when little is known about it. */
+const OPEN_ROLES = new Set(["hero", "about", "cta"]);
 
 function toRef(img: ImportedBrandImage, alt: string): StockImageReference {
   return {
     provider: "upload",
     url: img.url,
-    altText: img.altText || alt,
+    altText: img.altText || img.analysis?.description || alt,
+    description: img.analysis?.description || img.altText || undefined,
     attributionRequired: false,
     licenseInfo: "Imported from the customer's existing website",
   };
@@ -41,11 +40,36 @@ function isCustomerPhoto(
   return img.provider === "upload";
 }
 
+export function importedPhotoFacts(img: ImportedBrandImage): PhotoFacts {
+  return {
+    description: img.analysis?.description || img.altText,
+    tags: img.analysis?.tags,
+    kind: img.analysis?.kind,
+    quality: img.analysis?.quality,
+    orientation: img.orientation,
+  };
+}
+
+/** True when nothing is known about what the photo shows. */
+function isUnknown(img: ImportedBrandImage): boolean {
+  return !img.analysis && contentWords(img.altText).length === 0;
+}
+
+function scoreImported(img: ImportedBrandImage, slot: ImageSlot): number {
+  const score = scorePhoto(importedPhotoFacts(img), slot.intent);
+  if (!isUnknown(img)) return score;
+  // Unanalysed and unlabelled: only a broad section photo is a safe home.
+  if (slot.itemIndex !== undefined || !OPEN_ROLES.has(slot.intent.role)) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  return score + MIN_FIT_SCORE;
+}
+
 /**
- * Mutates the blueprint so image slots use the customer's own photos.
- * Editor uploads are left alone. When none of the imported photos are on the
- * page yet, stock and template photos are replaced so the site actually shows
- * the pictures pulled from the customer's website.
+ * Mutates the blueprint so image slots use the customer's own photos where
+ * they fit. Editor uploads are left alone. When none of the imported photos
+ * are on the page yet, stock and template photos are replaced so the site
+ * actually shows the pictures pulled from the customer's website.
  */
 export function assignImportedImages(
   blueprint: WebsiteBlueprint,
@@ -54,13 +78,8 @@ export function assignImportedImages(
   if (!imported.length) return blueprint;
 
   const importedUrls = new Set(imported.map((img) => img.url));
-  const alreadyPlaced = blueprint.pages.some((page) =>
-    page.sections.some(
-      (section) =>
-        isCustomerPhoto(section.selectedImage, importedUrls) ||
-        (section.itemImages ?? []).some((img) => isCustomerPhoto(img, importedUrls))
-    )
-  );
+  const slots = collectImageSlots(blueprint);
+  const alreadyPlaced = slots.some((slot) => isCustomerPhoto(slotImage(slot), importedUrls));
   const replaceForeign = !alreadyPlaced;
 
   const open = (img: StockImageReference | null | undefined): boolean => {
@@ -68,80 +87,20 @@ export function assignImportedImages(
     return replaceForeign && !isCustomerPhoto(img, importedUrls);
   };
 
-  const available = imported.map((img) => ({ img, used: false }));
-  let cycle = 0;
+  const onPage = new Set(slots.map((slot) => slotImage(slot)?.url).filter(Boolean));
+  const photos = imported.filter((img) => !onPage.has(img.url));
+  const targets = slots.filter((slot) => open(slotImage(slot)));
+  if (!photos.length || !targets.length) return blueprint;
 
-  const take = (want: { orientation?: string; hint?: string }): ImportedBrandImage | null => {
-    let best: { index: number; score: number } | null = null;
-    for (const [index, slot] of available.entries()) {
-      if (slot.used) continue;
-      let score = 1;
-      if (want.orientation && slot.img.orientation === want.orientation) score += 3;
-      else if (want.orientation === "landscape" && slot.img.orientation === "square") score += 1;
-      if (want.hint) score += overlap(want.hint, slot.img.altText) * 4;
-      if (!best || score > best.score) best = { index, score };
-    }
-    if (!best) return null;
-    available[best.index].used = true;
-    return available[best.index].img;
-  };
+  const placed = assignBest({
+    slotCount: targets.length,
+    photoCount: photos.length,
+    score: (s, p) => scoreImported(photos[p], targets[s]),
+    priority: (s) => targets[s].priority,
+  });
 
-  const takeOrRepeat = (want: { orientation?: string; hint?: string }): ImportedBrandImage | null => {
-    const fresh = take(want);
-    if (fresh) return fresh;
-    if (!imported.length) return null;
-    const img = imported[cycle % imported.length];
-    cycle += 1;
-    return img;
-  };
-
-  for (const page of blueprint.pages) {
-    for (const section of page.sections) {
-      const spec = getVariantSpec(section.variant);
-      if (!spec) continue;
-
-      if (spec.needsImage && open(section.selectedImage)) {
-        const hint = [
-          section.content.headline,
-          section.content.heading,
-          ...(section.imageKeywords ?? []),
-        ]
-          .flat()
-          .filter((v): v is string => typeof v === "string")
-          .join(" ");
-        const img = takeOrRepeat({
-          orientation: spec.imageOrientation ?? "landscape",
-          hint,
-        });
-        if (img) {
-          section.selectedImage = toRef(img, `${blueprint.business.name} — ${section.type}`);
-        }
-      }
-
-      if (!spec.needsItemImages) continue;
-
-      const titles = Array.isArray(section.content.itemTitles)
-        ? section.content.itemTitles.filter(
-            (t): t is string => typeof t === "string" && t.trim().length > 0
-          )
-        : [];
-      if (!titles.length) continue;
-
-      const existing = section.itemImages ? [...section.itemImages] : [];
-      while (existing.length < titles.length) existing.push(null);
-      if (existing.length > titles.length) existing.length = titles.length;
-
-      for (const [index, title] of titles.entries()) {
-        if (!open(existing[index])) continue;
-        const img = takeOrRepeat({
-          orientation: spec.imageOrientation ?? "square",
-          hint: title,
-        });
-        if (img) existing[index] = toRef(img, `${title} — ${blueprint.business.name}`);
-      }
-      section.itemImages = existing;
-    }
+  for (const { slot, photo } of placed) {
+    setSlotImage(targets[slot], toRef(photos[photo], targets[slot].altText));
   }
-
   return blueprint;
 }

@@ -17,6 +17,7 @@ import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { newFailureLog, withAiDiagnostics } from "@/lib/ai/diagnostics";
 import { recordAiIncidents } from "@/lib/ai/incidents";
 import { sourceImages } from "@/lib/agents/image-sourcing";
+import { releaseRetitledItemPhotos } from "@/lib/agents/image-slots";
 import { trySyncPaidProjectToGitHub } from "@/lib/github/github";
 import { getTemplateById } from "@/lib/templates/store";
 import { findTemplateLockViolation } from "@/lib/templates/lock";
@@ -258,6 +259,7 @@ export async function editSectionWithAi(params: {
       finalBalance = await getBalance(userId);
     }
 
+    releaseRetitledItemPhotos(section, updated);
     section.content = updated;
     await persistAndSync(projectId, blueprint, theme);
 

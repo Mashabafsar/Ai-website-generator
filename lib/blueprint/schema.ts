@@ -13,6 +13,7 @@ export const stockImageSchema = z.object({
   attributionRequired: z.boolean().optional(),
   licenseInfo: z.string().optional(),
   altText: z.string(),
+  description: z.string().max(300).optional(),
 });
 
 export const sectionSchema = z

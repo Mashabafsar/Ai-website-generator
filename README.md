@@ -133,6 +133,9 @@ See `.env.example` for the full list. Highlights:
 | `AI_USE_MOCK` | `true` to skip APIs and use the local template |
 | `SIGNUP_CREDIT_BONUS`, `CREDIT_COST_HEAVY_GENERATE`, `CREDIT_COST_LIGHT_EDIT` | Credit economics |
 | `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY` | Stock image providers |
+| `IMAGE_VISION_ENABLED` | `false` to place photos from provider descriptions only (default `true`) |
+| `VISION_MODEL_NAME` | Model that looks at photos before placing them (default: `HEAVY_MODEL_NAME`) |
+| `IMAGE_VISION_TIMEOUT_MS`, `IMAGE_VISION_MAX_IMAGES` | Photo-analysis time limit (90s) and photos per call (36) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payments |
 | `STRIPE_CREDIT_PACK_SMALL_PRICE_ID` | Small pack — 20 credits, $10. Omit to use an inline price |
 | `STRIPE_CREDIT_PACK_MEDIUM_PRICE_ID` | Medium pack — 60 credits, $29 |

@@ -296,7 +296,7 @@ model AiIncident {
   userId    String?
   projectId String?
 
-  operation String // heavy_generate | light_edit | scrape_extract
+  operation String // heavy_generate | light_edit | scrape_extract | site_plan | image_analysis
   provider  String // cursor | gemini | mock
   model     String @default("")
 

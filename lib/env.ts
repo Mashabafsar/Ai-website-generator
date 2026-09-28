@@ -47,6 +47,16 @@ export const env = {
     shutterstock: process.env.SHUTTERSTOCK_API_TOKEN ?? "",
     pexels: process.env.PEXELS_API_KEY ?? "",
     unsplash: process.env.UNSPLASH_ACCESS_KEY ?? "",
+    vision: {
+      // Looks at candidate and imported photos before placing them. Off, or
+      // without a Cursor key, placement falls back to the providers' own
+      // photo descriptions.
+      enabled: bool(process.env.IMAGE_VISION_ENABLED, true),
+      model: process.env.VISION_MODEL_NAME ?? process.env.HEAVY_MODEL_NAME ?? "claude-opus-5",
+      timeoutMs: num(process.env.IMAGE_VISION_TIMEOUT_MS, 90_000),
+      /** Most photos sent in one analysis call. */
+      maxImages: num(process.env.IMAGE_VISION_MAX_IMAGES, 36),
+    },
   },
 
   supabase: {

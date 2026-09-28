@@ -65,7 +65,9 @@ export function sectionImageQueries(
 ): string[][] {
   const brand = brandWords(business.name);
   const industry = phrase(business.industry, 3);
-  const modelHint = phrase(section.imageKeywords?.[0], 3, brand);
+  const modelHints = (section.imageKeywords ?? [])
+    .slice(0, 3)
+    .map((hint) => phrase(hint, 3, brand));
   const copy = phrase(
     first(section.content.headline) ?? first(section.content.heading),
     3,
@@ -78,7 +80,7 @@ export function sectionImageQueries(
     if (query.length) queries.push(query);
   };
 
-  push(modelHint, industry);
+  for (const hint of modelHints) push(hint, industry);
   push(copy, industry);
   push(industry);
   return dedupe(queries);
@@ -86,19 +88,23 @@ export function sectionImageQueries(
 
 /**
  * Queries for one item's photo (a service, product, or case). The item's own
- * title is the subject; the industry keeps it in the right world.
+ * title is the subject; the industry keeps it in the right world. The item's
+ * description backs up abstract titles like "Faster delivery".
  */
 export function itemImageQueries(
   title: string,
-  business: ImageBusinessContext
+  business: ImageBusinessContext,
+  body?: string
 ): string[][] {
   const brand = brandWords(business.name);
   const industry = phrase(business.industry, 3);
   const subject = phrase(title, 3, brand);
+  const detail = phrase(body, 3, brand);
 
   const queries: string[][] = [];
   if (subject && industry) queries.push([subject, industry]);
   if (subject) queries.push([subject]);
+  if (detail && industry) queries.push([detail, industry]);
   if (industry) queries.push([industry]);
   return dedupe(queries);
 }

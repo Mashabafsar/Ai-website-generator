@@ -5,7 +5,6 @@ export const reboAssets: string[] = [
   "templates/rebo/asterisk.svg",
   "templates/rebo/phone-circle.svg",
   "templates/rebo/scribble.svg",
-  "templates/rebo/play-circle.svg",
   "templates/rebo/plus.svg",
   "templates/rebo/minus.svg",
   "templates/rebo/star.svg",

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PHOTO_KINDS } from "@/lib/images/placement";
 
 // The branding lifted from a customer's existing website: their logo, their
 // photos, their colours, and the nearest catalog match to their typeface. Kept
@@ -44,12 +45,24 @@ export const importedBrandColorsSchema = z.object({
   foreground: hexColor,
 });
 
+/**
+ * What a vision model saw in an imported photo. Placement reads this to put
+ * each picture in the slot it actually belongs to.
+ */
+export const importedPhotoAnalysisSchema = z.object({
+  description: z.string().max(200),
+  tags: z.array(z.string().max(40)).max(10).default([]),
+  kind: z.enum(PHOTO_KINDS),
+  quality: z.enum(["good", "poor"]),
+});
+
 export const importedBrandImageSchema = z.object({
   url: uploadPath,
   altText: z.string().max(160),
   /** The page the photo was found on, kept as provenance for the licence note. */
   sourcePageUrl: httpUrl,
   orientation: z.enum(["landscape", "portrait", "square"]),
+  analysis: importedPhotoAnalysisSchema.optional(),
 });
 
 export const importedBrandSchema = z.object({
@@ -67,6 +80,7 @@ export const importedBrandSchema = z.object({
 
 export type ImportedBrandColors = z.infer<typeof importedBrandColorsSchema>;
 export type ImportedBrandImage = z.infer<typeof importedBrandImageSchema>;
+export type ImportedPhotoAnalysis = z.infer<typeof importedPhotoAnalysisSchema>;
 export type ImportedBrand = z.infer<typeof importedBrandSchema>;
 
 /**

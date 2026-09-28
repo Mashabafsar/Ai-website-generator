@@ -2,7 +2,7 @@ import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type { Run, RunResult, SDKAgent } from "@cursor/sdk";
+import type { Run, RunResult, SDKAgent, SDKUserMessage } from "@cursor/sdk";
 import { withTimeout } from "@/lib/ai/timeout";
 
 /**
@@ -51,7 +51,7 @@ export function cursorReplyText(result: RunResult): string {
 async function runCursorOnce(
   apiKey: string,
   model: string,
-  prompt: string,
+  prompt: string | SDKUserMessage,
   timeoutMs: number
 ): Promise<RunResult> {
   const { Agent, JsonlLocalAgentStore, Cursor, getDefaultSdkStateRoot } = await import(
@@ -135,7 +135,7 @@ export async function runCursorPrompt(
 export async function runCursorText(
   apiKey: string,
   model: string,
-  prompt: string,
+  prompt: string | SDKUserMessage,
   timeoutMs: number
 ): Promise<string> {
   let lastError: unknown;

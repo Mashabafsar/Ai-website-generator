@@ -9,6 +9,8 @@ export type StockImageReference = {
   attributionRequired?: boolean;
   licenseInfo?: string;
   altText: string;
+  /** What the photo shows, from the provider or vision analysis. Drives placement. */
+  description?: string;
 };
 
 /** Optional per-section color overrides. Empty/unset means inherit the site theme. */
