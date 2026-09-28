@@ -11,16 +11,21 @@
 import { env } from "@/lib/env";
 import {
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
+  LEAD_CLOSED_WON_STAGE_LABEL,
+  LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID,
   NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID,
   NOTE_TO_DEAL_ASSOCIATION_TYPE_ID,
+  leadLabel,
   scoreActionLabel,
 } from "@/lib/crm/config";
 import {
   HubSpotError,
+  associationListPath,
   associationPath,
   hubspotRequest,
   isHubSpotConfigured,
   objectPath,
+  pipelinesPath,
 } from "@/lib/crm/hubspot-client";
 
 export type ContactSnapshot = {
@@ -349,6 +354,127 @@ export async function associateDealWithContact(
       },
     ]),
   });
+}
+
+export type LeadSnapshot = {
+  contactId: string;
+  /** Person or business name shown on the lead board. */
+  displayName: string;
+  score: number;
+  /** A website package has been paid for. */
+  closedWon: boolean;
+};
+
+export function formatLeadName(lead: Pick<LeadSnapshot, "displayName" | "score">): string {
+  return `${lead.displayName} — Lead score ${lead.score}`;
+}
+
+let closedWonStageId: string | null = null;
+
+/**
+ * The lead-pipeline stage a website purchase moves the lead into. HubSpot's
+ * built-in lead pipeline has no such stage, so it is created on first use and
+ * found by label after that, including by other instances.
+ */
+export async function resolveLeadClosedWonStage(): Promise<string> {
+  if (env.hubspot.leadClosedWonStage) return env.hubspot.leadClosedWonStage;
+  if (closedWonStageId) return closedWonStageId;
+
+  type Stage = { id: string; label: string; displayOrder: number };
+  const pipeline = await hubspotRequest<{ stages?: Stage[] }>(
+    pipelinesPath("leads", env.hubspot.leadPipeline),
+    { method: "GET" }
+  );
+  const stages = pipeline?.stages ?? [];
+  const wanted = LEAD_CLOSED_WON_STAGE_LABEL.toLowerCase();
+  const existing = stages.find((s) => s.label.trim().toLowerCase() === wanted);
+  if (existing) {
+    closedWonStageId = existing.id;
+    return existing.id;
+  }
+
+  const created = await hubspotRequest<{ id: string }>(
+    pipelinesPath("leads", env.hubspot.leadPipeline, "stages"),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        label: LEAD_CLOSED_WON_STAGE_LABEL,
+        displayOrder: Math.max(0, ...stages.map((s) => s.displayOrder)) + 1,
+        metadata: { isClosed: "true", leadState: "QUALIFIED" },
+      }),
+    }
+  );
+  closedWonStageId = created.id;
+  return created.id;
+}
+
+/** A lead already attached to the contact, so a retried job reuses it. */
+async function findLeadIdForContact(contactId: string): Promise<string | null> {
+  const found = await hubspotRequest<{ results?: { toObjectId?: string | number }[] }>(
+    associationListPath("contacts", contactId, "leads"),
+    { method: "GET" }
+  );
+  const first = found?.results?.[0]?.toObjectId;
+  return first != null ? String(first) : null;
+}
+
+/**
+ * Create or update the HubSpot lead for an account.
+ *
+ * The stage is only written when the lead is created and when a website is
+ * bought. In between, a sales rep may move it by hand (Attempting, Connected),
+ * and a routine score update must not drag it back to New.
+ */
+export async function upsertLead(
+  lead: LeadSnapshot,
+  knownLeadId?: string | null
+): Promise<string | null> {
+  const properties: Record<string, string> = {
+    hs_lead_name: formatLeadName(lead),
+    hs_lead_label: leadLabel(lead.score),
+  };
+  if (lead.closedWon) {
+    properties.hs_pipeline = env.hubspot.leadPipeline;
+    properties.hs_pipeline_stage = await resolveLeadClosedWonStage();
+  }
+
+  const leadId = knownLeadId ?? (await findLeadIdForContact(lead.contactId));
+  if (leadId) {
+    try {
+      await hubspotRequest(objectPath("leads", leadId), {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return leadId;
+    } catch (err) {
+      const gone = err instanceof HubSpotError && (err.status === 404 || err.status === 400);
+      if (!gone) throw err;
+    }
+  }
+
+  const created = await hubspotRequest<HubSpotRecord>(objectPath("leads"), {
+    method: "POST",
+    body: JSON.stringify({
+      properties: {
+        hs_pipeline: env.hubspot.leadPipeline,
+        hs_pipeline_stage: env.hubspot.leadNewStage,
+        hs_lead_type: "NEW_BUSINESS",
+        ...properties,
+      },
+      associations: [
+        {
+          to: { id: lead.contactId },
+          types: [
+            {
+              associationCategory: "HUBSPOT_DEFINED",
+              associationTypeId: LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID,
+            },
+          ],
+        },
+      ],
+    }),
+  });
+  return created?.id ?? null;
 }
 
 export { isHubSpotConfigured };

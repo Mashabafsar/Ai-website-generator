@@ -130,6 +130,11 @@ export const env = {
     /** Deal placement. Left blank, HubSpot drops the deal in the portal default. */
     dealPipeline: process.env.HUBSPOT_DEAL_PIPELINE ?? "",
     dealStage: process.env.HUBSPOT_DEAL_STAGE ?? "",
+    /** Lead placement. Defaults are the ids of HubSpot's built-in lead pipeline. */
+    leadPipeline: process.env.HUBSPOT_LEAD_PIPELINE || "lead-pipeline-id",
+    leadNewStage: process.env.HUBSPOT_LEAD_NEW_STAGE || "new-stage-id",
+    /** Blank: find the stage labelled "Closed Won" in the lead pipeline, creating it if missing. */
+    leadClosedWonStage: process.env.HUBSPOT_LEAD_CLOSED_WON_STAGE ?? "",
     requestTimeoutMs: num(process.env.HUBSPOT_REQUEST_TIMEOUT_MS, 15_000),
     /** Extra in-request tries for blips. Longer outages are the outbox's job. */
     requestRetries: num(process.env.HUBSPOT_REQUEST_RETRIES, 2),

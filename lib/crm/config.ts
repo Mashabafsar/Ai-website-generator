@@ -61,6 +61,27 @@ export const NOTE_TO_DEAL_ASSOCIATION_TYPE_ID = 214;
 /** HubSpot-defined association type id for note -> contact. */
 export const NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID = 202;
 
+/** HubSpot-defined association type id for lead -> primary contact. */
+export const LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID = 578;
+
+/** Label of the lead-pipeline stage a website purchase moves the lead into. */
+export const LEAD_CLOSED_WON_STAGE_LABEL = "Closed Won";
+
+/** Minimum score for each HubSpot lead label (standard `hs_lead_label` values). */
+export const LEAD_LABEL_THRESHOLDS = { HOT: 30, WARM: 20 } as const;
+
+export type LeadLabel = "HOT" | "WARM" | "COLD";
+
+/**
+ * Login alone is cold, completing the questionnaire makes the lead warm, and
+ * buying credits on top of that makes it hot.
+ */
+export function leadLabel(score: number): LeadLabel {
+  if (score >= LEAD_LABEL_THRESHOLDS.HOT) return "HOT";
+  if (score >= LEAD_LABEL_THRESHOLDS.WARM) return "WARM";
+  return "COLD";
+}
+
 /** Operator-facing labels for score events (admin UI and HubSpot notes). */
 export const SCORE_ACTION_LABELS: Record<string, string> = {
   [CrmScoreAction.REGISTERED]: "Logged in",

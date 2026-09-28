@@ -61,12 +61,34 @@ export function associationPath(
     : `/crm/objects/${version}/${tail}`;
 }
 
+/** Path listing every record of one type associated with a record. */
+export function associationListPath(
+  fromObjectType: string,
+  fromObjectId: string,
+  toObjectType: string
+): string {
+  const version = env.hubspot.associationsApiVersion.trim().replace(/^\/+|\/+$/g, "");
+  const tail = `${fromObjectType}/${fromObjectId}/associations/${toObjectType}`;
+  return isLegacyVersion(version)
+    ? `/crm/${version}/objects/${tail}`
+    : `/crm/objects/${version}/${tail}`;
+}
+
 /** Path for an object type's property definitions, e.g. `contacts` or `deals`. */
 export function propertiesPath(objectType: string): string {
   const version = env.hubspot.apiVersion.trim().replace(/^\/+|\/+$/g, "");
   return isLegacyVersion(version)
     ? `/crm/${version}/properties/${objectType}`
     : `/crm/properties/${version}/${objectType}`;
+}
+
+/** Path for an object type's pipelines, e.g. `leads` or `leads/{pipelineId}/stages`. */
+export function pipelinesPath(objectType: string, ...segments: string[]): string {
+  const version = env.hubspot.apiVersion.trim().replace(/^\/+|\/+$/g, "");
+  const tail = [objectType, ...segments].filter(Boolean).join("/");
+  return isLegacyVersion(version)
+    ? `/crm/${version}/pipelines/${tail}`
+    : `/crm/pipelines/${version}/${tail}`;
 }
 
 /** Strip the API key from anything that might reach a log. */

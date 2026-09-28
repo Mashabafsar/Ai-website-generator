@@ -1,0 +1,1 @@
+ALTER TABLE "CrmProfile" ADD COLUMN IF NOT EXISTS "hubspotLeadId" TEXT;

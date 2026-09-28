@@ -178,8 +178,16 @@ or not it ever buys anything.
 | Medium credit pack (every purchase) | +15 |
 | Large credit pack (every purchase) | +20 |
 
-A website purchase opens a **Closed Won** deal associated with the contact and
-moves the contact to `customer`.
+Each account also gets a HubSpot **Lead** record (the Leads object), associated
+to the contact as its primary contact. The lead name carries the current score
+("Jane Doe (Bright Smile) — Lead score 20"), and `hs_lead_label` follows it:
+COLD under 20, WARM from 20, HOT from 30. A new lead starts in the **New**
+stage of the lead pipeline; after that the stage is left for sales reps to move.
+
+A website purchase moves the lead to the **Closed Won** lead stage, opens a
+**Closed Won** deal associated with the contact, and moves the contact to
+`customer`. HubSpot's built-in lead pipeline has no Closed Won stage, so the
+integration creates one (label "Closed Won") the first time it is needed.
 
 Lead scores and marketing consent also stay in **our database**. Admins review
 that local data at `/app/admin/clients`.
@@ -188,6 +196,7 @@ The integration writes **standard HubSpot properties only**. Do not create custo
 contact or deal properties.
 
 **Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`  
+**Lead (standard):** `hs_lead_name`, `hs_lead_label`, `hs_lead_type`, `hs_pipeline`, `hs_pipeline_stage`  
 **Progress history:** one HubSpot Note per score event, associated to the contact  
 **Deal (standard):** `dealname`, `amount`, `description` (website URL + itemized
 breakdown), `pipeline` / `dealstage` (default `default` / `closedwon`, overridable
@@ -199,7 +208,9 @@ overflow, the full breakdown is attached as a Note on the deal.
 1. Create a HubSpot private app with the scopes below.
 2. Set `HUBSPOT_API_KEY`, `HUBSPOT_API_BASE_URL=https://api.hubapi.com`,
    `HUBSPOT_API_VERSION=2026-09`, `HUBSPOT_ASSOCIATIONS_API_VERSION=2026-09`.
-   Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `CRON_SECRET`.
+   Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_LEAD_PIPELINE`,
+   `HUBSPOT_LEAD_NEW_STAGE`, `HUBSPOT_LEAD_CLOSED_WON_STAGE`, `CRON_SECRET`.
+   The lead settings default to HubSpot's built-in lead pipeline.
 3. Apply the Prisma schema (`npx prisma migrate dev` or `npx prisma db push`).
 4. `npm run hubspot:verify` — confirms the token can read contacts. Never prints the key.
 
@@ -210,6 +221,7 @@ overflow, the full breakdown is attached as a Note on the deal.
 | `crm.objects.contacts.read`, `crm.objects.contacts.write` | Contact upsert |
 | `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact association |
 | `crm.objects.notes.write` | Progress notes on the contact, plus overflow deal notes |
+| `crm.objects.leads.read`, `crm.objects.leads.write` | Lead records and their Closed Won stage |
 
 #### Lead scoring
 

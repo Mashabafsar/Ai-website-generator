@@ -326,6 +326,7 @@ model CrmProfile {
   marketingConsent      Boolean   @default(false)
   marketingConsentAt    DateTime?
   hubspotContactId      String?
+  hubspotLeadId         String?
   hubspotLastSyncedAt   DateTime?
   hubspotLastError      String?
 

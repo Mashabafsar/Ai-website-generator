@@ -18,7 +18,9 @@ const {
   formatPriceBreakdown,
   formatProgressNote,
   splitDealDescription,
+  upsertLead,
 } = await import("../lib/crm/hubspot");
+const { leadLabel } = await import("../lib/crm/config");
 
 type Call = { method: string; url: string; body: unknown };
 
@@ -319,5 +321,80 @@ describe("progress notes", () => {
     assert.equal(props.hs_timestamp, "2026-01-02T03:04:05.000Z");
     assert.equal(calls[1].method, "PUT");
     assert.ok(calls[1].url.includes("/notes/n-login/associations/contacts/c-1"));
+  });
+});
+
+describe("lead record", () => {
+  const lead = { contactId: "c-1", displayName: "Jane Doe (Bright Smile)", score: 5, closedWon: false };
+
+  it("labels by score: login cold, questionnaire warm, credits hot", () => {
+    assert.equal(leadLabel(5), "COLD");
+    assert.equal(leadLabel(20), "WARM");
+    assert.equal(leadLabel(30), "HOT");
+  });
+
+  it("creates a New lead tied to the contact as its primary contact", async () => {
+    calls = [];
+    stubHubSpot([
+      (c) => (c.method === "GET" && c.url.includes("/associations/leads") ? json({ results: [] }) : undefined),
+      (c) => (c.method === "POST" && c.url.endsWith("/leads") ? json({ id: "l-1" }) : undefined),
+    ]);
+
+    const id = await upsertLead(lead);
+
+    assert.equal(id, "l-1");
+    const create = calls.find((c) => c.method === "POST")!;
+    const body = create.body as {
+      properties: Record<string, string>;
+      associations: { to: { id: string }; types: { associationTypeId: number }[] }[];
+    };
+    assert.equal(body.properties.hs_lead_name, "Jane Doe (Bright Smile) — Lead score 5");
+    assert.equal(body.properties.hs_lead_label, "COLD");
+    assert.equal(body.properties.hs_pipeline_stage, "new-stage-id");
+    assert.equal(body.associations[0].to.id, "c-1");
+    assert.equal(body.associations[0].types[0].associationTypeId, 578);
+  });
+
+  it("reuses a lead already on the contact and leaves its stage alone", async () => {
+    calls = [];
+    stubHubSpot([
+      (c) =>
+        c.method === "GET" && c.url.includes("/associations/leads")
+          ? json({ results: [{ toObjectId: 77 }] })
+          : undefined,
+    ]);
+
+    const id = await upsertLead({ ...lead, score: 20 });
+
+    assert.equal(id, "77");
+    assert.ok(!calls.some((c) => c.method === "POST"));
+    const patch = calls.find((c) => c.method === "PATCH")!;
+    const props = (patch.body as { properties: Record<string, string> }).properties;
+    assert.equal(props.hs_lead_label, "WARM");
+    assert.equal(props.hs_pipeline_stage, undefined);
+  });
+
+  it("moves a paid lead to the pipeline's Closed Won stage", async () => {
+    calls = [];
+    stubHubSpot([
+      (c) =>
+        c.method === "GET" && c.url.includes("/pipelines/")
+          ? json({
+              stages: [
+                { id: "new-stage-id", label: "New", displayOrder: 1 },
+                { id: "stage-cw", label: "Closed Won", displayOrder: 6 },
+              ],
+            })
+          : undefined,
+    ]);
+
+    await upsertLead({ ...lead, score: 30, closedWon: true }, "l-1");
+
+    assert.ok(!calls.some((c) => c.method === "POST"), "existing stage must not be recreated");
+    const patch = calls.find((c) => c.method === "PATCH")!;
+    assert.ok(patch.url.includes("/leads/l-1"));
+    const props = (patch.body as { properties: Record<string, string> }).properties;
+    assert.equal(props.hs_pipeline_stage, "stage-cw");
+    assert.equal(props.hs_lead_label, "HOT");
   });
 });

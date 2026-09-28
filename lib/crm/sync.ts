@@ -22,6 +22,7 @@ import {
   upsertContact,
   upsertContactNote,
   upsertDealNote,
+  upsertLead,
   upsertPurchaseDeal,
   type ContactSnapshot,
   type PurchaseDealSnapshot,
@@ -74,6 +75,9 @@ async function markContactSynced(userId: string, contactId: string): Promise<voi
   });
 }
 
+/** RFC 2606 test domains. HubSpot rejects them as invalid emails, forever. */
+const RESERVED_EMAIL_TLD = /\.(test|example|invalid|localhost)$/i;
+
 /** Everything HubSpot should know about an account, read fresh. */
 export async function buildContactSnapshot(userId: string): Promise<ContactSnapshot | null> {
   const user = await prisma.user.findUnique({
@@ -82,7 +86,7 @@ export async function buildContactSnapshot(userId: string): Promise<ContactSnaps
       project: { include: { questionnaire: true, deployment: true } },
     },
   });
-  if (!user?.email) return null;
+  if (!user?.email || RESERVED_EMAIL_TLD.test(user.email)) return null;
 
   const project = user.project;
   let phone: string | undefined;
@@ -152,7 +156,7 @@ export async function syncProgressNotes(userId: string, contactId: string): Prom
   }
 }
 
-/** Push an account's contact record, then each new progress note. */
+/** Push an account's contact record, its lead, then each new progress note. */
 export async function syncContact(userId: string): Promise<string | null> {
   const snapshot = await buildContactSnapshot(userId);
   if (!snapshot) return null;
@@ -160,10 +164,39 @@ export async function syncContact(userId: string): Promise<string | null> {
   const profile = await prisma.crmProfile.findUnique({ where: { userId } });
   const contactId = await upsertContact(snapshot, profile?.hubspotContactId);
   if (contactId) {
-    await syncProgressNotes(userId, contactId);
     await markContactSynced(userId, contactId);
+    await syncLead(userId, contactId, snapshot, profile?.hubspotLeadId);
+    await syncProgressNotes(userId, contactId);
   }
   return contactId;
+}
+
+/** Keep the HubSpot lead's name, score label, and stage in step with the account. */
+async function syncLead(
+  userId: string,
+  contactId: string,
+  contact: ContactSnapshot,
+  knownLeadId: string | null | undefined
+): Promise<void> {
+  const profile = await prisma.crmProfile.findUnique({
+    where: { userId },
+    select: { leadScore: true },
+  });
+  const personName = [contact.firstName, contact.lastName].filter(Boolean).join(" ");
+  const displayName = contact.company ? `${personName} (${contact.company})` : personName;
+
+  const leadId = await upsertLead(
+    {
+      contactId,
+      displayName: displayName || contact.email,
+      score: profile?.leadScore ?? 0,
+      closedWon: contact.lifecycleStage === "customer",
+    },
+    knownLeadId
+  );
+  if (leadId && leadId !== knownLeadId) {
+    await prisma.crmProfile.update({ where: { userId }, data: { hubspotLeadId: leadId } });
+  }
 }
 
 /**
