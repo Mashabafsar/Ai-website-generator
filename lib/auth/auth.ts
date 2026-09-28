@@ -6,6 +6,7 @@ import { grantSignupBonus } from "@/lib/credits/credits";
 import { getAuthBaseURL, getAuthTrustedOrigins } from "@/lib/auth/config";
 import { CrmScoreAction } from "@/lib/crm/config";
 import { awardOneTimeAction } from "@/lib/crm/scoring";
+import { scheduleCrmDrain } from "@/lib/crm/sync";
 
 export const auth = betterAuth({
   appName: "Agency Partner AI Website Builder",
@@ -33,6 +34,7 @@ export const auth = betterAuth({
           // Both paths share one idempotency key, so it only counts once.
           try {
             await awardOneTimeAction(user.id, CrmScoreAction.REGISTERED);
+            scheduleCrmDrain();
           } catch (err) {
             console.error("[crm] registration score failed:", err instanceof Error ? err.message : err);
           }

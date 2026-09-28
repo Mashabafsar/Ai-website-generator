@@ -18,19 +18,21 @@ export type CrmScoreAction = (typeof CrmScoreAction)[keyof typeof CrmScoreAction
  * Actions that score once per account, ever.
  *
  * Filling the questionnaire by hand and importing it with the scraper are the
- * same event on purpose — doing both is worth 20 points total, not 40.
+ * same event on purpose — doing both is worth 15 points total, not 30.
+ *
+ * THEME_SELECTED no longer scores; it stays in CrmScoreAction only so older
+ * score history keeps its label.
  */
 export const ONE_TIME_SCORES: Record<string, number> = {
   [CrmScoreAction.REGISTERED]: 5,
-  [CrmScoreAction.THEME_SELECTED]: 5,
-  [CrmScoreAction.QUESTIONNAIRE_COMPLETED]: 20,
+  [CrmScoreAction.QUESTIONNAIRE_COMPLETED]: 15,
 };
 
 /** Credit-pack points, awarded on every purchase rather than once. */
 export const PACKAGE_SCORES: Record<CreditPackId, number> = {
   small: 10,
-  medium: 20,
-  large: 40,
+  medium: 15,
+  large: 20,
 };
 
 /** Outbox job kinds. */

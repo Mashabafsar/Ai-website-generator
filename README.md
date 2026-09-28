@@ -145,7 +145,7 @@ See `.env.example` for the full list. Highlights:
 | `HUBSPOT_API_BASE_URL` | API host (default `https://api.hubapi.com`) |
 | `HUBSPOT_API_VERSION` | Objects API version (default `2026-09`) |
 | `HUBSPOT_ASSOCIATIONS_API_VERSION` | Associations API version (default `2026-09`) |
-| `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE` | Optional internal IDs for where purchase deals land |
+| `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE` | Optional internal IDs for where purchase deals land (default `default` / `closedwon`). A custom pipeline needs its own Closed Won stage id |
 | `CRON_SECRET` | Shared secret for `/api/cron/hubspot`. Unset disables the scheduled drain |
 | `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
@@ -167,8 +167,19 @@ Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 A login drops a HubSpot **lead** immediately (contact with `lifecyclestage=lead`).
 Each later scoring step appends a Note on that contact so the HubSpot timeline
-shows progress in order (logged in +5, theme +5, questionnaire +20, …). A
-website purchase opens a deal and moves the contact to `customer`.
+shows progress in order. Every account is synced from its first login, whether
+or not it ever buys anything.
+
+| Step | Points |
+|---|---|
+| Logged in (once per account) | +5 |
+| Completed questionnaire (once per account) | +15 |
+| Small credit pack (every purchase) | +10 |
+| Medium credit pack (every purchase) | +15 |
+| Large credit pack (every purchase) | +20 |
+
+A website purchase opens a **Closed Won** deal associated with the contact and
+moves the contact to `customer`.
 
 Lead scores and marketing consent also stay in **our database**. Admins review
 that local data at `/app/admin/clients`.
@@ -179,7 +190,8 @@ contact or deal properties.
 **Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`  
 **Progress history:** one HubSpot Note per score event, associated to the contact  
 **Deal (standard):** `dealname`, `amount`, `description` (website URL + itemized
-breakdown), optional `pipeline` / `dealstage` from env. If the description would
+breakdown), `pipeline` / `dealstage` (default `default` / `closedwon`, overridable
+from env). If the description would
 overflow, the full breakdown is attached as a Note on the deal.
 
 #### Setup

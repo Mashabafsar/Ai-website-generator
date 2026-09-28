@@ -121,7 +121,7 @@ export async function buildContactSnapshot(userId: string): Promise<ContactSnaps
 
 /**
  * Write each unsynced scoring step onto the contact as a HubSpot note so the
- * timeline shows login +5, theme +5, and so on, in order.
+ * timeline shows login +5, questionnaire +15, and so on, in order.
  */
 export async function syncProgressNotes(userId: string, contactId: string): Promise<void> {
   const events = await prisma.crmScoreEvent.findMany({

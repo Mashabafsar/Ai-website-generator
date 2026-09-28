@@ -16,6 +16,7 @@
     "templates:locks": "tsx scripts/validate-template-locks.ts",
     "test": "node --import tsx --test tests/*.test.mts",
     "hubspot:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-hubspot.ts",
+    "hubspot:backfill": "node --env-file-if-exists=.env --import tsx scripts/backfill-hubspot-leads.ts",
     "validate": "npm run templates:validate && npm run icons:validate && npm run templates:locks",
     "admin:grant": "node scripts/set-admin.mjs"
   },

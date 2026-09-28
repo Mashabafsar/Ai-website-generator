@@ -189,8 +189,11 @@ function dealProperties(
     amount: String(deal.amount),
     description,
   };
-  if (env.hubspot.dealPipeline) properties.pipeline = env.hubspot.dealPipeline;
-  if (env.hubspot.dealStage) properties.dealstage = env.hubspot.dealStage;
+  // Deals are only created once the payment has succeeded, so they land in
+  // Closed Won. HubSpot rejects a pipeline without a stage, so both are always
+  // sent; a custom pipeline needs its own Closed Won id in HUBSPOT_DEAL_STAGE.
+  properties.pipeline = env.hubspot.dealPipeline || "default";
+  properties.dealstage = env.hubspot.dealStage || "closedwon";
   return properties;
 }
 

@@ -37,8 +37,8 @@ describe("credit packages", () => {
 
   it("scores each tier as specified", () => {
     assert.equal(packageScore("small"), 10);
-    assert.equal(packageScore("medium"), 20);
-    assert.equal(packageScore("large"), 40);
+    assert.equal(packageScore("medium"), 15);
+    assert.equal(packageScore("large"), 20);
   });
 
   it("scores an unknown package as zero rather than guessing", () => {
@@ -54,14 +54,17 @@ describe("credit packages", () => {
 describe("one-time actions", () => {
   it("uses the specified point values", () => {
     assert.equal(oneTimeScore(CrmScoreAction.REGISTERED), 5);
-    assert.equal(oneTimeScore(CrmScoreAction.THEME_SELECTED), 5);
-    assert.equal(oneTimeScore(CrmScoreAction.QUESTIONNAIRE_COMPLETED), 20);
+    assert.equal(oneTimeScore(CrmScoreAction.QUESTIONNAIRE_COMPLETED), 15);
+  });
+
+  it("no longer scores theme selection", () => {
+    assert.equal(oneTimeScore(CrmScoreAction.THEME_SELECTED), 0);
   });
 
   it("treats the manual questionnaire and the scraper as one event", () => {
     // There is deliberately no separate scraper action: both paths award
-    // QUESTIONNAIRE_COMPLETED, so doing both is worth 20 points, not 40.
-    assert.equal(Object.keys(ONE_TIME_SCORES).length, 3);
+    // QUESTIONNAIRE_COMPLETED, so doing both is worth 15 points, not 30.
+    assert.equal(Object.keys(ONE_TIME_SCORES).length, 2);
     assert.ok(!Object.keys(ONE_TIME_SCORES).some((k) => /SCRAP|IMPORT/i.test(k)));
   });
 });

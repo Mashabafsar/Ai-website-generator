@@ -77,16 +77,10 @@ flowchart TD
 6. **Keep image selection provider-based.**  
    Images come from Shutterstock first, then Pexels, then Unsplash.
 
-   **Always analyze a picture before placing it.** Every photo, stock or the customer's own, is placed where its content fits the slot (role, subject, orientation), never at random, by index, or by cycling leftovers. Logos and text graphics are never used as photos, no photo appears twice on a site, and a slot with no fitting photo gets a fresh stock search instead of an unrelated picture.
-
 7. **HubSpot syncs the platform account, never the generated site's visitors.**  
    Upsert the account owner as a HubSpot contact using standard properties only (name, email, company, phone, website, lifecyclestage). Login drops the contact as a lead immediately. Each scoring step appends a Note on that contact (action, points, running total) so HubSpot shows progress in order. A website-package payment additionally opens a deal with `dealname`, `amount`, and a `description` that includes the website URL and itemized price breakdown, associated to that contact, and moves the contact to customer. Do not create or write custom HubSpot properties. Lead score, marketing consent, and scoring history also stay in our database and are visible on the admin clients page. Do not sync form leads captured by generated websites.
 
    Contacts are synced from login/registration onward, not only after payment. Consent is recorded locally and is not sent to HubSpot: a contact without marketing consent is still created, and must never be marketed to from HubSpot lists.
-
-   All HubSpot work goes through the outbox (`lib/crm/`). No user-facing request may block on a HubSpot call.
-
-   Contacts are synced from registration onward, not only after payment, because scoring needs them. Consent governs marketing, not existence: a contact without `marketing_consent` is still created, and must never be marketed to.
 
    All HubSpot work goes through the outbox (`lib/crm/`). No user-facing request may block on a HubSpot call.
 
@@ -467,12 +461,9 @@ Find suitable stock images for website sections.
 ### Guardrails
 
 - Do not use unlicensed images.
-- Store provider metadata, including the provider's description of what the photo shows.
+- Store provider metadata.
 - Respect provider API limits.
 - Do not download images if provider terms do not allow it.
-- Analyze before placing: score each candidate against the slot using its description (`lib/images/placement.ts`), then let the vision model (`lib/ai/vision.ts`) review the leading candidates when the generation time budget allows.
-- Analyze customer photos at import and store the result on the photo, so every later placement uses it.
-- Assign photos site-wide, strongest fit first. Never repeat a photo to fill a gap, and never place a logo or text graphic as a photo.
 
 ---
 

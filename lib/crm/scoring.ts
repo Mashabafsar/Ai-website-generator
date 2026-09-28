@@ -88,6 +88,23 @@ export async function awardOneTimeAction(
 }
 
 /**
+ * Make sure a signed-in account has been dropped into HubSpot as a lead.
+ *
+ * The login form only runs when someone actually submits it, but sessions last
+ * 30 days, and accounts created before the CRM integration never went through
+ * it at all. Calling this on portal visits catches both. Cheap when the lead
+ * already exists: one indexed lookup and nothing else.
+ */
+export async function ensureLeadRegistered(userId: string): Promise<boolean> {
+  const existing = await prisma.crmScoreEvent.findUnique({
+    where: { idempotencyKey: `${CrmScoreAction.REGISTERED}:${userId}` },
+    select: { id: true },
+  });
+  if (existing) return false;
+  return awardOneTimeAction(userId, CrmScoreAction.REGISTERED);
+}
+
+/**
  * Award points for a credit-pack purchase. Unlike the one-time actions this
  * scores on every purchase, deduplicated by Stripe Checkout Session id so the
  * webhook and the success-page reconcile can both run it.
