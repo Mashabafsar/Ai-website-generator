@@ -91,6 +91,9 @@ flowchart TD
 8. **No local AI.**  
    All AI tasks use API-based heavy or lightweight models.
 
+9. **Design every website with the three design skills.**  
+   Before any visual, copy, or motion decision, the designing agents read and follow `frontend-design`, `animation-vocabulary`, and `hyperframes-animation`. The contract is in [Website design skills](#website-design-skills). The heavy model still returns a structured blueprint. It does not emit HTML, CSS, or animation scripts.
+
 ---
 
 ## 4. Orchestrator Agent
@@ -208,6 +211,11 @@ Create the website strategy before content and UI assembly.
 - Create CTA strategy
 - Recommend image keywords
 - Determine complexity level
+- Write the design plan required by [Website design skills](#website-design-skills) before any section list is accepted
+
+### Design skills
+
+Read `frontend-design` first. Ground pages, hero, and section order in this business, then review the plan against the generic defaults in that skill and revise before planning is finished. Name any motion with `animation-vocabulary`. Choose at most one orchestrated motion moment using `hyperframes-animation` (2–4 atomic rules).
 
 ### Input
 
@@ -258,6 +266,7 @@ Build clean prompts for the heavy model and lightweight model.
 - Add output JSON schema
 - Prevent unsupported UI variants
 - Keep model output structured
+- Paste the operative rules from [Website design skills](#website-design-skills) into the generation prompt
 
 ### Guardrail Prompt Rules
 
@@ -270,6 +279,10 @@ Do not invent unsupported components.
 Do not generate unrestricted frontend code.
 Do not include API keys or secrets.
 Do not include copyrighted text copied from external sources.
+Follow frontend-design for palette, type, layout, and copy.
+Name every motion with an animation-vocabulary term.
+Choose motion with hyperframes-animation: one orchestrated moment, 2–4 atomic rules, transform and opacity only.
+Do not return HTML, CSS, GSAP, or a HyperFrames composition.
 ```
 
 ---
@@ -287,8 +300,12 @@ Use the heavy AI model API to generate the first full website blueprint.
 - Generate section content
 - Generate SEO title and description
 - Generate image keywords
-- Generate design direction
+- Generate design direction by following [Website design skills](#website-design-skills)
 - Generate quote signals
+
+### Design skills
+
+Run the two-pass `frontend-design` plan (tokens, type, layout, principles, then a revision against generic defaults) before writing section copy. Write copy with that skill's writing rules. Record motion as glossary terms from `animation-vocabulary`, chosen with `hyperframes-animation`. Return the plan inside the blueprint's design direction. Do not return code.
 
 ### Input
 
@@ -373,9 +390,14 @@ Convert the validated blueprint into actual ShadCN UI page sections.
 
 - Select correct ShadCN section component
 - Inject content into section props
-- Apply theme tokens
+- Apply theme tokens from the design plan
 - Insert selected image references
 - Produce renderable page structure
+- Map the named motion plan onto the shared motion runtime (`templates/shared/motion/runtime.ts`)
+
+### Design skills
+
+Assembly does not invent a new look or a new animation. It applies the theme from `frontend-design` and only the motions already named with `animation-vocabulary` and chosen under `hyperframes-animation`. If a requested motion is not in the shared runtime, drop it. Do not inject GSAP, a second library, or a HyperFrames clip.
 
 ### Input
 
@@ -471,16 +493,16 @@ Find suitable stock images for website sections.
 
 ### Purpose
 
-Create a clean visual theme based on user preferences and industry.
+Create a visual theme for this specific business, using the design plan from [Website design skills](#website-design-skills).
 
 ### Responsibilities
 
-- Suggest color palette
-- Map user color preference to Tailwind tokens
-- Pick typography style
-- Set border radius preference
-- Set spacing style
-- Define button style
+- Read `frontend-design` and write the token plan before picking colors or type
+- Suggest a color palette grounded in the business, then snap it to a catalog palette name
+- Map the customer's color preference to Tailwind tokens when they named one (their choice wins)
+- Pick typography from the catalog font ids, one family or two clearly distinct families
+- Set border radius, spacing, and button style so they serve that plan
+- Reject a theme that matches the generic defaults listed in `frontend-design` unless the questionnaire asked for that look
 
 ### Output
 
@@ -494,6 +516,93 @@ Create a clean visual theme based on user preferences and industry.
   "radius": "1rem",
   "fontStyle": "modern sans-serif"
 }
+```
+
+The JSON above is the token shape. A real theme is the catalog palette and font chosen after the design plan, for this business. It is not a default blue, teal, and `1rem` radius.
+
+---
+
+## Website design skills
+
+When the AI designs a website, these three skills are required. Read each file in full before planning, prompting, generating, theming, or assembling. Do not design from memory of them.
+
+| Skill | File |
+|---|---|
+| `frontend-design` | `.claude/skills/frontend-design/SKILL.md` |
+| `animation-vocabulary` | `.claude/skills/animation-vocabulary/SKILL.md` |
+| `hyperframes-animation` | `.claude/skills/hyperframes-animation/SKILL.md` |
+
+Agents that must follow them: Website Planner, Prompt Builder, Heavy Model Generation, Theme, Section Assembly, Lightweight Revision (copy only), and QA.
+
+The blueprint stays structured. These skills decide the look, the words, and the motion. They do not authorize HTML, CSS, GSAP timelines, or a HyperFrames clip in the model output. Section Assembly maps the result onto approved components and `templates/shared/motion/runtime.ts`.
+
+### frontend-design
+
+Use this for palette, type, layout, and copy.
+
+1. Ground the design in this business before choosing a look: industry, materials, audience, and the one job of the page. Take those from the questionnaire. If the subject is still unclear, name one concrete subject and confirm it. Do not start from a template aesthetic.
+2. Work in two passes. First write a compact plan:
+   - **Color.** 4–6 named hex values for this business.
+   - **Type.** One family, or two that are clearly distinct, with a role for each. Set a real type scale. Keep line length under 80 characters. Give serif body text slightly more line-height.
+   - **Layout.** One-sentence concept, an ASCII wireframe, and an alignment choice (left, center, or justified) made for this page.
+   - **Principles.** What makes this page specific to this business.
+3. Review that plan against the brief. If any part is the generic default you would ship for any similar business, revise it and say what changed. Only the revised plan may become the blueprint.
+4. Open the hero with the most characteristic thing in this business's world. Use a big number, a small label, and a gradient accent only when that is actually the right hero for this subject.
+5. Spend boldness in one place. Keep everything around it quiet. Structural devices (rules, numbers, labels) encode real information. Numbered markers are only for a real sequence.
+6. One orchestrated motion moment on the page. Fade-and-slide on every section, and a hover transition on every card, is not that moment.
+7. Write for the visitor. Plain verbs, sentence case, active voice, one job per line. A button says what happens when it is used, and that same verb is used for the result. An empty or failed state tells the visitor what to do next.
+8. Ship the quality floor: responsive down to mobile, visible keyboard focus, `prefers-reduced-motion` respected, and contrast that stays readable.
+
+Do not use these treatments unless the questionnaire explicitly asks for that look:
+
+- Warm cream background, high-contrast serif, terracotta or clay accent (near `#D97757`).
+- Near-black background with one acid-green or vermilion accent.
+- Broadsheet layout: hairline rules, zero radius, newspaper columns.
+- Identical rounded cards, one radius on everything, the same soft grey shadow, gradient washes as decoration.
+- Tracked-out all-caps eyebrows, middle-dot meta lines, em-dash labels, monospace micro-labels, or an arrow stuck on every button.
+- A single italic, bold, or recolored word in a headline. All-caps labels. A label stacked above content that does not add information.
+
+Platform constraint: after the plan, snap color to one catalog palette name and type to catalog font ids. The model never returns a raw hex or a font stack. A color the customer named wins over the model's pick.
+
+### animation-vocabulary
+
+Use this to name motion. Every motion in the design plan uses a term from that skill's glossary, quoted as written there. Do not invent a term. If nothing in the glossary matches, use the closest term and say it is an approximation, or drop the motion.
+
+Do not answer with the skill's "I'm ready" greeting. That greeting is for a naming question in chat. A website design uses the glossary directly.
+
+Terms that fit a generated site: Fade in, Slide in, Scale in, Pop in, Reveal, Stagger, Orchestration, Scroll reveal, Parallax, Hover effect, Press / Tap feedback, Accordion / Collapse, Ease-out, Spring, Number ticker, Reduced motion.
+
+### hyperframes-animation
+
+Use this to choose and limit motion. Read `rules-index.md` in that skill and pick 2–4 atomic rules for the one orchestrated moment. Do not load a blueprint unless the page truly matches that multi-phase template, and do not load one speculatively.
+
+For a customer website, apply the craft and leave the HyperFrames clip contract on the shelf:
+
+- GSAP-style judgment is the default: a few rules, one coordinated motion.
+- Spatial motion is transform and opacity only (`x`, `y`, `scale`, `rotation`). Do not animate `width`, `height`, `top`, or `left`.
+- The moment answers something on the page (orient, reveal, confirm). It is not decoration on every block.
+- Honor `prefers-reduced-motion` by removing or toning that moment down.
+- No `Math.random`, `Date.now`, or `performance.now` in motion. No unbounded `repeat: -1` authored as a custom timeline.
+- Map the chosen rules onto motions the shared runtime already runs: scroll reveal, stagger, number ticker, parallax, FAQ accordion, hover, and press. A rule the runtime cannot play is omitted, not reimplemented as new script.
+
+Do not ship a HyperFrames composition, a paused master timeline, or a second animation library inside a generated site. Those belong to a HyperFrames clip, which this generator does not produce.
+
+### Order during generation
+
+```text
+Requirement Analyst
+      ↓
+Website Planner — frontend-design plan, then revise
+      ↓
+Prompt Builder — plan + glossary terms + motion limits in the prompt
+      ↓
+Heavy Model — copy and design direction under those rules
+      ↓
+Theme Agent — snap the revised plan to catalog palette and font
+      ↓
+Section Assembly — approved sections + shared motion runtime only
+      ↓
+QA — reject generic defaults, unnamed motion, and extra motion moments
 ```
 
 ---
@@ -592,6 +701,8 @@ Use lightweight AI model API.
 - Preserve business facts.
 - Do not invent fake claims.
 - Do not alter pricing unless user specifically edits pricing content.
+- Copy edits follow the writing rules in `frontend-design` (see [Website design skills](#website-design-skills)).
+- Do not restyle the site or add motion during a text edit.
 
 ---
 
@@ -816,6 +927,7 @@ Check generated website quality before quote/payment/deployment.
 - Check SEO title and description
 - Check basic accessibility labels
 - Check mobile preview state
+- Check the design plan against [Website design skills](#website-design-skills): generic defaults, unnamed motion, more than one orchestrated motion moment, and copy that does not say what the visitor should do
 
 ### Output
 
@@ -866,6 +978,8 @@ Never store card details in SQLite.
 ## 23. Agent Handoff Flow
 
 ### Initial Generation Flow
+
+Design steps in this flow follow [Website design skills](#website-design-skills): `frontend-design` for the look and the words, `animation-vocabulary` for motion names, and `hyperframes-animation` for which motion to keep.
 
 ```text
 Orchestrator Agent
@@ -957,7 +1071,7 @@ Managed Hosting: Deployment Agent → notify owner
 
 ## 25. Final Agent Summary
 
-The AI Website Generator should be built around structured agents, not one large AI prompt. The heavy model creates the first complete website blueprint. The platform then uses approved ShadCN UI sections to assemble the site. Stock images are selected through provider APIs. Later edits are handled by a cheaper lightweight model. The quote, payment, GitHub storage, ZIP export, and subdomain deployment are all automated through deterministic backend agents.
+The AI Website Generator should be built around structured agents, not one large AI prompt. The heavy model creates the first complete website blueprint. Visual design, copy, and motion follow `frontend-design`, `animation-vocabulary`, and `hyperframes-animation` as specified in [Website design skills](#website-design-skills). The platform then uses approved ShadCN UI sections and the shared motion runtime to assemble the site. Stock images are selected through provider APIs. Later edits are handled by a cheaper lightweight model. The quote, payment, GitHub storage, ZIP export, and subdomain deployment are all automated through deterministic backend agents.
 
 <!-- stripe-projects-cli managed:agents-md:start -->
 ## Stripe Projects CLI

@@ -2,6 +2,7 @@ import { shortId } from "@/lib/utils";
 import { getVariantSpec } from "@/lib/sections/registry";
 import { pageTitle } from "@/lib/blueprint/page-catalog";
 import { applyServicePricing } from "@/lib/agents/template-fill";
+import { searchPhrases } from "@/lib/ai/prompt-builder";
 import type { NormalizedRequirements } from "@/lib/agents/requirement-analyst";
 import type { WebsiteBlueprint, WebsitePage, WebsiteSection } from "@/lib/blueprint/types";
 
@@ -40,6 +41,7 @@ export function buildMockBlueprint(req: NormalizedRequirements): WebsiteBlueprin
     sections: def.sections.map((v) => makeSection(v, req)),
   }));
 
+  const { primary, secondary } = searchPhrases(req);
   const sectionCount = pages.reduce((n, p) => n + p.sections.length, 0);
   const complexityLevel =
     sectionCount >= 14 ? "complex" : sectionCount >= 9 ? "medium" : "simple";
@@ -59,12 +61,12 @@ export function buildMockBlueprint(req: NormalizedRequirements): WebsiteBlueprin
     },
     pages,
     seo: {
-      title: `${req.business.name} | ${req.business.industry}`.slice(0, 70),
+      title: `${primary} | ${req.business.name}`.slice(0, 70),
       description: (
         req.business.description ||
-        `${req.business.name} — ${req.business.industry} for ${req.audience}.`
-      ).slice(0, 200),
-      keywords: [req.business.industry, ...req.services].slice(0, 8),
+        `${req.business.name} — ${primary} for ${req.audience}.`
+      ).slice(0, 160),
+      keywords: [primary, ...secondary].slice(0, 6),
     },
     quoteSignals: req.quoteSignals,
     complexity: {
