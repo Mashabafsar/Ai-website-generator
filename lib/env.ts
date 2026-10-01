@@ -130,11 +130,21 @@ export const env = {
     /** Deal placement. Left blank, HubSpot drops the deal in the portal default. */
     dealPipeline: process.env.HUBSPOT_DEAL_PIPELINE ?? "",
     dealStage: process.env.HUBSPOT_DEAL_STAGE ?? "",
-    /** Lead placement. Defaults are the ids of HubSpot's built-in lead pipeline. */
-    leadPipeline: process.env.HUBSPOT_LEAD_PIPELINE || "lead-pipeline-id",
-    leadNewStage: process.env.HUBSPOT_LEAD_NEW_STAGE || "new-stage-id",
+    /** Lead placement. Blank means look up the portal's lead pipeline and its
+     * "New" stage at sync time — HubSpot stage ids differ per portal.
+     */
+    leadPipeline: process.env.HUBSPOT_LEAD_PIPELINE ?? "",
+    leadNewStage: process.env.HUBSPOT_LEAD_NEW_STAGE ?? "",
     /** Blank: find the stage labelled "Closed Won" in the lead pipeline, creating it if missing. */
     leadClosedWonStage: process.env.HUBSPOT_LEAD_CLOSED_WON_STAGE ?? "",
+    /**
+     * Owner (seat) every new Lead is assigned to. Required for the lead to
+     * show up under "My leads" in HubSpot Sales. Blank leaves leads unassigned.
+     * Read live so a backfill can set the env without restarting the process.
+     */
+    get leadOwnerId() {
+      return process.env.HUBSPOT_LEAD_OWNER_ID ?? "";
+    },
     requestTimeoutMs: num(process.env.HUBSPOT_REQUEST_TIMEOUT_MS, 15_000),
     /** Extra in-request tries for blips. Longer outages are the outbox's job. */
     requestRetries: num(process.env.HUBSPOT_REQUEST_RETRIES, 2),

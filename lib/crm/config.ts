@@ -64,6 +64,15 @@ export const NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID = 202;
 /** HubSpot-defined association type id for lead -> primary contact. */
 export const LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID = 578;
 
+/**
+ * HubSpot's standard `hs_lead_type` value for a new opportunity.
+ * The API expects a space, not an underscore (`NEW BUSINESS`).
+ */
+export const LEAD_TYPE_NEW_BUSINESS = "NEW BUSINESS";
+
+/** Label of the lead-pipeline stage a new signup starts in. */
+export const LEAD_NEW_STAGE_LABEL = "New";
+
 /** Label of the lead-pipeline stage a website purchase moves the lead into. */
 export const LEAD_CLOSED_WON_STAGE_LABEL = "Closed Won";
 

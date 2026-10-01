@@ -2,9 +2,11 @@
  * Drops every existing account into HubSpot as a lead with the +5 login score,
  * for accounts created before the CRM integration or that haven't opened the
  * portal since, and creates the HubSpot lead record for contacts that predate
- * lead records. Safe to re-run: the login score is awarded once per account.
+ * lead records. With `--repair`, also re-syncs every contact that already has a
+ * HubSpot id so existing Lead records pick up owner assignment and lead type.
  *
  * Dry run by default. Run with `npm run hubspot:backfill -- --apply` to write.
+ * Add `--repair` with `--apply` to refresh existing leads.
  */
 
 import { prisma } from "@/lib/prisma";
@@ -16,6 +18,7 @@ import { runCrmOutbox } from "@/lib/crm/sync";
 
 async function main() {
   const apply = process.argv.includes("--apply");
+  const repair = process.argv.includes("--repair");
 
   const registered = await prisma.crmScoreEvent.findMany({
     where: { action: CrmScoreAction.REGISTERED },
@@ -28,21 +31,40 @@ async function main() {
     where: { hubspotContactId: { not: null }, hubspotLeadId: null },
     select: { userId: true },
   });
+  const existingLeads = repair
+    ? await prisma.crmProfile.findMany({
+        where: { hubspotContactId: { not: null } },
+        select: { userId: true },
+      })
+    : [];
 
   console.log(`${users.length} accounts, ${pending.length} not yet dropped into HubSpot as leads.`);
   console.log(`${withoutLead.length} HubSpot contacts without a HubSpot lead record.`);
+  if (repair) {
+    console.log(`${existingLeads.length} synced contacts will be re-queued to repair Lead records.`);
+  }
   if (!apply) {
     console.log("Dry run. Re-run with --apply to queue them and sync to HubSpot.");
+    if (repair) console.log("Include --repair with --apply to refresh existing leads.");
     return;
   }
 
   for (const user of pending) {
     await ensureLeadRegistered(user.id);
   }
+  const queued = new Set<string>();
   for (const { userId } of withoutLead) {
     await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId });
+    queued.add(userId);
   }
-  console.log(`Queued ${pending.length + withoutLead.length} contact syncs. Syncing to HubSpot...`);
+  for (const { userId } of existingLeads) {
+    if (queued.has(userId)) continue;
+    await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId });
+    queued.add(userId);
+  }
+  console.log(
+    `Queued ${pending.length + queued.size} contact syncs. Syncing to HubSpot...`
+  );
 
   let totals = { processed: 0, failed: 0 };
   for (;;) {

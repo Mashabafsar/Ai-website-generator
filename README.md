@@ -209,10 +209,14 @@ overflow, the full breakdown is attached as a Note on the deal.
 2. Set `HUBSPOT_API_KEY`, `HUBSPOT_API_BASE_URL=https://api.hubapi.com`,
    `HUBSPOT_API_VERSION=2026-09`, `HUBSPOT_ASSOCIATIONS_API_VERSION=2026-09`.
    Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_LEAD_PIPELINE`,
-   `HUBSPOT_LEAD_NEW_STAGE`, `HUBSPOT_LEAD_CLOSED_WON_STAGE`, `CRON_SECRET`.
-   The lead settings default to HubSpot's built-in lead pipeline.
+   `HUBSPOT_LEAD_NEW_STAGE`, `HUBSPOT_LEAD_CLOSED_WON_STAGE`, `HUBSPOT_LEAD_OWNER_ID`,
+   `CRON_SECRET`.
+   Leave the lead pipeline settings blank to look them up from HubSpot (recommended).
+   Set `HUBSPOT_LEAD_OWNER_ID` to a HubSpot owner id so new Leads appear under
+   "My leads" (Settings → Users & Teams → open a user → Owner ID).
 3. Apply the Prisma schema (`npx prisma migrate dev` or `npx prisma db push`).
-4. `npm run hubspot:verify` — confirms the token can read contacts. Never prints the key.
+4. `npm run hubspot:verify` — confirms the token can read contacts and leads.
+   Never prints the key.
 
 #### Private app scopes
 

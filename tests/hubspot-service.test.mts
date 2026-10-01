@@ -337,6 +337,19 @@ describe("lead record", () => {
     calls = [];
     stubHubSpot([
       (c) => (c.method === "GET" && c.url.includes("/associations/leads") ? json({ results: [] }) : undefined),
+      (c) =>
+        c.method === "GET" && c.url.includes("/pipelines/") && c.url.endsWith("/leads")
+          ? json({
+              results: [
+                {
+                  id: "pipe-lead",
+                  label: "Lead pipeline",
+                  displayOrder: 0,
+                  stages: [{ id: "stage-new", label: "New", displayOrder: 0 }],
+                },
+              ],
+            })
+          : undefined,
       (c) => (c.method === "POST" && c.url.endsWith("/leads") ? json({ id: "l-1" }) : undefined),
     ]);
 
@@ -350,9 +363,33 @@ describe("lead record", () => {
     };
     assert.equal(body.properties.hs_lead_name, "Jane Doe (Bright Smile) — Lead score 5");
     assert.equal(body.properties.hs_lead_label, "COLD");
-    assert.equal(body.properties.hs_pipeline_stage, "new-stage-id");
+    assert.equal(body.properties.hs_lead_type, "NEW BUSINESS");
+    assert.equal(body.properties.hs_pipeline, "pipe-lead");
+    assert.equal(body.properties.hs_pipeline_stage, "stage-new");
     assert.equal(body.associations[0].to.id, "c-1");
     assert.equal(body.associations[0].types[0].associationTypeId, 578);
+  });
+
+  it("assigns the configured owner so the lead shows under My leads", async () => {
+    process.env.HUBSPOT_LEAD_OWNER_ID = "owner-99";
+    try {
+      calls = [];
+      stubHubSpot([
+        (c) =>
+          c.method === "GET" && c.url.includes("/associations/leads")
+            ? json({ results: [] })
+            : undefined,
+        (c) => (c.method === "POST" && c.url.endsWith("/leads") ? json({ id: "l-2" }) : undefined),
+      ]);
+
+      const id = await upsertLead(lead);
+      assert.equal(id, "l-2");
+      const create = calls.find((c) => c.method === "POST")!;
+      const props = (create.body as { properties: Record<string, string> }).properties;
+      assert.equal(props.hubspot_owner_id, "owner-99");
+    } finally {
+      delete process.env.HUBSPOT_LEAD_OWNER_ID;
+    }
   });
 
   it("reuses a lead already on the contact and leaves its stage alone", async () => {
@@ -378,10 +415,22 @@ describe("lead record", () => {
     calls = [];
     stubHubSpot([
       (c) =>
-        c.method === "GET" && c.url.includes("/pipelines/")
+        c.method === "GET" && c.url.includes("/pipelines/") && c.url.endsWith("/leads")
+          ? json({
+              results: [
+                {
+                  id: "pipe-lead",
+                  label: "Lead pipeline",
+                  stages: [{ id: "stage-new", label: "New", displayOrder: 0 }],
+                },
+              ],
+            })
+          : undefined,
+      (c) =>
+        c.method === "GET" && c.url.includes("/pipelines/") && c.url.includes("/pipe-lead")
           ? json({
               stages: [
-                { id: "new-stage-id", label: "New", displayOrder: 1 },
+                { id: "stage-new", label: "New", displayOrder: 1 },
                 { id: "stage-cw", label: "Closed Won", displayOrder: 6 },
               ],
             })
@@ -394,6 +443,7 @@ describe("lead record", () => {
     const patch = calls.find((c) => c.method === "PATCH")!;
     assert.ok(patch.url.includes("/leads/l-1"));
     const props = (patch.body as { properties: Record<string, string> }).properties;
+    assert.equal(props.hs_pipeline, "pipe-lead");
     assert.equal(props.hs_pipeline_stage, "stage-cw");
     assert.equal(props.hs_lead_label, "HOT");
   });

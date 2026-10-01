@@ -12,7 +12,9 @@ import { env } from "@/lib/env";
 import {
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
   LEAD_CLOSED_WON_STAGE_LABEL,
+  LEAD_NEW_STAGE_LABEL,
   LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID,
+  LEAD_TYPE_NEW_BUSINESS,
   NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID,
   NOTE_TO_DEAL_ASSOCIATION_TYPE_ID,
   leadLabel,
@@ -369,7 +371,73 @@ export function formatLeadName(lead: Pick<LeadSnapshot, "displayName" | "score">
   return `${lead.displayName} — Lead score ${lead.score}`;
 }
 
+type PipelineStage = { id: string; label: string; displayOrder: number };
+type Pipeline = { id: string; label: string; stages?: PipelineStage[]; displayOrder?: number };
+
+let leadPlacement: { pipelineId: string; newStageId: string } | null = null;
 let closedWonStageId: string | null = null;
+
+function stageByLabel(stages: PipelineStage[], label: string): PipelineStage | undefined {
+  const wanted = label.trim().toLowerCase();
+  return stages.find((s) => s.label.trim().toLowerCase() === wanted);
+}
+
+/**
+ * The portal's lead pipeline and its New stage.
+ *
+ * Env overrides win when set. Otherwise we ask HubSpot — stage ids are not the
+ * same in every portal, and inventing `new-stage-id` creates a contact with no
+ * Lead record when HubSpot rejects the create.
+ */
+export async function resolveLeadNewPlacement(): Promise<{
+  pipelineId: string;
+  newStageId: string;
+}> {
+  if (env.hubspot.leadPipeline && env.hubspot.leadNewStage) {
+    return { pipelineId: env.hubspot.leadPipeline, newStageId: env.hubspot.leadNewStage };
+  }
+  if (leadPlacement) return leadPlacement;
+
+  const listed = await hubspotRequest<{ results?: Pipeline[] }>(pipelinesPath("leads"), {
+    method: "GET",
+  });
+  const pipelines = listed?.results ?? [];
+  if (!pipelines.length) {
+    throw new HubSpotError("HubSpot has no lead pipelines; cannot drop a Lead record");
+  }
+
+  const byEnv = env.hubspot.leadPipeline
+    ? pipelines.find((p) => p.id === env.hubspot.leadPipeline)
+    : undefined;
+  const byLabel = pipelines.find((p) => /lead/i.test(p.label));
+  const pipeline =
+    byEnv ??
+    byLabel ??
+    [...pipelines].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))[0];
+
+  let stages = pipeline.stages ?? [];
+  if (!stages.length) {
+    const full = await hubspotRequest<{ stages?: PipelineStage[] }>(
+      pipelinesPath("leads", pipeline.id),
+      { method: "GET" }
+    );
+    stages = full?.stages ?? [];
+  }
+  if (!stages.length) {
+    throw new HubSpotError(`Lead pipeline ${pipeline.id} has no stages`);
+  }
+
+  const byEnvStage = env.hubspot.leadNewStage
+    ? stages.find((s) => s.id === env.hubspot.leadNewStage)
+    : undefined;
+  const newStage =
+    byEnvStage ??
+    stageByLabel(stages, LEAD_NEW_STAGE_LABEL) ??
+    [...stages].sort((a, b) => a.displayOrder - b.displayOrder)[0];
+
+  leadPlacement = { pipelineId: pipeline.id, newStageId: newStage.id };
+  return leadPlacement;
+}
 
 /**
  * The lead-pipeline stage a website purchase moves the lead into. HubSpot's
@@ -380,21 +448,20 @@ export async function resolveLeadClosedWonStage(): Promise<string> {
   if (env.hubspot.leadClosedWonStage) return env.hubspot.leadClosedWonStage;
   if (closedWonStageId) return closedWonStageId;
 
-  type Stage = { id: string; label: string; displayOrder: number };
-  const pipeline = await hubspotRequest<{ stages?: Stage[] }>(
-    pipelinesPath("leads", env.hubspot.leadPipeline),
+  const { pipelineId } = await resolveLeadNewPlacement();
+  const pipeline = await hubspotRequest<{ stages?: PipelineStage[] }>(
+    pipelinesPath("leads", pipelineId),
     { method: "GET" }
   );
   const stages = pipeline?.stages ?? [];
-  const wanted = LEAD_CLOSED_WON_STAGE_LABEL.toLowerCase();
-  const existing = stages.find((s) => s.label.trim().toLowerCase() === wanted);
+  const existing = stageByLabel(stages, LEAD_CLOSED_WON_STAGE_LABEL);
   if (existing) {
     closedWonStageId = existing.id;
     return existing.id;
   }
 
   const created = await hubspotRequest<{ id: string }>(
-    pipelinesPath("leads", env.hubspot.leadPipeline, "stages"),
+    pipelinesPath("leads", pipelineId, "stages"),
     {
       method: "POST",
       body: JSON.stringify({
@@ -421,6 +488,11 @@ async function findLeadIdForContact(contactId: string): Promise<string | null> {
 /**
  * Create or update the HubSpot lead for an account.
  *
+ * A contact alone is not a lead on HubSpot's Leads board — this writes the
+ * Lead object and associates the contact as its primary contact. When
+ * HUBSPOT_LEAD_OWNER_ID is set, the lead is assigned to that seat so it shows
+ * under "My leads" instead of only on the contact record.
+ *
  * The stage is only written when the lead is created and when a website is
  * bought. In between, a sales rep may move it by hand (Attempting, Connected),
  * and a routine score update must not drag it back to New.
@@ -432,9 +504,14 @@ export async function upsertLead(
   const properties: Record<string, string> = {
     hs_lead_name: formatLeadName(lead),
     hs_lead_label: leadLabel(lead.score),
+    hs_lead_type: LEAD_TYPE_NEW_BUSINESS,
   };
+  if (env.hubspot.leadOwnerId) {
+    properties.hubspot_owner_id = env.hubspot.leadOwnerId;
+  }
   if (lead.closedWon) {
-    properties.hs_pipeline = env.hubspot.leadPipeline;
+    const { pipelineId } = await resolveLeadNewPlacement();
+    properties.hs_pipeline = pipelineId;
     properties.hs_pipeline_stage = await resolveLeadClosedWonStage();
   }
 
@@ -452,13 +529,13 @@ export async function upsertLead(
     }
   }
 
+  const placement = await resolveLeadNewPlacement();
   const created = await hubspotRequest<HubSpotRecord>(objectPath("leads"), {
     method: "POST",
     body: JSON.stringify({
       properties: {
-        hs_pipeline: env.hubspot.leadPipeline,
-        hs_pipeline_stage: env.hubspot.leadNewStage,
-        hs_lead_type: "NEW_BUSINESS",
+        hs_pipeline: placement.pipelineId,
+        hs_pipeline_stage: placement.newStageId,
         ...properties,
       },
       associations: [
