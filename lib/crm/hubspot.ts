@@ -10,6 +10,7 @@
 
 import { env } from "@/lib/env";
 import {
+  CONTACT_ANALYTICS_SOURCE,
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
   LEAD_CLOSED_WON_STAGE_LABEL,
   LEAD_NEW_STAGE_LABEL,
@@ -106,7 +107,11 @@ export async function findContactIdByEmail(email: string): Promise<string | null
 }
 
 function contactProperties(contact: ContactSnapshot): Record<string, string> {
-  const properties: Record<string, string> = { email: contact.email };
+  const properties: Record<string, string> = {
+    email: contact.email,
+    // API creates default to Offline Sources; attribute signups as Direct Traffic.
+    hs_analytics_source: CONTACT_ANALYTICS_SOURCE,
+  };
   if (contact.firstName) properties.firstname = contact.firstName;
   if (contact.lastName) properties.lastname = contact.lastName;
   if (contact.company) properties.company = contact.company;
@@ -367,8 +372,8 @@ export type LeadSnapshot = {
   closedWon: boolean;
 };
 
-export function formatLeadName(lead: Pick<LeadSnapshot, "displayName" | "score">): string {
-  return `${lead.displayName} — Lead score ${lead.score}`;
+export function formatLeadName(lead: Pick<LeadSnapshot, "displayName">): string {
+  return lead.displayName;
 }
 
 type PipelineStage = { id: string; label: string; displayOrder: number };
@@ -505,6 +510,7 @@ export async function upsertLead(
     hs_lead_name: formatLeadName(lead),
     hs_lead_label: leadLabel(lead.score),
     hs_lead_type: LEAD_TYPE_NEW_BUSINESS,
+    [env.hubspot.leadScoreProperty]: String(lead.score),
   };
   if (env.hubspot.leadOwnerId) {
     properties.hubspot_owner_id = env.hubspot.leadOwnerId;

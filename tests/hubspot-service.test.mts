@@ -88,6 +88,7 @@ describe("contact upsert", () => {
     assert.equal(props.firstname, "Jane");
     assert.equal(props.lastname, "Doe");
     assert.equal(props.company, "Bright Smile");
+    assert.equal(props.hs_analytics_source, "DIRECT_TRAFFIC");
     assert.ok(!("lead_score" in props));
     assert.ok(!("marketing_consent" in props));
   });
@@ -100,6 +101,7 @@ describe("contact upsert", () => {
 
     const props = (calls[1].body as { properties: Record<string, string> }).properties;
     assert.equal(props.lifecyclestage, "lead");
+    assert.equal(props.hs_analytics_source, "DIRECT_TRAFFIC");
   });
 
   it("creates the contact when the email is unknown", async () => {
@@ -361,7 +363,8 @@ describe("lead record", () => {
       properties: Record<string, string>;
       associations: { to: { id: string }; types: { associationTypeId: number }[] }[];
     };
-    assert.equal(body.properties.hs_lead_name, "Jane Doe (Bright Smile) — Lead score 5");
+    assert.equal(body.properties.hs_lead_name, "Jane Doe (Bright Smile)");
+    assert.equal(body.properties.lead_score, "5");
     assert.equal(body.properties.hs_lead_label, "COLD");
     assert.equal(body.properties.hs_lead_type, "NEW_BUSINESS");
     assert.equal(body.properties.hs_pipeline, "pipe-lead");

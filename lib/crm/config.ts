@@ -65,6 +65,12 @@ export const NOTE_TO_CONTACT_ASSOCIATION_TYPE_ID = 202;
 export const LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID = 578;
 
 /**
+ * HubSpot Original Traffic Source for contacts we create via the CRM API.
+ * Without this, HubSpot labels API-created contacts as Offline Sources.
+ */
+export const CONTACT_ANALYTICS_SOURCE = "DIRECT_TRAFFIC";
+
+/**
  * HubSpot's standard `hs_lead_type` value for a new opportunity.
  * The portal enum is underscore form: NEW_BUSINESS | UPSELL | RE_ATTEMPTING.
  */

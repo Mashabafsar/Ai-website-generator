@@ -145,6 +145,13 @@ export const env = {
     get leadOwnerId() {
       return process.env.HUBSPOT_LEAD_OWNER_ID ?? "";
     },
+    /**
+     * Internal name of the Lead Score column on the HubSpot leads object.
+     * Default matches the portal property created for this project.
+     */
+    get leadScoreProperty() {
+      return process.env.HUBSPOT_LEAD_SCORE_PROPERTY?.trim() || "lead_score";
+    },
     requestTimeoutMs: num(process.env.HUBSPOT_REQUEST_TIMEOUT_MS, 15_000),
     /** Extra in-request tries for blips. Longer outages are the outbox's job. */
     requestRetries: num(process.env.HUBSPOT_REQUEST_RETRIES, 2),

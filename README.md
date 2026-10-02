@@ -196,7 +196,8 @@ The integration writes **standard HubSpot properties only**. Do not create custo
 contact or deal properties.
 
 **Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`  
-**Lead (standard):** `hs_lead_name`, `hs_lead_label`, `hs_lead_type`, `hs_pipeline`, `hs_pipeline_stage`  
+**Lead:** `hs_lead_name` (person/business only), `lead_score` (numeric score),
+`hs_lead_label`, `hs_lead_type`, `hs_pipeline`, `hs_pipeline_stage`  
 **Progress history:** one HubSpot Note per score event, associated to the contact  
 **Deal (standard):** `dealname`, `amount`, `description` (website URL + itemized
 breakdown), `pipeline` / `dealstage` (default `default` / `closedwon`, overridable
@@ -210,7 +211,7 @@ overflow, the full breakdown is attached as a Note on the deal.
    `HUBSPOT_API_VERSION=2026-09`, `HUBSPOT_ASSOCIATIONS_API_VERSION=2026-09`.
    Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_LEAD_PIPELINE`,
    `HUBSPOT_LEAD_NEW_STAGE`, `HUBSPOT_LEAD_CLOSED_WON_STAGE`, `HUBSPOT_LEAD_OWNER_ID`,
-   `CRON_SECRET`.
+   `HUBSPOT_LEAD_SCORE_PROPERTY` (defaults to `lead_score`), `CRON_SECRET`.
    Leave the lead pipeline settings blank to look them up from HubSpot (recommended).
    Set `HUBSPOT_LEAD_OWNER_ID` to a HubSpot owner id so new Leads appear under
    "My leads" (Settings → Users & Teams → open a user → Owner ID).
