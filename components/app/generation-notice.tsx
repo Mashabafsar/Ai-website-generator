@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
 import { GenerationLog } from "@/components/app/generation-log";
+import { useHoldGenerationLock } from "@/components/app/generation-lock";
 import { GenerationStreamError, streamWebsiteGeneration } from "@/lib/ai/generation-stream";
 import type { GenerationStepId } from "@/lib/ai/generation-steps";
 
@@ -30,6 +31,7 @@ export function GenerationNotice({
   const router = useRouter();
   const [retrying, setRetrying] = useState(false);
   const [buildStep, setBuildStep] = useState<GenerationStepId | "done" | null>(null);
+  useHoldGenerationLock(Boolean(buildStep));
 
   async function retry() {
     setRetrying(true);

@@ -15,7 +15,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function UserMenu({ name, email }: { name: string; email: string }) {
+export function UserMenu({
+  name,
+  email,
+  navigationLocked = false,
+  onBlocked,
+}: {
+  name: string;
+  email: string;
+  navigationLocked?: boolean;
+  onBlocked?: () => void;
+}) {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const initials = (name || email)
@@ -27,6 +37,10 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
 
   async function handleSignOut() {
     if (signingOut) return;
+    if (navigationLocked) {
+      onBlocked?.();
+      return;
+    }
     setSigningOut(true);
     try {
       const { error } = await signOut();
@@ -65,7 +79,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="gap-2">
+        <DropdownMenuItem className="gap-2" disabled={navigationLocked}>
           <UserIcon className="h-4 w-4" /> Account
         </DropdownMenuItem>
         <DropdownMenuItem

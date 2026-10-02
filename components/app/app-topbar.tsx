@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Coins } from "lucide-react";
 import { UserMenu } from "@/components/app/user-menu";
 import { CREDITS_CHANGED_EVENT } from "@/lib/credits/notify";
+import { useGenerationLock } from "@/components/app/generation-lock";
+import { cn } from "@/lib/utils";
 
 // App shell top bar — 66px white bar with a hairline bottom border: page title
 // on the left; token balance, theme toggle, and the account menu on the right,
@@ -43,6 +45,7 @@ export function AppTopbar({
 }) {
   const pathname = usePathname();
   const [balance, setBalance] = useState(initialBalance);
+  const { locked, warnStay } = useGenerationLock();
 
   useEffect(() => {
     setBalance(initialBalance);
@@ -81,16 +84,32 @@ export function AppTopbar({
 
       <div className="flex items-center gap-5 pr-6">
         <Divider />
-        <Link
-          href="/app/credits"
-          className="flex items-center gap-3.5 text-black transition-opacity hover:opacity-70"
-          title="Credits — click to buy more"
-        >
-          <Coins className="size-[26px] text-brand-blue" />
-          <span className="text-lg leading-[1.2]">{balance.toLocaleString()} Credits left</span>
-        </Link>
+        {locked ? (
+          <button
+            type="button"
+            onClick={warnStay}
+            aria-disabled="true"
+            title="Credits are paused while your website is being created"
+            className={cn(
+              "flex items-center gap-3.5 text-black",
+              "cursor-not-allowed opacity-60"
+            )}
+          >
+            <Coins className="size-[26px] text-brand-blue" />
+            <span className="text-lg leading-[1.2]">{balance.toLocaleString()} Credits left</span>
+          </button>
+        ) : (
+          <Link
+            href="/app/credits"
+            className="flex items-center gap-3.5 text-black transition-opacity hover:opacity-70"
+            title="Credits — click to buy more"
+          >
+            <Coins className="size-[26px] text-brand-blue" />
+            <span className="text-lg leading-[1.2]">{balance.toLocaleString()} Credits left</span>
+          </Link>
+        )}
         <Divider />
-        <UserMenu name={user.name} email={user.email} />
+        <UserMenu name={user.name} email={user.email} navigationLocked={locked} onBlocked={warnStay} />
       </div>
     </header>
   );

@@ -37,6 +37,7 @@ import { hasImportedBrand, hasImportedTheme, parseImportedBrand } from "@/lib/br
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
 import { GenerationLog } from "@/components/app/generation-log";
+import { useHoldGenerationLock } from "@/components/app/generation-lock";
 import { GenerationStreamError, streamWebsiteGeneration } from "@/lib/ai/generation-stream";
 import type { GenerationStepId } from "@/lib/ai/generation-steps";
 import { isMultiPageTemplate } from "@/lib/agents/site-layout";
@@ -135,6 +136,7 @@ export function QuestionnaireWizard({
   const STEPS = STEPS_BASE;
   const [submitting, setSubmitting] = useState(false);
   const [buildStep, setBuildStep] = useState<GenerationStepId | "done" | null>(null);
+  useHoldGenerationLock(Boolean(buildStep));
   const [planning, setPlanning] = useState(false);
   const [sitePlan, setSitePlan] = useState<SitePlanView | null>(
     () => initialAnswers?.layoutPlan ?? null
@@ -429,7 +431,10 @@ export function QuestionnaireWizard({
           <CardContent className="space-y-4 p-6">
             <div>
               <p className="font-medium">Creating your website</p>
-              <p className="text-sm text-muted-foreground">This usually takes a minute. You can stay on this page.</p>
+              <p className="text-sm text-muted-foreground">
+                This usually takes a minute. Please stay on this page — the side menu is
+                paused until your website is ready.
+              </p>
             </div>
             <GenerationLog activeId={buildStep} />
           </CardContent>
