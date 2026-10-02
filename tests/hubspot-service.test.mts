@@ -363,7 +363,7 @@ describe("lead record", () => {
     };
     assert.equal(body.properties.hs_lead_name, "Jane Doe (Bright Smile) — Lead score 5");
     assert.equal(body.properties.hs_lead_label, "COLD");
-    assert.equal(body.properties.hs_lead_type, "NEW BUSINESS");
+    assert.equal(body.properties.hs_lead_type, "NEW_BUSINESS");
     assert.equal(body.properties.hs_pipeline, "pipe-lead");
     assert.equal(body.properties.hs_pipeline_stage, "stage-new");
     assert.equal(body.associations[0].to.id, "c-1");

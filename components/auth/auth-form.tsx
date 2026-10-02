@@ -24,6 +24,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSignup && !marketingConsent) {
+      toast.error("Please agree to the marketing notice to create an account.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isSignup) {
@@ -51,7 +56,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            marketingConsent,
+            marketingConsent: isSignup ? true : false,
             mode: isSignup ? "register" : "login",
           }),
         });
@@ -110,23 +115,34 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         />
       </div>
 
-      <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3">
-        <input
-          id="marketing-consent"
-          type="checkbox"
-          checked={marketingConsent}
-          onChange={(e) => setMarketingConsent(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-input accent-primary"
-        />
-        <Label
-          htmlFor="marketing-consent"
-          className="cursor-pointer text-sm font-normal leading-snug text-muted-foreground"
-        >
-          I agree that my email and information may be used for marketing purposes.
-        </Label>
-      </div>
+      {isSignup && (
+        <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3">
+          <input
+            id="marketing-consent"
+            type="checkbox"
+            required
+            checked={marketingConsent}
+            onChange={(e) => setMarketingConsent(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-input accent-primary"
+            aria-required="true"
+          />
+          <Label
+            htmlFor="marketing-consent"
+            className="cursor-pointer text-sm font-normal leading-snug text-muted-foreground"
+          >
+            I agree that my email and information may be used for marketing purposes.{" "}
+            <span className="text-destructive">*</span>
+          </Label>
+        </div>
+      )}
 
-      <Button type="submit" variant="brand" className="w-full" disabled={loading} size="lg">
+      <Button
+        type="submit"
+        variant="brand"
+        className="w-full"
+        disabled={loading || (isSignup && !marketingConsent)}
+        size="lg"
+      >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         {isSignup ? "Create account" : "Log in"}
       </Button>

@@ -21,6 +21,11 @@ export async function POST(req: Request) {
   const granted = body.marketingConsent === true;
   const mode = body.mode === "register" ? "register" : "login";
 
+  // New accounts must accept the marketing notice before we record consent.
+  if (mode === "register" && !granted) {
+    return jsonError("Marketing consent is required to create an account.", 400, "CONSENT_REQUIRED");
+  }
+
   try {
     await recordMarketingConsent({ userId: user.id, granted, mode });
     await awardOneTimeAction(user.id, CrmScoreAction.REGISTERED);

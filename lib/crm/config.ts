@@ -66,9 +66,9 @@ export const LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID = 578;
 
 /**
  * HubSpot's standard `hs_lead_type` value for a new opportunity.
- * The API expects a space, not an underscore (`NEW BUSINESS`).
+ * The portal enum is underscore form: NEW_BUSINESS | UPSELL | RE_ATTEMPTING.
  */
-export const LEAD_TYPE_NEW_BUSINESS = "NEW BUSINESS";
+export const LEAD_TYPE_NEW_BUSINESS = "NEW_BUSINESS";
 
 /** Label of the lead-pipeline stage a new signup starts in. */
 export const LEAD_NEW_STAGE_LABEL = "New";
