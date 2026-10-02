@@ -16,6 +16,7 @@ import { CrmJobKind } from "@/lib/crm/config";
 import { drainCrmOutbox } from "@/lib/crm/outbox";
 import {
   associateDealWithContact,
+  associateDealWithLead,
   formatProgressNote,
   isHubSpotConfigured,
   splitDealDescription,
@@ -200,25 +201,36 @@ async function syncLead(
 }
 
 /**
- * Push a website purchase as a deal associated with the buyer's contact.
+ * Push a website purchase as a deal associated with the buyer's contact and lead.
  *
  * Amount and breakdown come from the snapshot taken when the payment was
  * confirmed, not from the current quote, so later edits to the project can't
- * rewrite the price the customer was actually charged.
+ * rewrite the price the customer was actually charged. The deal description
+ * also carries the questionnaire answers for that project.
  */
 export async function syncPurchaseDeal(paymentId: string): Promise<void> {
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
     include: {
       project: {
-        include: { user: true, quote: true, deployment: true },
+        include: {
+          user: true,
+          quote: true,
+          deployment: true,
+          questionnaire: true,
+        },
       },
     },
   });
   if (!payment?.project?.user) return;
 
   const { project } = payment;
+  // Refresh the contact and move the HubSpot lead to Closed Won first.
   const contactId = await syncContact(project.userId);
+  const profile = await prisma.crmProfile.findUnique({
+    where: { userId: project.userId },
+    select: { hubspotLeadId: true },
+  });
 
   const amount =
     payment.amountCents != null ? payment.amountCents / 100 : payment.amount;
@@ -227,6 +239,41 @@ export async function syncPurchaseDeal(paymentId: string): Promise<void> {
     payment.packageType === PackageType.MANAGED_HOSTING
       ? project.quote?.monthlyTotal ?? 0
       : 0;
+
+  let projectDetails: PurchaseDealSnapshot["projectDetails"];
+  if (project.questionnaire?.answers) {
+    try {
+      const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
+      projectDetails = {
+        businessName: answers.businessName || project.businessName,
+        industry: answers.industry,
+        description: answers.description,
+        location: answers.location || undefined,
+        targetAudience: answers.targetAudience,
+        demographics: answers.demographics,
+        goals: answers.goals,
+        services: answers.services,
+        tone: answers.tone || undefined,
+        visualStyle: answers.visualStyle || undefined,
+        colorPreference: answers.colorPreference || undefined,
+        brandingNotes: answers.brandingNotes || undefined,
+        contactEmail: answers.contactEmail || project.user.email || undefined,
+        contactPhone: answers.contactPhone || undefined,
+        existingWebsiteUrl:
+          answers.hasWebsite === "yes" ? answers.existingWebsiteUrl || undefined : undefined,
+      };
+    } catch {
+      projectDetails = {
+        businessName: project.businessName,
+        contactEmail: project.user.email || undefined,
+      };
+    }
+  } else {
+    projectDetails = {
+      businessName: project.businessName,
+      contactEmail: project.user.email || undefined,
+    };
+  }
 
   const deal: PurchaseDealSnapshot = {
     paymentId: payment.id,
@@ -237,6 +284,13 @@ export async function syncPurchaseDeal(paymentId: string): Promise<void> {
     websiteUrl: projectUrl(project.id, project.deployment),
     lineItems,
     monthlyTotal,
+    packageLabel:
+      payment.packageType === PackageType.MANAGED_HOSTING
+        ? "Managed hosting"
+        : payment.packageType === PackageType.SELF_HOSTING
+          ? "Self hosting"
+          : payment.packageType || undefined,
+    projectDetails,
   };
 
   const { description, overflowBody } = splitDealDescription(deal);
@@ -264,6 +318,9 @@ export async function syncPurchaseDeal(paymentId: string): Promise<void> {
 
   if (contactId) {
     await associateDealWithContact(dealId, contactId);
+  }
+  if (profile?.hubspotLeadId) {
+    await associateDealWithLead(dealId, profile.hubspotLeadId);
   }
 }
 

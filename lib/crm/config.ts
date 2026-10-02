@@ -55,6 +55,9 @@ export type CrmJobStatus = (typeof CrmJobStatus)[keyof typeof CrmJobStatus];
 /** HubSpot-defined association type id for deal -> contact. */
 export const DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID = 3;
 
+/** HubSpot-defined association type id for deal -> lead (primary deal on the lead). */
+export const DEAL_TO_LEAD_ASSOCIATION_TYPE_ID = 583;
+
 /** HubSpot-defined association type id for note -> deal. */
 export const NOTE_TO_DEAL_ASSOCIATION_TYPE_ID = 214;
 

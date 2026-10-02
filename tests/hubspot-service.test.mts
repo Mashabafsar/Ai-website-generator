@@ -10,12 +10,14 @@ process.env.HUBSPOT_REQUEST_RETRIES = "0";
 const {
   upsertContact,
   associateDealWithContact,
+  associateDealWithLead,
   associateNoteWithContact,
   associateNoteWithDeal,
   upsertPurchaseDeal,
   upsertContactNote,
   upsertDealNote,
   formatPriceBreakdown,
+  formatProjectDetails,
   formatProgressNote,
   splitDealDescription,
   upsertLead,
@@ -167,6 +169,18 @@ describe("purchase deal", () => {
       { name: "Monthly hosting", amount: 29 },
     ],
     monthlyTotal: 29,
+    packageLabel: "Managed hosting",
+    projectDetails: {
+      businessName: "Bright Smile Dental",
+      industry: "Dental Clinic",
+      description: "Family dentist offering cleaning and whitening",
+      location: "Austin, TX",
+      targetAudience: "Families and professionals",
+      services: ["Dental Cleaning", "Teeth Whitening"],
+      tone: "Modern and trustworthy",
+      contactEmail: "hello@brightsmile.example",
+      contactPhone: "+1 512 555 0100",
+    },
   };
 
   it("itemizes the breakdown and the charged total", () => {
@@ -176,17 +190,29 @@ describe("purchase deal", () => {
     assert.match(text, /Recurring: 29 USD\/month/);
   });
 
-  it("puts the website URL and breakdown on the standard description", () => {
+  it("includes questionnaire answers in the project details block", () => {
+    const text = formatProjectDetails(deal);
+    assert.match(text, /Business: Bright Smile Dental/);
+    assert.match(text, /Industry: Dental Clinic/);
+    assert.match(text, /Services: Dental Cleaning, Teeth Whitening/);
+    assert.match(text, /Package: Managed hosting/);
+    assert.match(text, /Contact email: hello@brightsmile.example/);
+  });
+
+  it("puts the website URL, project details, and breakdown on the description", () => {
     const { description, overflowBody } = splitDealDescription(deal);
     assert.match(description, /Website: https:\/\/bright-smile.vercel.app/);
+    assert.match(description, /Business: Bright Smile Dental/);
     assert.match(description, /Website creation: 499 USD/);
+    assert.match(description, /Total charged: 528 USD/);
     assert.equal(overflowBody, null);
   });
 
-  it("overflows a long breakdown onto a note body", () => {
+  it("overflows a long description onto a note body", () => {
     const { description, overflowBody } = splitDealDescription(deal, 40);
-    assert.match(description, /Full itemized breakdown attached as a note/);
+    assert.match(description, /Full project details and itemized breakdown attached as a note/);
     assert.ok(overflowBody && overflowBody.includes("Website creation: 499 USD"));
+    assert.ok(overflowBody.includes("Business: Bright Smile Dental"));
   });
 
   it("updates the existing deal from the cached id without a property search", async () => {
@@ -203,6 +229,8 @@ describe("purchase deal", () => {
     assert.equal(props.dealname, deal.dealName);
     assert.equal(props.amount, "528");
     assert.match(props.description, /Website: https:\/\/bright-smile.vercel.app/);
+    assert.match(props.description, /Business: Bright Smile Dental/);
+    assert.ok(props.closedate);
     assert.ok(!("website_builder_payment_id" in props));
     assert.ok(!("website_url" in props));
   });
@@ -265,6 +293,22 @@ describe("association", () => {
     );
     assert.deepEqual(calls[0].body, [
       { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 3 },
+    ]);
+  });
+
+  it("links the deal to the Closed Won lead", async () => {
+    calls = [];
+    stubHubSpot([() => json({})]);
+
+    await associateDealWithLead("d-1", "l-1");
+
+    assert.equal(calls[0].method, "PUT");
+    assert.equal(
+      calls[0].url,
+      "https://api.hubapi.example/crm/objects/2026-09/deals/d-1/associations/leads/l-1"
+    );
+    assert.deepEqual(calls[0].body, [
+      { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 583 },
     ]);
   });
 

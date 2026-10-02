@@ -179,15 +179,19 @@ or not it ever buys anything.
 | Large credit pack (every purchase) | +20 |
 
 Each account also gets a HubSpot **Lead** record (the Leads object), associated
-to the contact as its primary contact. The lead name carries the current score
-("Jane Doe (Bright Smile) — Lead score 20"), and `hs_lead_label` follows it:
-COLD under 20, WARM from 20, HOT from 30. A new lead starts in the **New**
-stage of the lead pipeline; after that the stage is left for sales reps to move.
+to the contact as its primary contact. The lead name is the person or business
+name only. The numeric score is written to `lead_score`, and `hs_lead_label`
+follows it: COLD under 20, WARM from 20, HOT from 30. A new lead starts in the
+**New** stage of the lead pipeline; after that the stage is left for sales reps
+to move until payment.
 
 A website purchase moves the lead to the **Closed Won** lead stage, opens a
-**Closed Won** deal associated with the contact, and moves the contact to
-`customer`. HubSpot's built-in lead pipeline has no Closed Won stage, so the
-integration creates one (label "Closed Won") the first time it is needed.
+**Closed Won** deal associated with the contact and the lead, and moves the
+contact to `customer`. The deal carries the sale price (`amount`), close date,
+and a description with the website URL, the full questionnaire answers for that
+project, and the itemized price breakdown. HubSpot's built-in lead pipeline has
+no Closed Won stage, so the integration creates one (label "Closed Won") the
+first time it is needed.
 
 Lead scores and marketing consent also stay in **our database**. Admins review
 that local data at `/app/admin/clients`.
@@ -195,14 +199,15 @@ that local data at `/app/admin/clients`.
 The integration writes **standard HubSpot properties only**. Do not create custom
 contact or deal properties.
 
-**Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`  
+**Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`, `hs_analytics_source` (Direct Traffic)  
 **Lead:** `hs_lead_name` (person/business only), `lead_score` (numeric score),
 `hs_lead_label`, `hs_lead_type`, `hs_pipeline`, `hs_pipeline_stage`  
 **Progress history:** one HubSpot Note per score event, associated to the contact  
-**Deal (standard):** `dealname`, `amount`, `description` (website URL + itemized
-breakdown), `pipeline` / `dealstage` (default `default` / `closedwon`, overridable
-from env). If the description would
-overflow, the full breakdown is attached as a Note on the deal.
+**Deal (standard):** `dealname`, `amount`, `closedate`, `description` (website URL
++ questionnaire answers + itemized sale price), `pipeline` / `dealstage` (default
+`default` / `closedwon`, overridable from env). The deal is associated with both
+the contact and the Closed Won lead. If the description would overflow, the full
+details are attached as a Note on the deal.
 
 #### Setup
 
@@ -224,7 +229,7 @@ overflow, the full breakdown is attached as a Note on the deal.
 | Scope | Needed for |
 |---|---|
 | `crm.objects.contacts.read`, `crm.objects.contacts.write` | Contact upsert |
-| `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact association |
+| `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact/lead association |
 | `crm.objects.notes.write` | Progress notes on the contact, plus overflow deal notes |
 | `crm.objects.leads.read`, `crm.objects.leads.write` | Lead records and their Closed Won stage |
 
@@ -298,8 +303,9 @@ Then, with `HUBSPOT_API_KEY` pointed at a test portal:
    questionnaire — a third note (score 30).
 3. Buy the Medium credit pack with card `4242 4242 4242 4242` (score 50, another
    note). No HubSpot deal is created for credit packs.
-4. Pay for a website package. A deal appears, associated with the contact,
-   with the URL, charged amount, and itemized breakdown on `description`.
+4. Pay for a website package. A Closed Won deal appears, associated with the
+   contact and the Closed Won lead, with the URL, questionnaire answers, charged
+   amount, and itemized breakdown on `description`.
 5. Log in again with the box **ticked**: admin clients shows consent true; the
    score does not move; HubSpot is unchanged on those fields.
 

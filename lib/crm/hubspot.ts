@@ -12,6 +12,7 @@ import { env } from "@/lib/env";
 import {
   CONTACT_ANALYTICS_SOURCE,
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
+  DEAL_TO_LEAD_ASSOCIATION_TYPE_ID,
   LEAD_CLOSED_WON_STAGE_LABEL,
   LEAD_NEW_STAGE_LABEL,
   LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID,
@@ -52,6 +53,26 @@ export type PurchaseDealSnapshot = {
   websiteUrl: string;
   lineItems: { name: string; amount: number }[];
   monthlyTotal?: number;
+  /** Self-hosting or managed hosting label. */
+  packageLabel?: string;
+  /** Everything the customer entered for this website project. */
+  projectDetails?: {
+    businessName?: string;
+    industry?: string;
+    description?: string;
+    location?: string;
+    targetAudience?: string;
+    demographics?: string;
+    goals?: string;
+    services?: string[];
+    tone?: string;
+    visualStyle?: string;
+    colorPreference?: string;
+    brandingNotes?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    existingWebsiteUrl?: string;
+  };
 };
 
 type HubSpotRecord = { id?: string };
@@ -69,8 +90,43 @@ export function formatPriceBreakdown(deal: PurchaseDealSnapshot): string {
   return lines.join("\n");
 }
 
+function line(label: string, value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? `${label}: ${trimmed}` : null;
+}
+
+/** Questionnaire and delivery facts for the deal description. */
+export function formatProjectDetails(deal: PurchaseDealSnapshot): string {
+  const details = deal.projectDetails;
+  if (!details) return "";
+  const lines = [
+    line("Business", details.businessName),
+    line("Industry", details.industry),
+    line("Description", details.description),
+    line("Location", details.location),
+    line("Audience", details.targetAudience),
+    line("Who they help", details.demographics),
+    line("Website goals", details.goals),
+    details.services?.length ? `Services: ${details.services.join(", ")}` : null,
+    line("Tone", details.tone),
+    line("Visual style", details.visualStyle),
+    line("Colors", details.colorPreference),
+    line("Branding notes", details.brandingNotes),
+    line("Contact email", details.contactEmail),
+    line("Contact phone", details.contactPhone),
+    line("Existing website", details.existingWebsiteUrl),
+    line("Package", deal.packageLabel),
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
 export function formatDealDescription(deal: PurchaseDealSnapshot): string {
-  return `Website: ${deal.websiteUrl}\n\n${formatPriceBreakdown(deal)}`;
+  const sections = [
+    `Website: ${deal.websiteUrl}`,
+    formatProjectDetails(deal),
+    formatPriceBreakdown(deal),
+  ].filter(Boolean);
+  return sections.join("\n\n");
 }
 
 export function splitDealDescription(
@@ -83,7 +139,7 @@ export function splitDealDescription(
   }
   const currency = deal.currency.toUpperCase();
   return {
-    description: `Website: ${deal.websiteUrl}\nAmount: ${deal.amount} ${currency}\nFull itemized breakdown attached as a note.`,
+    description: `Website: ${deal.websiteUrl}\nAmount: ${deal.amount} ${currency}\nFull project details and itemized breakdown attached as a note.`,
     overflowBody: full,
   };
 }
@@ -200,6 +256,8 @@ function dealProperties(
     dealname: deal.dealName,
     amount: String(deal.amount),
     description,
+    // Purchases are fulfilled only after Stripe confirms payment.
+    closedate: new Date().toISOString(),
   };
   // Deals are only created once the payment has succeeded, so they land in
   // Closed Won. HubSpot rejects a pipeline without a stage, so both are always
@@ -358,6 +416,19 @@ export async function associateDealWithContact(
       {
         associationCategory: "HUBSPOT_DEFINED",
         associationTypeId: DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
+      },
+    ]),
+  });
+}
+
+/** Tie the Closed Won deal back to the HubSpot lead it came from. */
+export async function associateDealWithLead(dealId: string, leadId: string): Promise<void> {
+  await hubspotRequest(associationPath("deals", dealId, "leads", leadId), {
+    method: "PUT",
+    body: JSON.stringify([
+      {
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: DEAL_TO_LEAD_ASSOCIATION_TYPE_ID,
       },
     ]),
   });
