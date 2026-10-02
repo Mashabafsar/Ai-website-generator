@@ -10,8 +10,10 @@ const {
   PACKAGE_SCORES,
   ONE_TIME_SCORES,
   CrmScoreAction,
+  ENGAGEMENT_GROUP_LIMIT,
   packageScore,
   oneTimeScore,
+  computeCombinedScore,
   assertScoringConfigIsComplete,
 } = await import("../lib/crm/config");
 const { resolveCreditPack } = await import("../lib/stripe/stripe");
@@ -64,8 +66,58 @@ describe("one-time actions", () => {
   it("treats the manual questionnaire and the scraper as one event", () => {
     // There is deliberately no separate scraper action: both paths award
     // QUESTIONNAIRE_COMPLETED, so doing both is worth 15 points, not 30.
-    assert.equal(Object.keys(ONE_TIME_SCORES).length, 2);
+    assert.equal(Object.keys(ONE_TIME_SCORES).length, 3);
     assert.ok(!Object.keys(ONE_TIME_SCORES).some((k) => /SCRAP|IMPORT/i.test(k)));
+  });
+
+  it("scores a website package purchase once", () => {
+    assert.equal(oneTimeScore(CrmScoreAction.WEBSITE_PACKAGE_PURCHASED), 25);
+  });
+});
+
+describe("HubSpot-style combined deal score", () => {
+  it("splits engagement and fit with group caps", () => {
+    const score = computeCombinedScore([
+      { action: CrmScoreAction.REGISTERED, points: 5 },
+      { action: CrmScoreAction.QUESTIONNAIRE_COMPLETED, points: 15 },
+      { action: CrmScoreAction.CREDIT_PACK_PURCHASED, points: 15 },
+      { action: CrmScoreAction.WEBSITE_PACKAGE_PURCHASED, points: 25 },
+    ]);
+    assert.equal(score.fit, 15);
+    assert.equal(score.engagement, 45);
+    assert.equal(score.combined, 60);
+    assert.equal(score.dealLabel, "A1");
+    assert.equal(score.leadLabel, "HOT");
+  });
+
+  it("caps engagement at the group limit", () => {
+    const score = computeCombinedScore([
+      { action: CrmScoreAction.REGISTERED, points: 5 },
+      { action: CrmScoreAction.CREDIT_PACK_PURCHASED, points: 20 },
+      { action: CrmScoreAction.CREDIT_PACK_PURCHASED, points: 20 },
+      { action: CrmScoreAction.CREDIT_PACK_PURCHASED, points: 20 },
+      { action: CrmScoreAction.WEBSITE_PACKAGE_PURCHASED, points: 25 },
+    ]);
+    assert.equal(score.engagementRaw, 90);
+    assert.equal(score.engagement, ENGAGEMENT_GROUP_LIMIT);
+    assert.equal(score.combined, ENGAGEMENT_GROUP_LIMIT);
+  });
+
+  it("labels login alone as C3 / COLD", () => {
+    const score = computeCombinedScore([
+      { action: CrmScoreAction.REGISTERED, points: 5 },
+    ]);
+    assert.equal(score.dealLabel, "C3");
+    assert.equal(score.leadLabel, "COLD");
+  });
+
+  it("labels questionnaire completion as A3 / WARM", () => {
+    const score = computeCombinedScore([
+      { action: CrmScoreAction.REGISTERED, points: 5 },
+      { action: CrmScoreAction.QUESTIONNAIRE_COMPLETED, points: 15 },
+    ]);
+    assert.equal(score.dealLabel, "A3");
+    assert.equal(score.leadLabel, "WARM");
   });
 });
 

@@ -327,6 +327,9 @@ model CrmProfile {
   marketingConsentAt    DateTime?
   hubspotContactId      String?
   hubspotLeadId         String?
+  /** One HubSpot deal per account; opened at questionnaire, updated on every sale. */
+  hubspotDealId         String?
+  hubspotDealNoteId     String?
   hubspotLastSyncedAt   DateTime?
   hubspotLastError      String?
 

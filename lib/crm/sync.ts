@@ -9,17 +9,27 @@ import type { CrmOutbox } from "@prisma/client";
 import { after } from "next/server";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
-import { PackageType, PaymentStatus, PaymentType } from "@/lib/constants";
+import {
+  CREDIT_PACKS,
+  CreditLedgerReason,
+  PackageType,
+  PaymentStatus,
+  PaymentType,
+} from "@/lib/constants";
 import { publicSiteUrl } from "@/lib/deployment/url";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
-import { CrmJobKind } from "@/lib/crm/config";
-import { drainCrmOutbox } from "@/lib/crm/outbox";
+import { CrmJobKind, computeCombinedScore } from "@/lib/crm/config";
+import { drainCrmOutbox, enqueueCrmJob } from "@/lib/crm/outbox";
 import {
+  associateContactWithCompany,
+  associateDealWithCompany,
   associateDealWithContact,
   associateDealWithLead,
+  formatDealName,
   formatProgressNote,
   isHubSpotConfigured,
   splitDealDescription,
+  upsertCompany,
   upsertContact,
   upsertContactNote,
   upsertDealNote,
@@ -57,6 +67,282 @@ function safeLineItems(json: string | null | undefined): QuoteLineItem[] {
   } catch {
     return [];
   }
+}
+
+/** Hostname only when it looks like a real customer site, not our preview host. */
+function companyDomainFromUrl(url: string | undefined): string | undefined {
+  if (!url?.trim()) return undefined;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./i, "");
+    if (!host || host.includes("localhost") || host.endsWith(".vercel.app")) return undefined;
+    const appHost = (() => {
+      try {
+        return new URL(env.appUrl).hostname.replace(/^www\./i, "");
+      } catch {
+        return "";
+      }
+    })();
+    if (appHost && (host === appHost || host.endsWith(`.${appHost}`))) return undefined;
+    return host;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Every paid credit pack for this account, priced from the catalog. */
+async function creditPackLineItems(userId: string): Promise<QuoteLineItem[]> {
+  const purchases = await prisma.creditLedger.findMany({
+    where: { userId, reason: CreditLedgerReason.PURCHASE },
+    orderBy: { createdAt: "asc" },
+    select: { amount: true },
+  });
+  return purchases.map((entry) => {
+    const pack = CREDIT_PACKS.find((p) => p.credits === entry.amount);
+    return {
+      name: pack
+        ? `${pack.label} credit pack (${pack.credits} credits)`
+        : `Credit pack (${entry.amount} credits)`,
+      amount: pack?.priceUsd ?? 0,
+    };
+  });
+}
+
+/**
+ * Queue a deal sync for an account. One pending job per user — the worker
+ * rebuilds the deal from current questionnaire + every paid amount.
+ */
+export async function enqueueDealSyncForUser(userId: string, projectId?: string | null): Promise<void> {
+  await enqueueCrmJob({
+    kind: CrmJobKind.PURCHASE_DEAL,
+    userId,
+    projectId: projectId ?? null,
+    dedupeKey: `${CrmJobKind.PURCHASE_DEAL}:${userId}`,
+  });
+}
+
+/** @deprecated Prefer enqueueDealSyncForUser — kept as an alias for credit-pack callers. */
+export async function enqueueDealRefreshForUser(userId: string): Promise<void> {
+  await enqueueDealSyncForUser(userId);
+}
+
+function projectDetailsFromAnswers(
+  answers: ReturnType<typeof parseQuestionnaireAnswers>,
+  fallback: { businessName: string; email?: string | null }
+): PurchaseDealSnapshot["projectDetails"] {
+  return {
+    businessName: answers.businessName || fallback.businessName,
+    industry: answers.industry,
+    description: answers.description,
+    location: answers.location || undefined,
+    targetAudience: answers.targetAudience,
+    demographics: answers.demographics,
+    goals: answers.goals,
+    services: answers.services,
+    tone: answers.tone || undefined,
+    visualStyle: answers.visualStyle || undefined,
+    colorPreference: answers.colorPreference || undefined,
+    brandingNotes: answers.brandingNotes || undefined,
+    contactEmail: answers.contactEmail || fallback.email || undefined,
+    contactPhone: answers.contactPhone || undefined,
+    existingWebsiteUrl:
+      answers.hasWebsite === "yes" ? answers.existingWebsiteUrl || undefined : undefined,
+  };
+}
+
+/**
+ * Create or update the HubSpot deal for an account.
+ *
+ * Opens when the questionnaire is saved. Amount is every credit pack plus the
+ * website package once paid. Name is `Company $Amount`. Closed Won only after
+ * the website package is paid; until then the deal stays open on the pipeline.
+ */
+export async function syncAccountDeal(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      project: {
+        include: {
+          quote: true,
+          deployment: true,
+          questionnaire: true,
+        },
+      },
+    },
+  });
+  if (!user?.project) return;
+
+  const { project } = user;
+  if (!project.questionnaire) return;
+
+  const contactId = await syncContact(userId);
+  const profile = await prisma.crmProfile.findUnique({
+    where: { userId },
+    select: {
+      hubspotLeadId: true,
+      hubspotDealId: true,
+      hubspotDealNoteId: true,
+    },
+  });
+
+  const websitePayment = await prisma.payment.findFirst({
+    where: {
+      projectId: project.id,
+      type: PaymentType.WEBSITE_PACKAGE,
+      status: PaymentStatus.PAID,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  let projectDetails: PurchaseDealSnapshot["projectDetails"];
+  try {
+    const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
+    projectDetails = projectDetailsFromAnswers(answers, {
+      businessName: project.businessName,
+      email: user.email,
+    });
+  } catch {
+    projectDetails = {
+      businessName: project.businessName,
+      contactEmail: user.email || undefined,
+    };
+  }
+
+  const creditLineItems = await creditPackLineItems(userId);
+  const creditTotal = creditLineItems.reduce((sum, item) => sum + item.amount, 0);
+
+  let websiteAmount = 0;
+  let websiteLineItems: QuoteLineItem[] = [];
+  let monthlyTotal = 0;
+  let packageLabel: string | undefined;
+  let quotedWebsiteTotal: number | undefined;
+
+  if (websitePayment) {
+    websiteAmount =
+      websitePayment.amountCents != null
+        ? websitePayment.amountCents / 100
+        : websitePayment.amount;
+    websiteLineItems = safeLineItems(websitePayment.breakdown ?? project.quote?.lineItems);
+    if (websiteLineItems.length === 0 && websiteAmount > 0) {
+      websiteLineItems = [{ name: "Website package", amount: websiteAmount }];
+    }
+    monthlyTotal =
+      websitePayment.packageType === PackageType.MANAGED_HOSTING
+        ? project.quote?.monthlyTotal ?? 0
+        : 0;
+    packageLabel =
+      websitePayment.packageType === PackageType.MANAGED_HOSTING
+        ? "Managed hosting"
+        : websitePayment.packageType === PackageType.SELF_HOSTING
+          ? "Self hosting"
+          : websitePayment.packageType || undefined;
+  } else if (project.quote) {
+    quotedWebsiteTotal = project.quote.oneTimeTotal;
+    packageLabel =
+      // Quote stores package on payment usually; businessName path — check quote fields
+      undefined;
+  }
+
+  const amount = websiteAmount + creditTotal;
+  const lineItems = [...websiteLineItems, ...creditLineItems];
+  const closedWon = Boolean(websitePayment);
+  const businessName = projectDetails?.businessName || project.businessName;
+  const currency = websitePayment?.currency || project.quote?.currency || "USD";
+
+  const scoreEvents = await prisma.crmScoreEvent.findMany({
+    where: { userId },
+    select: { action: true, points: true },
+  });
+  const combined = computeCombinedScore(scoreEvents);
+
+  // Prefer the profile-cached deal id; fall back to an older payment-cached id.
+  const knownDealId = profile?.hubspotDealId || websitePayment?.hubspotDealId || null;
+  const knownNoteId = profile?.hubspotDealNoteId || websitePayment?.hubspotNoteId || null;
+
+  const deal: PurchaseDealSnapshot = {
+    paymentId: websitePayment?.id,
+    projectId: project.id,
+    dealName: formatDealName(businessName, amount),
+    amount,
+    currency,
+    websiteUrl: projectUrl(project.id, project.deployment),
+    lineItems,
+    monthlyTotal,
+    packageLabel,
+    closedWon,
+    quotedWebsiteTotal,
+    score: {
+      combined: combined.combined,
+      engagement: combined.engagement,
+      fit: combined.fit,
+      label: combined.dealLabel,
+    },
+    projectDetails,
+  };
+
+  const { description, overflowBody } = splitDealDescription(deal);
+  const dealId = await upsertPurchaseDeal(deal, knownDealId, description);
+  if (!dealId) return;
+
+  let noteId = knownNoteId;
+  if (overflowBody) {
+    noteId = await upsertDealNote({
+      dealId,
+      body: overflowBody,
+      knownNoteId,
+    });
+  }
+
+  await prisma.crmProfile.upsert({
+    where: { userId },
+    create: {
+      userId,
+      hubspotDealId: dealId,
+      ...(noteId ? { hubspotDealNoteId: noteId } : {}),
+    },
+    update: {
+      hubspotDealId: dealId,
+      ...(noteId ? { hubspotDealNoteId: noteId } : {}),
+    },
+  });
+
+  // Keep payment-cached ids in sync for admin views that still read them.
+  if (websitePayment && (dealId !== websitePayment.hubspotDealId || noteId !== websitePayment.hubspotNoteId)) {
+    await prisma.payment.update({
+      where: { id: websitePayment.id },
+      data: {
+        hubspotDealId: dealId,
+        ...(noteId ? { hubspotNoteId: noteId } : {}),
+      },
+    });
+  }
+
+  if (contactId) {
+    await associateDealWithContact(dealId, contactId);
+  }
+  if (profile?.hubspotLeadId) {
+    await associateDealWithLead(dealId, profile.hubspotLeadId);
+  }
+
+  const companyId = await upsertCompany({
+    name: businessName,
+    domain: companyDomainFromUrl(projectDetails?.existingWebsiteUrl),
+  });
+  if (companyId) {
+    await associateDealWithCompany(dealId, companyId);
+    if (contactId) {
+      await associateContactWithCompany(contactId, companyId);
+    }
+  }
+}
+
+/** Resolve a legacy payment-scoped job onto the account deal sync. */
+export async function syncPurchaseDeal(paymentId: string): Promise<void> {
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { project: { select: { userId: true } } },
+  });
+  if (!payment?.project?.userId) return;
+  await syncAccountDeal(payment.project.userId);
 }
 
 async function markContactSynced(userId: string, contactId: string): Promise<void> {
@@ -179,10 +465,18 @@ async function syncLead(
   contact: ContactSnapshot,
   knownLeadId: string | null | undefined
 ): Promise<void> {
-  const profile = await prisma.crmProfile.findUnique({
+  const events = await prisma.crmScoreEvent.findMany({
     where: { userId },
-    select: { leadScore: true },
+    select: { action: true, points: true },
   });
+  const combined = computeCombinedScore(events);
+  // Persist the HubSpot-capped combined score so admin and HubSpot stay aligned.
+  await prisma.crmProfile.upsert({
+    where: { userId },
+    create: { userId, leadScore: combined.combined },
+    update: { leadScore: combined.combined },
+  });
+
   const personName = [contact.firstName, contact.lastName].filter(Boolean).join(" ");
   const displayName = contact.company ? `${personName} (${contact.company})` : personName;
 
@@ -190,7 +484,7 @@ async function syncLead(
     {
       contactId,
       displayName: displayName || contact.email,
-      score: profile?.leadScore ?? 0,
+      score: combined.combined,
       closedWon: contact.lifecycleStage === "customer",
     },
     knownLeadId
@@ -200,137 +494,17 @@ async function syncLead(
   }
 }
 
-/**
- * Push a website purchase as a deal associated with the buyer's contact and lead.
- *
- * Amount and breakdown come from the snapshot taken when the payment was
- * confirmed, not from the current quote, so later edits to the project can't
- * rewrite the price the customer was actually charged. The deal description
- * also carries the questionnaire answers for that project.
- */
-export async function syncPurchaseDeal(paymentId: string): Promise<void> {
-  const payment = await prisma.payment.findUnique({
-    where: { id: paymentId },
-    include: {
-      project: {
-        include: {
-          user: true,
-          quote: true,
-          deployment: true,
-          questionnaire: true,
-        },
-      },
-    },
-  });
-  if (!payment?.project?.user) return;
-
-  const { project } = payment;
-  // Refresh the contact and move the HubSpot lead to Closed Won first.
-  const contactId = await syncContact(project.userId);
-  const profile = await prisma.crmProfile.findUnique({
-    where: { userId: project.userId },
-    select: { hubspotLeadId: true },
-  });
-
-  const amount =
-    payment.amountCents != null ? payment.amountCents / 100 : payment.amount;
-  const lineItems = safeLineItems(payment.breakdown ?? project.quote?.lineItems);
-  const monthlyTotal =
-    payment.packageType === PackageType.MANAGED_HOSTING
-      ? project.quote?.monthlyTotal ?? 0
-      : 0;
-
-  let projectDetails: PurchaseDealSnapshot["projectDetails"];
-  if (project.questionnaire?.answers) {
-    try {
-      const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
-      projectDetails = {
-        businessName: answers.businessName || project.businessName,
-        industry: answers.industry,
-        description: answers.description,
-        location: answers.location || undefined,
-        targetAudience: answers.targetAudience,
-        demographics: answers.demographics,
-        goals: answers.goals,
-        services: answers.services,
-        tone: answers.tone || undefined,
-        visualStyle: answers.visualStyle || undefined,
-        colorPreference: answers.colorPreference || undefined,
-        brandingNotes: answers.brandingNotes || undefined,
-        contactEmail: answers.contactEmail || project.user.email || undefined,
-        contactPhone: answers.contactPhone || undefined,
-        existingWebsiteUrl:
-          answers.hasWebsite === "yes" ? answers.existingWebsiteUrl || undefined : undefined,
-      };
-    } catch {
-      projectDetails = {
-        businessName: project.businessName,
-        contactEmail: project.user.email || undefined,
-      };
-    }
-  } else {
-    projectDetails = {
-      businessName: project.businessName,
-      contactEmail: project.user.email || undefined,
-    };
-  }
-
-  const deal: PurchaseDealSnapshot = {
-    paymentId: payment.id,
-    projectId: project.id,
-    dealName: `${project.businessName} — website`,
-    amount,
-    currency: payment.currency,
-    websiteUrl: projectUrl(project.id, project.deployment),
-    lineItems,
-    monthlyTotal,
-    packageLabel:
-      payment.packageType === PackageType.MANAGED_HOSTING
-        ? "Managed hosting"
-        : payment.packageType === PackageType.SELF_HOSTING
-          ? "Self hosting"
-          : payment.packageType || undefined,
-    projectDetails,
-  };
-
-  const { description, overflowBody } = splitDealDescription(deal);
-  const dealId = await upsertPurchaseDeal(deal, payment.hubspotDealId, description);
-  if (!dealId) return;
-
-  let noteId = payment.hubspotNoteId;
-  if (overflowBody) {
-    noteId = await upsertDealNote({
-      dealId,
-      body: overflowBody,
-      knownNoteId: payment.hubspotNoteId,
-    });
-  }
-
-  if (dealId !== payment.hubspotDealId || noteId !== payment.hubspotNoteId) {
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        hubspotDealId: dealId,
-        ...(noteId ? { hubspotNoteId: noteId } : {}),
-      },
-    });
-  }
-
-  if (contactId) {
-    await associateDealWithContact(dealId, contactId);
-  }
-  if (profile?.hubspotLeadId) {
-    await associateDealWithLead(dealId, profile.hubspotLeadId);
-  }
-}
-
 async function handleCrmJob(job: CrmOutbox): Promise<void> {
   switch (job.kind) {
     case CrmJobKind.CONTACT_SYNC:
       if (job.userId) await syncContact(job.userId);
       return;
     case CrmJobKind.PURCHASE_DEAL:
-      if (job.paymentId) await syncPurchaseDeal(job.paymentId);
+      if (job.userId) {
+        await syncAccountDeal(job.userId);
+      } else if (job.paymentId) {
+        await syncPurchaseDeal(job.paymentId);
+      }
       return;
     default:
       throw new Error(`Unknown CRM job kind: ${job.kind}`);

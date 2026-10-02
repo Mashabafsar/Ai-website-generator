@@ -9,10 +9,12 @@ import { prisma } from "@/lib/prisma";
 import {
   CrmJobKind,
   CrmScoreAction,
+  computeCombinedScore,
   oneTimeScore,
   packageScore,
 } from "@/lib/crm/config";
 import { enqueueCrmJob } from "@/lib/crm/outbox";
+import { enqueueDealRefreshForUser } from "@/lib/crm/sync";
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -52,10 +54,15 @@ async function award(params: {
       await tx.crmScoreEvent.create({
         data: { userId, action, points, idempotencyKey },
       });
+      const events = await tx.crmScoreEvent.findMany({
+        where: { userId },
+        select: { action: true, points: true },
+      });
+      const combined = computeCombinedScore(events);
       await tx.crmProfile.upsert({
         where: { userId },
-        create: { userId, leadScore: points, lastAction: action },
-        update: { leadScore: { increment: points }, lastAction: action },
+        create: { userId, leadScore: combined.combined, lastAction: action },
+        update: { leadScore: combined.combined, lastAction: action },
       });
     });
     return true;
@@ -121,6 +128,27 @@ export async function awardCreditPackPurchase(params: {
     idempotencyKey: `${CrmScoreAction.CREDIT_PACK_PURCHASED}:${params.stripeSessionId}`,
   });
   await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId: params.userId });
+  // Fold this pack into the website purchase deal when one exists.
+  await enqueueDealRefreshForUser(params.userId);
+  return awarded;
+}
+
+/**
+ * Award points for buying the website package. Once per payment id so the
+ * webhook and reconcile path cannot double-count.
+ */
+export async function awardWebsitePackagePurchase(params: {
+  userId: string;
+  paymentId: string;
+}): Promise<boolean> {
+  const awarded = await award({
+    userId: params.userId,
+    action: CrmScoreAction.WEBSITE_PACKAGE_PURCHASED,
+    points: oneTimeScore(CrmScoreAction.WEBSITE_PACKAGE_PURCHASED),
+    idempotencyKey: `${CrmScoreAction.WEBSITE_PACKAGE_PURCHASED}:${params.paymentId}`,
+  });
+  await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId: params.userId });
+  await enqueueDealRefreshForUser(params.userId);
   return awarded;
 }
 

@@ -11,7 +11,7 @@ import { PaymentStatus, PaymentType, ProjectStatus } from "@/lib/constants";
 import { resolveCreditPack } from "@/lib/stripe/stripe";
 import { CrmJobKind } from "@/lib/crm/config";
 import { enqueueCrmJob } from "@/lib/crm/outbox";
-import { awardCreditPackPurchase } from "@/lib/crm/scoring";
+import { awardCreditPackPurchase, awardWebsitePackagePurchase } from "@/lib/crm/scoring";
 
 /** Statuses that already mean the website was bought — never downgrade them. */
 const DELIVERED_STATUSES: string[] = [
@@ -114,12 +114,28 @@ export async function fulfillWebsiteCheckout(
   });
 
   if (payment) {
-    // Deduped on the payment id, so replays of this session queue one deal.
+    if (project?.userId) {
+      try {
+        await awardWebsitePackagePurchase({
+          userId: project.userId,
+          paymentId: payment.id,
+        });
+      } catch (err) {
+        console.error(
+          "[crm] website package score failed:",
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
+    // Deduped per user so questionnaire, credits, and website payment share one deal job.
     await enqueueCrmJob({
       kind: CrmJobKind.PURCHASE_DEAL,
       userId: project?.userId ?? null,
       projectId,
       paymentId: payment.id,
+      dedupeKey: project?.userId
+        ? `${CrmJobKind.PURCHASE_DEAL}:${project.userId}`
+        : undefined,
     });
   }
 

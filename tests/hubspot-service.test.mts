@@ -10,14 +10,19 @@ process.env.HUBSPOT_REQUEST_RETRIES = "0";
 const {
   upsertContact,
   associateDealWithContact,
+  associateDealWithCompany,
   associateDealWithLead,
+  associateContactWithCompany,
   associateNoteWithContact,
   associateNoteWithDeal,
   upsertPurchaseDeal,
+  upsertCompany,
   upsertContactNote,
   upsertDealNote,
+  formatDealName,
   formatPriceBreakdown,
   formatProjectDetails,
+  formatDealScore,
   formatProgressNote,
   splitDealDescription,
   upsertLead,
@@ -160,16 +165,24 @@ describe("purchase deal", () => {
   const deal = {
     paymentId: "pay_123",
     projectId: "proj_1",
-    dealName: "Bright Smile — website",
-    amount: 528,
+    dealName: formatDealName("Bright Smile Dental", 557),
+    amount: 557,
     currency: "USD",
     websiteUrl: "https://bright-smile.vercel.app",
     lineItems: [
       { name: "Website creation", amount: 499 },
       { name: "Monthly hosting", amount: 29 },
+      { name: "Medium credit pack (60 credits)", amount: 29 },
     ],
     monthlyTotal: 29,
     packageLabel: "Managed hosting",
+    closedWon: true,
+    score: {
+      combined: 60,
+      engagement: 45,
+      fit: 15,
+      label: "A1",
+    },
     projectDetails: {
       businessName: "Bright Smile Dental",
       industry: "Dental Clinic",
@@ -183,11 +196,40 @@ describe("purchase deal", () => {
     },
   };
 
+  it("names the deal Company $Amount with no thousands separator", () => {
+    assert.equal(formatDealName("Frontier Logistics", 7659), "Frontier Logistics $7659");
+    assert.equal(formatDealName("Bright Smile Dental", 557.4), "Bright Smile Dental $557");
+  });
+
   it("itemizes the breakdown and the charged total", () => {
     const text = formatPriceBreakdown(deal);
     assert.match(text, /Website creation: 499 USD/);
-    assert.match(text, /Total charged: 528 USD/);
+    assert.match(text, /Medium credit pack \(60 credits\): 29 USD/);
+    assert.match(text, /Total paid: 557 USD/);
     assert.match(text, /Recurring: 29 USD\/month/);
+  });
+
+  it("shows unpaid quote and credit packs on an open deal", () => {
+    const open = {
+      ...deal,
+      amount: 29,
+      closedWon: false,
+      quotedWebsiteTotal: 528,
+      lineItems: [{ name: "Medium credit pack (60 credits)", amount: 29 }],
+      monthlyTotal: 0,
+    };
+    const text = formatPriceBreakdown(open);
+    assert.match(text, /Quoted website package \(unpaid\): 528 USD/);
+    assert.match(text, /Medium credit pack \(60 credits\): 29 USD/);
+    assert.match(text, /Total paid: 29 USD/);
+  });
+
+  it("includes HubSpot-style combined deal score in the description", () => {
+    const text = formatDealScore(deal);
+    assert.match(text, /Deal score: 60 \(A1\)/);
+    assert.match(text, /Fit: 15 \/ Engagement: 45/);
+    const { description } = splitDealDescription(deal);
+    assert.match(description, /Deal score: 60 \(A1\)/);
   });
 
   it("includes questionnaire answers in the project details block", () => {
@@ -204,7 +246,7 @@ describe("purchase deal", () => {
     assert.match(description, /Website: https:\/\/bright-smile.vercel.app/);
     assert.match(description, /Business: Bright Smile Dental/);
     assert.match(description, /Website creation: 499 USD/);
-    assert.match(description, /Total charged: 528 USD/);
+    assert.match(description, /Total paid: 557 USD/);
     assert.equal(overflowBody, null);
   });
 
@@ -226,13 +268,34 @@ describe("purchase deal", () => {
     assert.equal(calls[0].method, "PATCH");
     assert.ok(!calls[0].url.includes("/search"));
     const props = (calls[0].body as { properties: Record<string, string> }).properties;
-    assert.equal(props.dealname, deal.dealName);
-    assert.equal(props.amount, "528");
+    assert.equal(props.dealname, "Bright Smile Dental $557");
+    assert.equal(props.amount, "557");
+    assert.equal(props.pipeline, "default");
+    assert.equal(props.dealstage, "closedwon");
     assert.match(props.description, /Website: https:\/\/bright-smile.vercel.app/);
     assert.match(props.description, /Business: Bright Smile Dental/);
     assert.ok(props.closedate);
     assert.ok(!("website_builder_payment_id" in props));
     assert.ok(!("website_url" in props));
+  });
+
+  it("keeps an unpaid deal in Qualified To Buy without a close date", async () => {
+    calls = [];
+    stubHubSpot([(c) => (c.method === "POST" ? json({ id: "d-open" }) : undefined)]);
+
+    const open = {
+      ...deal,
+      amount: 0,
+      closedWon: false,
+      lineItems: [],
+      quotedWebsiteTotal: 528,
+      dealName: formatDealName("Bright Smile Dental", 0),
+    };
+    assert.equal(await upsertPurchaseDeal(open), "d-open");
+    const props = (calls[0].body as { properties: Record<string, string> }).properties;
+    assert.equal(props.dealstage, "qualifiedtobuy");
+    assert.equal(props.amount, "0");
+    assert.ok(!("closedate" in props));
   });
 
   it("creates a deal when the payment has none", async () => {
@@ -248,7 +311,7 @@ describe("purchase deal", () => {
     calls = [];
     stubHubSpot([(c) => (c.method === "POST" ? json({ id: "n-1" }) : undefined)]);
 
-    const noteId = await upsertDealNote({ dealId: "d-1", body: "Website: …\nTotal charged: 528 USD" });
+    const noteId = await upsertDealNote({ dealId: "d-1", body: "Website: …\nTotal charged: 557 USD" });
 
     assert.equal(noteId, "n-1");
     assert.equal(calls[0].method, "POST");
@@ -276,6 +339,25 @@ describe("purchase deal", () => {
     assert.equal(noteId, "n-existing");
     assert.equal(calls.length, 1);
     assert.equal(calls[0].method, "PATCH");
+  });
+
+  it("creates a company from the business name", async () => {
+    calls = [];
+    stubHubSpot([
+      (c) =>
+        c.method === "POST" && c.url.includes("/companies/search")
+          ? json({ results: [] })
+          : undefined,
+      (c) => (c.method === "POST" && c.url.endsWith("/companies") ? json({ id: "co-1" }) : undefined),
+    ]);
+
+    const id = await upsertCompany({ name: "Frontier Logistics", domain: "frontierlogistics.com" });
+
+    assert.equal(id, "co-1");
+    const create = calls.find((c) => c.method === "POST" && c.url.endsWith("/companies"))!;
+    const props = (create.body as { properties: Record<string, string> }).properties;
+    assert.equal(props.name, "Frontier Logistics");
+    assert.equal(props.domain, "frontierlogistics.com");
   });
 });
 
@@ -309,6 +391,36 @@ describe("association", () => {
     );
     assert.deepEqual(calls[0].body, [
       { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 583 },
+    ]);
+  });
+
+  it("links the deal to the company", async () => {
+    calls = [];
+    stubHubSpot([() => json({})]);
+
+    await associateDealWithCompany("d-1", "co-1");
+
+    assert.equal(
+      calls[0].url,
+      "https://api.hubapi.example/crm/objects/2026-09/deals/d-1/associations/companies/co-1"
+    );
+    assert.deepEqual(calls[0].body, [
+      { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 5 },
+    ]);
+  });
+
+  it("links the contact to the company", async () => {
+    calls = [];
+    stubHubSpot([() => json({})]);
+
+    await associateContactWithCompany("c-1", "co-1");
+
+    assert.equal(
+      calls[0].url,
+      "https://api.hubapi.example/crm/objects/2026-09/contacts/c-1/associations/companies/co-1"
+    );
+    assert.deepEqual(calls[0].body, [
+      { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 1 },
     ]);
   });
 

@@ -145,7 +145,7 @@ See `.env.example` for the full list. Highlights:
 | `HUBSPOT_API_BASE_URL` | API host (default `https://api.hubapi.com`) |
 | `HUBSPOT_API_VERSION` | Objects API version (default `2026-09`) |
 | `HUBSPOT_ASSOCIATIONS_API_VERSION` | Associations API version (default `2026-09`) |
-| `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE` | Optional internal IDs for where purchase deals land (default `default` / `closedwon`). A custom pipeline needs its own Closed Won stage id |
+| `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_DEAL_OPEN_STAGE` | Optional pipeline/stage ids. Defaults: Sales Pipeline (`default`), Closed Won (`closedwon`) after website payment, Qualified To Buy (`qualifiedtobuy`) while the deal is open |
 | `CRON_SECRET` | Shared secret for `/api/cron/hubspot`. Unset disables the scheduled drain |
 | `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
@@ -170,13 +170,20 @@ Each later scoring step appends a Note on that contact so the HubSpot timeline
 shows progress in order. Every account is synced from its first login, whether
 or not it ever buys anything.
 
-| Step | Points |
-|---|---|
-| Logged in (once per account) | +5 |
-| Completed questionnaire (once per account) | +15 |
-| Small credit pack (every purchase) | +10 |
-| Medium credit pack (every purchase) | +15 |
-| Large credit pack (every purchase) | +20 |
+| Step | Group | Points |
+|---|---|---|
+| Logged in (once per account) | Engagement | +5 |
+| Completed questionnaire (once per account) | Fit | +15 |
+| Small credit pack (every purchase) | Engagement | +10 |
+| Medium credit pack (every purchase) | Engagement | +15 |
+| Large credit pack (every purchase) | Engagement | +20 |
+| Website package purchased (once per payment) | Engagement | +25 |
+
+Scoring follows [HubSpot’s lead scoring model for deals](https://knowledge.hubspot.com/scoring/understand-the-lead-scoring-tool):
+engagement and fit groups with caps (60 / 40), an overall score limit of 100,
+and combined thresholds **A1–C3** (letter = fit, number = engagement). The
+capped combined value is what we write to the Lead Score property and what
+appears on the deal description.
 
 Each account also gets a HubSpot **Lead** record (the Leads object), associated
 to the contact as its primary contact. The lead name is the person or business
@@ -185,13 +192,14 @@ follows it: COLD under 20, WARM from 20, HOT from 30. A new lead starts in the
 **New** stage of the lead pipeline; after that the stage is left for sales reps
 to move until payment.
 
-A website purchase moves the lead to the **Closed Won** lead stage, opens a
-**Closed Won** deal associated with the contact and the lead, and moves the
-contact to `customer`. The deal carries the sale price (`amount`), close date,
-and a description with the website URL, the full questionnaire answers for that
-project, and the itemized price breakdown. HubSpot's built-in lead pipeline has
-no Closed Won stage, so the integration creates one (label "Closed Won") the
-first time it is needed.
+Completing the questionnaire opens a deal on the **Sales Pipeline** (Qualified To
+Buy) named `Company $Amount`, associated with the contact and company. The
+description carries every questionnaire answer. Credit-pack purchases update that
+same deal's amount and line items even if the website is not bought yet. Paying
+for the website package moves the lead and the deal to **Closed Won**, sets the
+close date, adds the website charge to the total, and moves the contact to
+`customer`. HubSpot's built-in lead pipeline has no Closed Won stage, so the
+integration creates one (label "Closed Won") the first time it is needed.
 
 Lead scores and marketing consent also stay in **our database**. Admins review
 that local data at `/app/admin/clients`.
@@ -202,19 +210,21 @@ contact or deal properties.
 **Contact (standard):** `email`, `firstname`, `lastname`, `company`, `phone`, `website`, `lifecyclestage`, `hs_analytics_source` (Direct Traffic)  
 **Lead:** `hs_lead_name` (person/business only), `lead_score` (numeric score),
 `hs_lead_label`, `hs_lead_type`, `hs_pipeline`, `hs_pipeline_stage`  
+**Company:** `name`, optional `domain` (from the customer's existing website)  
 **Progress history:** one HubSpot Note per score event, associated to the contact  
-**Deal (standard):** `dealname`, `amount`, `closedate`, `description` (website URL
-+ questionnaire answers + itemized sale price), `pipeline` / `dealstage` (default
-`default` / `closedwon`, overridable from env). The deal is associated with both
-the contact and the Closed Won lead. If the description would overflow, the full
-details are attached as a Note on the deal.
+**Deal (standard):** `dealname` (`Company $Amount`), `amount` (every paid credit
+pack + website package when paid), `description` (website URL + HubSpot-style
+deal score A1–C3 + questionnaire answers + itemized payments), `pipeline` /
+`dealstage` (open: Qualified To Buy; paid website: Closed Won with `closedate`).
+Associated with contact, company, and lead. If the description would overflow,
+the full details are attached as a Note on the deal.
 
 #### Setup
 
 1. Create a HubSpot private app with the scopes below.
 2. Set `HUBSPOT_API_KEY`, `HUBSPOT_API_BASE_URL=https://api.hubapi.com`,
    `HUBSPOT_API_VERSION=2026-09`, `HUBSPOT_ASSOCIATIONS_API_VERSION=2026-09`.
-   Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_LEAD_PIPELINE`,
+   Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_DEAL_OPEN_STAGE`, `HUBSPOT_LEAD_PIPELINE`,
    `HUBSPOT_LEAD_NEW_STAGE`, `HUBSPOT_LEAD_CLOSED_WON_STAGE`, `HUBSPOT_LEAD_OWNER_ID`,
    `HUBSPOT_LEAD_SCORE_PROPERTY` (defaults to `lead_score`), `CRON_SECRET`.
    Leave the lead pipeline settings blank to look them up from HubSpot (recommended).
@@ -229,27 +239,33 @@ details are attached as a Note on the deal.
 | Scope | Needed for |
 |---|---|
 | `crm.objects.contacts.read`, `crm.objects.contacts.write` | Contact upsert |
-| `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact/lead association |
+| `crm.objects.deals.read`, `crm.objects.deals.write` | Purchase deals and contact/company/lead association |
+| `crm.objects.companies.read`, `crm.objects.companies.write` | Company records associated with deals and contacts |
 | `crm.objects.notes.write` | Progress notes on the contact, plus overflow deal notes |
 | `crm.objects.leads.read`, `crm.objects.leads.write` | Lead records and their Closed Won stage |
 
-#### Lead scoring
+#### Lead / deal scoring
 
 Point values and package definitions live in `lib/crm/config.ts` and
 `lib/constants.ts`; change them there, never in business logic. The running
 total and the event log are stored in `CrmProfile` / `CrmScoreEvent`.
 
-| Action | Points | Frequency |
-|---|---|---|
-| Registers or logs in | 5 | Once per account |
-| Selects a theme | 5 | Once per account |
-| Completes the questionnaire | 20 | Once per account |
-| Buys the Small pack (20 credits, $10) | 10 | Every purchase |
-| Buys the Medium pack (60 credits, $29) | 20 | Every purchase |
-| Buys the Large pack (100 credits, $45) | 40 | Every purchase |
+Scoring follows HubSpot’s combined engagement + fit model for deals (group
+limits 60 / 40, overall limit 100, thresholds A1–C3). The capped combined score
+is what HubSpot and the admin clients page show.
 
-Filling the questionnaire by hand and importing it with the scraper are the same
-event: together they are worth 20 points, not 40.
+| Action | Group | Points | Frequency |
+|---|---|---|---|
+| Registers or logs in | Engagement | 5 | Once per account |
+| Completes the questionnaire | Fit | 15 | Once per account |
+| Buys the Small pack (20 credits, $10) | Engagement | 10 | Every purchase |
+| Buys the Medium pack (60 credits, $29) | Engagement | 15 | Every purchase |
+| Buys the Large pack (100 credits, $45) | Engagement | 20 | Every purchase |
+| Buys the website package | Engagement | 25 | Once per payment |
+
+Theme selection no longer scores. Filling the questionnaire by hand and
+importing it with the scraper are the same event: together they are worth 15
+fit points, not 30.
 
 #### Marketing consent
 
@@ -300,12 +316,13 @@ Then, with `HUBSPOT_API_KEY` pointed at a test portal:
    contact and a note: "Logged in / +5 points / Lead score: 5". Admin clients
    shows the same score. Consent stays in our DB only.
 2. Pick a design — HubSpot gets a second note (score 10). Complete the
-   questionnaire — a third note (score 30).
+   questionnaire — a third note (score 30) and an open deal on the Sales Pipeline
+   with every questionnaire answer on `description`.
 3. Buy the Medium credit pack with card `4242 4242 4242 4242` (score 50, another
-   note). No HubSpot deal is created for credit packs.
-4. Pay for a website package. A Closed Won deal appears, associated with the
-   contact and the Closed Won lead, with the URL, questionnaire answers, charged
-   amount, and itemized breakdown on `description`.
+   note). The same deal's amount and line items update to include the pack.
+4. Pay for a website package. The deal moves to Closed Won, the close date is
+   set, and the website charge is added to the total. The contact and lead move
+   to customer / Closed Won.
 5. Log in again with the box **ticked**: admin clients shows consent true; the
    score does not move; HubSpot is unchanged on those fields.
 

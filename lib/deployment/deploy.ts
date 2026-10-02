@@ -133,19 +133,12 @@ export async function deployProject(projectId: string): Promise<{
 async function refreshCrmAfterGoingLive(projectId: string, userId: string): Promise<void> {
   try {
     await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId });
-
-    const payments = await prisma.payment.findMany({
-      where: { projectId, hubspotDealId: { not: null } },
-      select: { id: true },
+    await enqueueCrmJob({
+      kind: CrmJobKind.PURCHASE_DEAL,
+      userId,
+      projectId,
+      dedupeKey: `${CrmJobKind.PURCHASE_DEAL}:${userId}`,
     });
-    for (const payment of payments) {
-      await enqueueCrmJob({
-        kind: CrmJobKind.PURCHASE_DEAL,
-        userId,
-        projectId,
-        paymentId: payment.id,
-      });
-    }
     scheduleCrmDrain();
   } catch (err) {
     console.error("[crm] live-URL refresh failed:", err instanceof Error ? err.message : err);

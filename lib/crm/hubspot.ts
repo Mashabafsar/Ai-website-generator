@@ -11,6 +11,8 @@
 import { env } from "@/lib/env";
 import {
   CONTACT_ANALYTICS_SOURCE,
+  CONTACT_TO_COMPANY_ASSOCIATION_TYPE_ID,
+  DEAL_TO_COMPANY_ASSOCIATION_TYPE_ID,
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
   DEAL_TO_LEAD_ASSOCIATION_TYPE_ID,
   LEAD_CLOSED_WON_STAGE_LABEL,
@@ -44,17 +46,32 @@ export type ContactSnapshot = {
 };
 
 export type PurchaseDealSnapshot = {
-  paymentId: string;
+  /** Present once a website package payment exists. */
+  paymentId?: string;
   projectId: string;
   dealName: string;
-  /** Charged amount in currency units (not cents). */
+  /** Sum of every amount the customer has actually paid (credits + website). */
   amount: number;
   currency: string;
   websiteUrl: string;
   lineItems: { name: string; amount: number }[];
   monthlyTotal?: number;
-  /** Self-hosting or managed hosting label. */
+  /** Self-hosting or managed hosting label, once chosen. */
   packageLabel?: string;
+  /** True only after the website package is paid — moves the deal to Closed Won. */
+  closedWon: boolean;
+  /** Quoted website total before payment; shown in the description, not in amount. */
+  quotedWebsiteTotal?: number;
+  /**
+   * HubSpot-style combined deal score (engagement + fit with group limits).
+   * Threshold label uses A1–C3 (letter = fit, number = engagement).
+   */
+  score?: {
+    combined: number;
+    engagement: number;
+    fit: number;
+    label: string;
+  };
   /** Everything the customer entered for this website project. */
   projectDetails?: {
     businessName?: string;
@@ -80,10 +97,30 @@ type HubSpotRecord = { id?: string };
 /** Conservative cap under HubSpot's textarea limit so a huge quote still fits. */
 export const DEAL_DESCRIPTION_MAX_CHARS = 60_000;
 
+/**
+ * Deal title syntax: `Company $Amount` (e.g. "Frontier Logistics $7659").
+ * Amount is whole dollars with no thousands separator, matching HubSpot sales deals.
+ */
+export function formatDealName(companyName: string, amount: number): string {
+  const name = companyName.trim() || "Website";
+  const dollars = Math.round(Number.isFinite(amount) ? amount : 0);
+  return `${name} $${dollars}`;
+}
+
 export function formatPriceBreakdown(deal: PurchaseDealSnapshot): string {
   const currency = deal.currency.toUpperCase();
-  const lines = deal.lineItems.map((item) => `${item.name}: ${item.amount} ${currency}`);
-  lines.push(`Total charged: ${deal.amount} ${currency}`);
+  const lines: string[] = [];
+  if (deal.quotedWebsiteTotal != null && deal.quotedWebsiteTotal > 0 && !deal.closedWon) {
+    lines.push(`Quoted website package (unpaid): ${deal.quotedWebsiteTotal} ${currency}`);
+  }
+  for (const item of deal.lineItems) {
+    lines.push(`${item.name}: ${item.amount} ${currency}`);
+  }
+  if (deal.lineItems.length === 0 && deal.amount === 0) {
+    lines.push("No payments yet.");
+  } else {
+    lines.push(`Total paid: ${deal.amount} ${currency}`);
+  }
   if (deal.monthlyTotal && deal.monthlyTotal > 0) {
     lines.push(`Recurring: ${deal.monthlyTotal} ${currency}/month`);
   }
@@ -120,9 +157,20 @@ export function formatProjectDetails(deal: PurchaseDealSnapshot): string {
   return lines.join("\n");
 }
 
+/** HubSpot-style deal score block for the description. */
+export function formatDealScore(deal: PurchaseDealSnapshot): string {
+  const score = deal.score;
+  if (!score) return "";
+  return [
+    `Deal score: ${score.combined} (${score.label})`,
+    `Fit: ${score.fit} / Engagement: ${score.engagement}`,
+  ].join("\n");
+}
+
 export function formatDealDescription(deal: PurchaseDealSnapshot): string {
   const sections = [
     `Website: ${deal.websiteUrl}`,
+    formatDealScore(deal),
     formatProjectDetails(deal),
     formatPriceBreakdown(deal),
   ].filter(Boolean);
@@ -139,7 +187,7 @@ export function splitDealDescription(
   }
   const currency = deal.currency.toUpperCase();
   return {
-    description: `Website: ${deal.websiteUrl}\nAmount: ${deal.amount} ${currency}\nFull project details and itemized breakdown attached as a note.`,
+    description: `Website: ${deal.websiteUrl}\nAmount paid: ${deal.amount} ${currency}\nFull project details and itemized breakdown attached as a note.`,
     overflowBody: full,
   };
 }
@@ -256,14 +304,16 @@ function dealProperties(
     dealname: deal.dealName,
     amount: String(deal.amount),
     description,
-    // Purchases are fulfilled only after Stripe confirms payment.
-    closedate: new Date().toISOString(),
   };
-  // Deals are only created once the payment has succeeded, so they land in
-  // Closed Won. HubSpot rejects a pipeline without a stage, so both are always
-  // sent; a custom pipeline needs its own Closed Won id in HUBSPOT_DEAL_STAGE.
+  // Sales Pipeline by default. Open deals sit in Qualified To Buy until the
+  // website package is paid, then move to Closed Won with a close date.
   properties.pipeline = env.hubspot.dealPipeline || "default";
-  properties.dealstage = env.hubspot.dealStage || "closedwon";
+  if (deal.closedWon) {
+    properties.dealstage = env.hubspot.dealStage || "closedwon";
+    properties.closedate = new Date().toISOString();
+  } else {
+    properties.dealstage = env.hubspot.dealOpenStage || "qualifiedtobuy";
+  }
   return properties;
 }
 
@@ -432,6 +482,115 @@ export async function associateDealWithLead(dealId: string, leadId: string): Pro
       },
     ]),
   });
+}
+
+/** Associate the deal with the business's company record. */
+export async function associateDealWithCompany(
+  dealId: string,
+  companyId: string
+): Promise<void> {
+  await hubspotRequest(associationPath("deals", dealId, "companies", companyId), {
+    method: "PUT",
+    body: JSON.stringify([
+      {
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: DEAL_TO_COMPANY_ASSOCIATION_TYPE_ID,
+      },
+    ]),
+  });
+}
+
+/** Associate the contact with the business's company record. */
+export async function associateContactWithCompany(
+  contactId: string,
+  companyId: string
+): Promise<void> {
+  await hubspotRequest(associationPath("contacts", contactId, "companies", companyId), {
+    method: "PUT",
+    body: JSON.stringify([
+      {
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: CONTACT_TO_COMPANY_ASSOCIATION_TYPE_ID,
+      },
+    ]),
+  });
+}
+
+/**
+ * Find a company by exact name. Prefer this over search-by-domain so a
+ * vercel/preview URL never creates a junk company.
+ */
+export async function findCompanyIdByName(name: string): Promise<string | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  try {
+    const found = await hubspotRequest<{ results?: HubSpotRecord[] }>(
+      `${objectPath("companies")}/search`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                { propertyName: "name", operator: "EQ", value: trimmed },
+              ],
+            },
+          ],
+          properties: ["name"],
+          limit: 1,
+        }),
+      }
+    );
+    return found?.results?.[0]?.id ?? null;
+  } catch (err) {
+    if (err instanceof HubSpotError && err.status === 404) return null;
+    throw err;
+  }
+}
+
+/**
+ * Create or reuse the HubSpot company for a business name.
+ * Domain is optional — only set when it is a real customer website, not a preview URL.
+ */
+export async function upsertCompany(params: {
+  name: string;
+  domain?: string | null;
+  knownCompanyId?: string | null;
+}): Promise<string | null> {
+  const name = params.name.trim();
+  if (!name) return null;
+
+  const properties: Record<string, string> = { name };
+  const domain = params.domain?.trim();
+  if (domain) properties.domain = domain;
+
+  if (params.knownCompanyId) {
+    try {
+      await hubspotRequest(objectPath("companies", params.knownCompanyId), {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return params.knownCompanyId;
+    } catch (err) {
+      const gone = err instanceof HubSpotError && (err.status === 404 || err.status === 400);
+      if (!gone) throw err;
+    }
+  }
+
+  const existingId = await findCompanyIdByName(name);
+  if (existingId) {
+    await hubspotRequest(objectPath("companies", existingId), {
+      method: "PATCH",
+      body: JSON.stringify({ properties }),
+    });
+    return existingId;
+  }
+
+  const created = await hubspotRequest<HubSpotRecord>(objectPath("companies"), {
+    method: "POST",
+    body: JSON.stringify({ properties }),
+  });
+  return created?.id ?? null;
 }
 
 export type LeadSnapshot = {

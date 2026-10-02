@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { CrmScoreAction } from "@/lib/crm/config";
 import { awardOneTimeAction } from "@/lib/crm/scoring";
-import { scheduleCrmDrain } from "@/lib/crm/sync";
+import { enqueueDealSyncForUser, scheduleCrmDrain } from "@/lib/crm/sync";
 import { questionnaireSchema } from "@/lib/questionnaire/schema";
 import {
   parseImportedBrand,
@@ -101,6 +101,8 @@ export async function POST(req: Request, { params }: Ctx) {
   // same single event — doing it both ways is worth one award, not two.
   try {
     await awardOneTimeAction(user.id, CrmScoreAction.QUESTIONNAIRE_COMPLETED);
+    // Open (or refresh) the HubSpot deal with the full questionnaire.
+    await enqueueDealSyncForUser(user.id, projectId);
     scheduleCrmDrain();
   } catch (err) {
     console.error("[crm] questionnaire score failed:", err instanceof Error ? err.message : err);
