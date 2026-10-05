@@ -16,6 +16,7 @@ Rules:
 4. Banned: "in today's fast-paced world", "unlock", "elevate", "seamless", "cutting-edge", "state-of-the-art", "tailored solutions", "passion for excellence", "look no further", "we pride ourselves".
 5. Vary sentence length. No more than two sentences in a row that start the same way. Plain words, grade 7-9 reading level. Stay inside the character limits.
 6. Return valid JSON matching <schema>. No commentary.
+7. CTAs, button labels, and contact headings must match this industry and what the visitor is doing. A bakery asks for orders or catering ("Order today", "Contact us for your order") — never "book a consultation" or "start a project" unless the business is a consultancy, agency, or clinic. Rewrite every hero CTA, contact CTA, and contact heading for this business; do not leave design-agency defaults.
 
 Layout (the design is already chosen):
 - The chosen design lists every page and every section. Fill all of them from this business. Do not add extra pages. Do not drop a listed page or slot.

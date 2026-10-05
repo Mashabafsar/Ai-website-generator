@@ -1,4 +1,5 @@
 import { RB } from "./tokens";
+import { industryAwareContactHeading, industryAwareCta } from "./cta";
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
@@ -101,7 +102,7 @@ function header(
 </header>`;
 }
 
-function homeBody(slots: TemplateSlot[]): string {
+function homeBody(slots: TemplateSlot[], industry: string): string {
   const hero = slotAt(slots, "hero");
   const services = slotAt(slots, "services");
   const about = slotAt(slots, "about");
@@ -110,6 +111,7 @@ function homeBody(slots: TemplateSlot[]): string {
   const quotes = slotAt(slots, "testimonials");
   const cta = slotAt(slots, "cta");
   const team = slotAt(slots, "features");
+  const heroCta = industryAwareCta(text(hero.content, "ctaPrimary", "Get in touch"), industry);
   const serviceTitles = list(services.content, "itemTitles", ["UI/UX Design", "Graphic Design", "Web Development", "Motion Graphics"]);
   const serviceBodies = list(services.content, "itemBodies");
   const workTitles = list(work.content, "itemTitles", ["Box mockup", "Editorial", "Tape kit", "Cup brand"]);
@@ -249,7 +251,7 @@ function homeBody(slots: TemplateSlot[]): string {
         <p class="text-[18px]">${esc(text(hero.content, "ctaSecondary", "Believed by more than a thousand people"))}</p>
       </div>
       <div class="relative">
-        ${pillButton(pageHref("contact"), text(hero.content, "ctaPrimary", "Book a free consultant"), `<img src="${A}/phone-circle.svg" alt="" width="24" height="24" class="size-6" />`)}
+        ${pillButton(pageHref("contact"), heroCta, `<img src="${A}/phone-circle.svg" alt="" width="24" height="24" class="size-6" />`)}
         <img src="${A}/scribble.svg" alt="" width="177" height="178" class="pointer-events-none absolute -bottom-16 left-[85%] hidden w-[176px] lg:block" />
       </div>
     </div>
@@ -340,7 +342,8 @@ function homeContact(
   contactEmail: string,
   contactPhone: string,
   businessName: string,
-  customLogo: string
+  customLogo: string,
+  industry: string
 ): string {
   const contact = slotAt(slots, "contact");
   const footerSlot = slotAt(slots, "footer");
@@ -348,11 +351,21 @@ function homeContact(
     .map((src) => `<img src="${src}" alt="" width="24" height="24" class="size-6" />`)
     .join("");
   const year = new Date().getFullYear();
+  const ctaLabel = industryAwareCta(text(contact.content, "ctaPrimary", "Get in touch"), industry);
+  const heading = industryAwareContactHeading(
+    text(contact.content, "heading", "Get in touch"),
+    industry
+  );
+  const invite = text(
+    contact.content,
+    "body",
+    "Tell us what you need — we will reply as soon as we can."
+  );
   return `<footer class="px-8 py-20" style="background-color:${RB.inverse};color:${RB.inverseFg};${sectionBandCss(contact.theme)}">
   <div class="mx-auto flex max-w-[1133px] flex-col gap-[45px] lg:flex-row lg:items-start">
     <div class="flex w-full max-w-[555px] flex-col gap-[49px]">
       <div class="relative">
-        <h2 class="max-w-[521px] text-[52px] font-bold leading-none text-white" style="${dFont()}">${esc(text(contact.content, "heading", "Let's start a project together"))}</h2>
+        <h2 class="max-w-[521px] text-[52px] font-bold leading-none text-white" style="${dFont()}">${esc(heading)}</h2>
         <span class="absolute left-[303px] top-1 hidden md:block">${asterisk()}</span>
       </div>
       <p class="text-[18px] leading-normal text-white">${esc(text(contact.content, "subheading"))}</p>
@@ -366,17 +379,11 @@ function homeContact(
       </div>
       <div class="flex gap-[21px]">${lights}</div>
     </div>
-    <form class="flex w-full max-w-[558px] flex-col gap-6 rounded-lg p-8">
+    <div class="flex w-full max-w-[558px] flex-col gap-6 rounded-lg border border-white/20 p-8">
       <h3 class="text-[32px] font-medium text-white" style="${dFont()}">Send us a message</h3>
-      <input class="h-[46px] rounded-md border border-white bg-transparent px-4 text-[15px] text-white placeholder:text-[#A5ACBA]" placeholder="Name" />
-      <input class="h-[46px] rounded-md border border-white bg-transparent px-4 text-[15px] text-white placeholder:text-[#A5ACBA]" placeholder="Email" type="email" />
-      <textarea class="min-h-[157px] rounded-md border border-white bg-transparent px-4 py-3 text-[15px] text-white placeholder:text-[#A5ACBA]" placeholder="Message"></textarea>
-      <label class="flex items-start gap-3 text-[16px] font-medium text-white">
-        <span class="mt-0.5 size-5 shrink-0 rounded-[5px] border-2 border-[#DAE0E6] bg-white"></span>
-        ${esc(text(contact.content, "body", "I agree with Lookscout Privacy Policy"))}
-      </label>
-      ${pillButton(pageHref("contact"), text(contact.content, "ctaPrimary", "Book a free consultant"), `<img src="${A}/phone-circle.svg" alt="" width="24" height="24" class="size-6" />`)}
-    </form>
+      <p class="text-[18px] leading-normal text-white/80">${esc(invite)}</p>
+      ${pillButton(pageHref("contact"), ctaLabel, `<img src="${A}/phone-circle.svg" alt="" width="24" height="24" class="size-6" />`)}
+    </div>
   </div>
   <div class="mx-auto mt-[45px] flex max-w-[1133px] items-center justify-between border-t pt-6" style="border-color:#2E3545">
     <p class="text-[16px]" style="color:${RB.graySoft}">© Copyright ${year}, All Rights Reserved by ${esc(text(footerSlot.content, "businessName", businessName))}</p>
@@ -609,7 +616,12 @@ ${faqList(text(faq.content, "heading", "Popular Questions"), list(faq.content, "
 ${wordMarquee()}`;
 }
 
-function contactBody(slots: TemplateSlot[], contactEmail: string, contactPhone: string): string {
+function contactBody(
+  slots: TemplateSlot[],
+  contactEmail: string,
+  contactPhone: string,
+  industry: string
+): string {
   const hero = slotAt(slots, "hero");
   const contact = slotAt(slots, "contact");
   const pills = ["twitter", "linkedin", "instagram"]
@@ -618,6 +630,16 @@ function contactBody(slots: TemplateSlot[], contactEmail: string, contactPhone: 
         `<span class="inline-flex w-[105px] items-center justify-center rounded-[33px] border border-black p-[5px] text-[18px] font-normal normal-case">${label}</span>`
     )
     .join("");
+  const formHeading = industryAwareContactHeading(
+    text(contact.content, "subheading", "We would love to hear from you"),
+    industry,
+    "We would love to hear from you"
+  );
+  const sendLabel = industryAwareCta(
+    text(contact.content, "ctaPrimary", "Send Message"),
+    industry,
+    "Send Message"
+  );
   return `${pageTitle(text(hero.content, "headline", "CONTACTS"))}
 <section class="px-8 py-16" style="${sectionBandCss(contact.theme)}">
   <div class="mx-auto flex max-w-[1136px] flex-col gap-[78px]">
@@ -640,14 +662,20 @@ function contactBody(slots: TemplateSlot[], contactEmail: string, contactPhone: 
     </div>
     <div class="h-px w-full bg-black"></div>
     <div class="mx-auto flex w-full max-w-[750px] flex-col items-center gap-[30px]">
-      <h3 class="text-center text-[52px] font-bold uppercase leading-none" style="${dFont(true)}">${esc(text(contact.content, "subheading", "Lets Bring Your Vision Into Reality"))}</h3>
-      <form class="flex w-full flex-col items-center gap-[53px]">
+      <h3 class="text-center text-[52px] font-bold uppercase leading-none" style="${dFont(true)}">${esc(formHeading)}</h3>
+      <form class="flex w-full flex-col items-center gap-[53px]" action="${contactEmail ? `mailto:${esc(contactEmail)}` : "#"}" method="get" enctype="text/plain">
         <div class="grid w-full gap-5 md:grid-cols-2">
-          <label class="flex flex-col gap-3 text-[18px]" style="color:#7E7E7E">Your Name<span class="h-px w-full bg-black"></span></label>
-          <label class="flex flex-col gap-3 text-[18px]" style="color:#7E7E7E">Email<span class="h-px w-full bg-black"></span></label>
+          <label class="flex flex-col gap-3 text-[18px]" style="color:#7E7E7E">Your Name
+            <input name="name" required autocomplete="name" class="w-full border-0 border-b border-black bg-transparent pb-2 text-[18px] text-black outline-none placeholder:text-[#B0B0B0]" placeholder="Jane Doe" />
+          </label>
+          <label class="flex flex-col gap-3 text-[18px]" style="color:#7E7E7E">Email
+            <input name="email" type="email" required autocomplete="email" class="w-full border-0 border-b border-black bg-transparent pb-2 text-[18px] text-black outline-none placeholder:text-[#B0B0B0]" placeholder="you@example.com" />
+          </label>
         </div>
-        <label class="flex h-40 w-full flex-col justify-between text-[18px]" style="color:#7E7E7E">Message<span class="h-px w-full bg-black"></span></label>
-        <a href="mailto:${esc(contactEmail || "info@rebo.com")}" class="inline-flex items-center gap-1.5 px-[18px] py-3 text-[15px] font-semibold text-white" style="background-color:${RB.brand}">${esc(text(contact.content, "ctaPrimary", "Send Message"))}<img src="${A}/arrow-up-right.svg" alt="" width="20" height="20" class="size-5" /></a>
+        <label class="flex w-full flex-col gap-3 text-[18px]" style="color:#7E7E7E">Message
+          <textarea name="body" required rows="5" class="min-h-32 w-full resize-y border-0 border-b border-black bg-transparent pb-2 text-[18px] text-black outline-none placeholder:text-[#B0B0B0]" placeholder="How can we help?"></textarea>
+        </label>
+        <button type="submit" class="inline-flex items-center gap-1.5 px-[18px] py-3 text-[15px] font-semibold text-white" style="background-color:${RB.brand}">${esc(sendLabel)}<img src="${A}/arrow-up-right.svg" alt="" width="20" height="20" class="size-5" /></button>
       </form>
     </div>
   </div>
@@ -747,7 +775,13 @@ function portfolioBody(slots: TemplateSlot[]): string {
 </section>`;
 }
 
-function pageBody(active: string, slots: TemplateSlot[], contactEmail: string, contactPhone: string): string {
+function pageBody(
+  active: string,
+  slots: TemplateSlot[],
+  contactEmail: string,
+  contactPhone: string,
+  industry: string
+): string {
   switch (active) {
     case "about":
       return aboutBody(slots);
@@ -756,7 +790,7 @@ function pageBody(active: string, slots: TemplateSlot[], contactEmail: string, c
     case "pricing":
       return pricingBody(slots);
     case "contact":
-      return contactBody(slots, contactEmail, contactPhone);
+      return contactBody(slots, contactEmail, contactPhone, industry);
     case "faq":
       return faqBody(slots);
     case "blog":
@@ -764,7 +798,7 @@ function pageBody(active: string, slots: TemplateSlot[], contactEmail: string, c
     case "portfolio":
       return portfolioBody(slots);
     default:
-      return homeBody(slots);
+      return homeBody(slots, industry);
   }
 }
 
@@ -783,11 +817,12 @@ export function renderReboPage(site: AssembledSite, pageSlug?: string): string {
   const tagline = text(footerSlot.content, "tagline", "WE ARE PRIORITIZE COLLABORATION WITH OUR CLIENTS");
   const contactEmail = site.contact?.email?.trim() || "";
   const contactPhone = site.contact?.phone?.trim() || "";
+  const industry = site.industry || "";
   const isHome = active === "home";
   const activeTitle = pages.find((p) => p.slug === active)?.title || "Home";
   const bg = isHome ? RB.bg : RB.innerBg;
   const foot = isHome
-    ? homeContact(slots, contactEmail, contactPhone, businessName, customLogo)
+    ? homeContact(slots, contactEmail, contactPhone, businessName, customLogo, industry)
     : innerFooter(businessName, customLogo, tagline, contactEmail, contactPhone);
 
   return `<!doctype html>
@@ -816,7 +851,7 @@ export function renderReboPage(site: AssembledSite, pageSlug?: string): string {
 <body>
 ${header(pages, active, businessName, customLogo, isHome)}
 <main>
-${pageBody(active, slots, contactEmail, contactPhone)}
+${pageBody(active, slots, contactEmail, contactPhone, industry)}
 </main>
 ${foot}
 </body>

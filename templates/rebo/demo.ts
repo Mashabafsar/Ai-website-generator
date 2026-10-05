@@ -31,7 +31,7 @@ export function reboDemoBlueprint(): WebsiteBlueprint {
           headline: "A creative design studio",
           subheadline:
             "We're a creative design studio specializing in meeting the needs of the new generation. We offer innovative and cutting-edge design solutions to help our clients stand out in today's fast-paced.",
-          ctaPrimary: "Book a free consultant",
+          ctaPrimary: "Get in touch",
           ctaSecondary: "Believed by more than a thousand people",
         },
         selectedImage: img(`${A}/hero.png`, "Designers collaborating around a laptop"),
@@ -135,7 +135,7 @@ export function reboDemoBlueprint(): WebsiteBlueprint {
         content: {
           headline: "LET'S CREATE NEW EXPERIENCES",
           subheadline: "A creative studio for brands that need to stand out.",
-          ctaPrimary: "Book a free consultant",
+          ctaPrimary: "Get in touch",
         },
       },
       {
@@ -158,11 +158,11 @@ export function reboDemoBlueprint(): WebsiteBlueprint {
         type: "contact",
         variant: "contact-split",
         content: {
-          heading: "Let's start a project together",
+          heading: "Get in touch",
           subheading:
             "We work closely with our clients to understand their objectives, target audience, and unique needs. We use our creative skills to translate these requirements and practical design solutions.",
           body: "I agree with Lookscout Privacy Policy",
-          ctaPrimary: "Book a free consultant",
+          ctaPrimary: "Get in touch",
         },
       },
       footer("foot_home"),

@@ -50,5 +50,6 @@ export function assembleSite(blueprint: WebsiteBlueprint, theme: ThemeTokens): A
     seo: blueprint.seo,
     logo,
     businessName: blueprint.business.name,
+    industry: blueprint.business.industry,
   };
 }

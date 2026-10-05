@@ -5,6 +5,8 @@ import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { industryAwareContactHeading, industryAwareCta } from "./cta";
+import { ReboContactForm } from "./contact-form";
 
 const faces = templateFaces([
   { family: "Space Grotesk", variable: "--rb-display", weights: ["400", "500", "600", "700"] },
@@ -60,6 +62,7 @@ export function ReboSite({
   const details = contact ?? site?.contact;
   const contactEmail = details?.email?.trim() || "";
   const contactPhone = details?.phone?.trim() || "";
+  const industry = blueprint?.business.industry || "";
   const isHome = active === "home";
 
   return (
@@ -84,9 +87,16 @@ export function ReboSite({
         @media (prefers-reduced-motion: reduce) { .rb-marquee { animation: none; } }
       `}</style>
       <Header pages={pages} active={active} businessName={businessName} customLogo={customLogo} dark={isHome} />
-      <main>{renderPageBody(active, slots, { businessName, contactEmail, contactPhone })}</main>
+      <main>{renderPageBody(active, slots, { businessName, contactEmail, contactPhone, industry })}</main>
       {isHome ? (
-        <HomeContact slots={slots} contactEmail={contactEmail} contactPhone={contactPhone} businessName={businessName} customLogo={customLogo} />
+        <HomeContact
+          slots={slots}
+          contactEmail={contactEmail}
+          contactPhone={contactPhone}
+          businessName={businessName}
+          customLogo={customLogo}
+          industry={industry}
+        />
       ) : (
         <InnerFooter
           businessName={businessName}
@@ -100,7 +110,7 @@ export function ReboSite({
   );
 }
 
-type PageMeta = { businessName: string; contactEmail: string; contactPhone: string };
+type PageMeta = { businessName: string; contactEmail: string; contactPhone: string; industry: string };
 
 function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta) {
   switch (active) {
@@ -119,7 +129,7 @@ function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta) {
     case "portfolio":
       return <PortfolioBody slots={slots} />;
     default:
-      return <HomeBody slots={slots} />;
+      return <HomeBody slots={slots} industry={meta.industry} />;
   }
 }
 
@@ -225,7 +235,7 @@ function PillButton({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-function HomeBody({ slots }: { slots: TemplateSlot[] }) {
+function HomeBody({ slots, industry }: { slots: TemplateSlot[]; industry: string }) {
   const hero = slotAt(slots, "hero");
   const services = slotAt(slots, "services");
   const about = slotAt(slots, "about");
@@ -234,6 +244,7 @@ function HomeBody({ slots }: { slots: TemplateSlot[] }) {
   const quotes = slotAt(slots, "testimonials");
   const cta = slotAt(slots, "cta");
   const team = slotAt(slots, "features");
+  const heroCta = industryAwareCta(text(hero.content, "ctaPrimary", "Get in touch"), industry);
   const serviceTitles = list(services.content, "itemTitles", ["UI/UX Design", "Graphic Design", "Web Development", "Motion Graphics"]);
   const serviceBodies = list(services.content, "itemBodies");
   const workTitles = list(work.content, "itemTitles", ["Box mockup", "Editorial", "Tape kit", "Cup brand"]);
@@ -280,7 +291,7 @@ function HomeBody({ slots }: { slots: TemplateSlot[] }) {
             </div>
             <div className="relative">
               <PillButton href={pageHref("contact")}>
-                {text(hero.content, "ctaPrimary", "Book a free consultant")}
+                {heroCta}
                 <img src={`${A}/phone-circle.svg`} alt="" width={24} height={24} className="size-6" />
               </PillButton>
               <img
@@ -529,22 +540,29 @@ function HomeContact({
   contactPhone,
   businessName,
   customLogo,
+  industry,
 }: {
   slots: TemplateSlot[];
   contactEmail: string;
   contactPhone: string;
   businessName: string;
   customLogo: string;
+  industry: string;
 }) {
   const contact = slotAt(slots, "contact");
   const footer = slotAt(slots, "footer");
+  const ctaLabel = industryAwareCta(text(contact.content, "ctaPrimary", "Get in touch"), industry);
+  const heading = industryAwareContactHeading(
+    text(contact.content, "heading", "Get in touch"),
+    industry
+  );
   return (
     <footer className="px-8 py-20" style={{ backgroundColor: RB.inverse, color: RB.inverseFg, ...sectionBandStyle(contact.theme) }}>
       <div className="mx-auto flex max-w-[1133px] flex-col gap-[45px] lg:flex-row lg:items-start">
         <div className="flex w-full max-w-[555px] flex-col gap-[49px]">
           <div className="relative">
             <h2 className="max-w-[521px] text-[52px] font-bold leading-none text-white" style={displayFont()}>
-              {text(contact.content, "heading", "Let's start a project together")}
+              {heading}
             </h2>
             <span className="absolute left-[303px] top-1 hidden md:block">
               <Asterisk />
@@ -569,22 +587,26 @@ function HomeContact({
             ))}
           </div>
         </div>
-        <form className="flex w-full max-w-[558px] flex-col gap-6 rounded-lg p-8">
+        {/*
+          Homepage keeps contact details + a CTA into the Contact page.
+          The fillable form lives only on Contact so visitors are not asked twice.
+        */}
+        <div className="flex w-full max-w-[558px] flex-col gap-6 rounded-lg border border-white/20 p-8">
           <h3 className="text-[32px] font-medium text-white" style={displayFont()}>
             Send us a message
           </h3>
-          <input className="h-[46px] rounded-md border border-white bg-transparent px-4 text-[15px] text-white placeholder:text-[#A5ACBA]" placeholder="Name" />
-          <input className="h-[46px] rounded-md border border-white bg-transparent px-4 text-[15px] text-white placeholder:text-[#A5ACBA]" placeholder="Email" type="email" />
-          <textarea className="min-h-[157px] rounded-md border border-white bg-transparent px-4 py-3 text-[15px] text-white placeholder:text-[#A5ACBA]" placeholder="Message" />
-          <label className="flex items-start gap-3 text-[16px] font-medium text-white">
-            <span className="mt-0.5 size-5 shrink-0 rounded-[5px] border-2 border-[#DAE0E6] bg-white" />
-            {text(contact.content, "body", "I agree with Lookscout Privacy Policy")}
-          </label>
+          <p className="text-[18px] leading-normal text-white/80">
+            {text(
+              contact.content,
+              "body",
+              "Tell us what you need — we will reply as soon as we can."
+            )}
+          </p>
           <PillButton href={pageHref("contact")}>
-            {text(contact.content, "ctaPrimary", "Book a free consultant")}
+            {ctaLabel}
             <img src={`${A}/phone-circle.svg`} alt="" width={24} height={24} className="size-6" />
           </PillButton>
-        </form>
+        </div>
       </div>
       <div className="mx-auto mt-[45px] flex max-w-[1133px] items-center justify-between border-t pt-6" style={{ borderColor: "#2E3545" }}>
         <p className="text-[16px]" style={{ color: RB.graySoft }}>
@@ -931,32 +953,20 @@ function ContactBody({ slots, meta }: { slots: TemplateSlot[]; meta: PageMeta })
           <div className="h-px w-full bg-black" />
           <div className="mx-auto flex w-full max-w-[750px] flex-col items-center gap-[30px]">
             <h3 className="text-center text-[52px] font-bold uppercase leading-none" style={displayFont(true)}>
-              {text(contact.content, "subheading", "Lets Bring Your Vision Into Reality")}
+              {industryAwareContactHeading(
+                text(contact.content, "subheading", "We would love to hear from you"),
+                meta.industry,
+                "We would love to hear from you"
+              )}
             </h3>
-            <form className="flex w-full flex-col items-center gap-[53px]">
-              <div className="grid w-full gap-5 md:grid-cols-2">
-                <label className="flex flex-col gap-3 text-[18px]" style={{ color: "#7E7E7E" }}>
-                  Your Name
-                  <span className="h-px w-full bg-black" />
-                </label>
-                <label className="flex flex-col gap-3 text-[18px]" style={{ color: "#7E7E7E" }}>
-                  Email
-                  <span className="h-px w-full bg-black" />
-                </label>
-              </div>
-              <label className="flex h-40 w-full flex-col justify-between text-[18px]" style={{ color: "#7E7E7E" }}>
-                Message
-                <span className="h-px w-full bg-black" />
-              </label>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1.5 px-[18px] py-3 text-[15px] font-semibold text-white"
-                style={{ backgroundColor: RB.brand }}
-              >
-                {text(contact.content, "ctaPrimary", "Send Message")}
-                <img src={`${A}/arrow-up-right.svg`} alt="" width={20} height={20} className="size-5" />
-              </button>
-            </form>
+            <ReboContactForm
+              ctaLabel={industryAwareCta(
+                text(contact.content, "ctaPrimary", "Send Message"),
+                meta.industry,
+                "Send Message"
+              )}
+              contactEmail={meta.contactEmail}
+            />
           </div>
         </div>
       </section>

@@ -161,6 +161,8 @@ export type AssembledSite = {
   seo: SiteSeo;
   logo?: CompanyLogo;
   businessName?: string;
+  /** Industry from the questionnaire — used for industry-aware CTA fallbacks. */
+  industry?: string;
   contact?: SiteContact;
   /** Which renderer draws this site: "standard-sections" or a bespoke design. */
   renderer?: string;
