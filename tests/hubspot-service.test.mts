@@ -177,6 +177,7 @@ describe("purchase deal", () => {
     monthlyTotal: 29,
     packageLabel: "Managed hosting",
     closedWon: true,
+    dealStage: "1450553354",
     score: {
       combined: 60,
       engagement: 45,
@@ -270,8 +271,8 @@ describe("purchase deal", () => {
     const props = (calls[0].body as { properties: Record<string, string> }).properties;
     assert.equal(props.dealname, "Bright Smile Dental $557");
     assert.equal(props.amount, "557");
-    assert.equal(props.pipeline, "default");
-    assert.equal(props.dealstage, "closedwon");
+    assert.equal(props.pipeline, "941017774");
+    assert.equal(props.dealstage, "1450553354");
     assert.match(props.description, /Website: https:\/\/bright-smile.vercel.app/);
     assert.match(props.description, /Business: Bright Smile Dental/);
     assert.ok(props.closedate);
@@ -279,7 +280,7 @@ describe("purchase deal", () => {
     assert.ok(!("website_url" in props));
   });
 
-  it("keeps an unpaid deal in Qualified To Buy without a close date", async () => {
+  it("keeps an unpaid deal on Preview Generated without a close date", async () => {
     calls = [];
     stubHubSpot([(c) => (c.method === "POST" ? json({ id: "d-open" }) : undefined)]);
 
@@ -287,13 +288,15 @@ describe("purchase deal", () => {
       ...deal,
       amount: 0,
       closedWon: false,
+      dealStage: "1450553349",
       lineItems: [],
       quotedWebsiteTotal: 528,
       dealName: formatDealName("Bright Smile Dental", 0),
     };
     assert.equal(await upsertPurchaseDeal(open), "d-open");
     const props = (calls[0].body as { properties: Record<string, string> }).properties;
-    assert.equal(props.dealstage, "qualifiedtobuy");
+    assert.equal(props.pipeline, "941017774");
+    assert.equal(props.dealstage, "1450553349");
     assert.equal(props.amount, "0");
     assert.ok(!("closedate" in props));
   });

@@ -145,7 +145,7 @@ See `.env.example` for the full list. Highlights:
 | `HUBSPOT_API_BASE_URL` | API host (default `https://api.hubapi.com`) |
 | `HUBSPOT_API_VERSION` | Objects API version (default `2026-09`) |
 | `HUBSPOT_ASSOCIATIONS_API_VERSION` | Associations API version (default `2026-09`) |
-| `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_DEAL_OPEN_STAGE` | Optional pipeline/stage ids. Defaults: Sales Pipeline (`default`), Closed Won (`closedwon`) after website payment, Qualified To Buy (`qualifiedtobuy`) while the deal is open |
+| `HUBSPOT_DEAL_PIPELINE` | Optional deal pipeline override. Default `941017774` (Preview Generated → Content Generation → Credit Bought → Quotation Generated → Closed Won) |
 | `CRON_SECRET` | Shared secret for `/api/cron/hubspot`. Unset disables the scheduled drain |
 | `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
 | `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
@@ -192,13 +192,23 @@ follows it: COLD under 20, WARM from 20, HOT from 30. A new lead starts in the
 **New** stage of the lead pipeline; after that the stage is left for sales reps
 to move until payment.
 
-Completing the questionnaire opens a deal on the **Sales Pipeline** (Qualified To
-Buy) named `Company $Amount`, associated with the contact and company. The
-description carries every questionnaire answer. Credit-pack purchases update that
-same deal's amount and line items even if the website is not bought yet. Paying
-for the website package moves the lead and the deal to **Closed Won**, sets the
-close date, adds the website charge to the total, and moves the contact to
-`customer`. HubSpot's built-in lead pipeline has no Closed Won stage, so the
+Completing the questionnaire opens a deal on pipeline `941017774` named
+`Company $Amount`, associated with the contact and company. The deal stage
+advances with progress:
+
+| Milestone | Stage |
+|---|---|
+| Questionnaire saved | Preview Generated |
+| Website generated | Content Generation |
+| Credit pack purchased | Credit Bought |
+| Quote calculated | Quotation Generated |
+| Website package paid | Closed Won |
+
+The description carries every questionnaire answer. Credit-pack purchases update
+that same deal's amount and line items even if the website is not bought yet.
+Paying for the website package moves the lead and the deal to **Closed Won**,
+sets the close date, adds the website charge to the total, and moves the contact
+to `customer`. HubSpot's built-in lead pipeline has no Closed Won stage, so the
 integration creates one (label "Closed Won") the first time it is needed.
 
 Lead scores and marketing consent also stay in **our database**. Admins review
@@ -214,8 +224,8 @@ contact or deal properties.
 **Progress history:** one HubSpot Note per score event, associated to the contact  
 **Deal (standard):** `dealname` (`Company $Amount`), `amount` (every paid credit
 pack + website package when paid), `description` (website URL + HubSpot-style
-deal score A1–C3 + questionnaire answers + itemized payments), `pipeline` /
-`dealstage` (open: Qualified To Buy; paid website: Closed Won with `closedate`).
+deal score A1–C3 + questionnaire answers + itemized payments), `pipeline`
+(`941017774`) / `dealstage` (progress stages above; Closed Won sets `closedate`).
 Associated with contact, company, and lead. If the description would overflow,
 the full details are attached as a Note on the deal.
 
@@ -224,7 +234,7 @@ the full details are attached as a Note on the deal.
 1. Create a HubSpot private app with the scopes below.
 2. Set `HUBSPOT_API_KEY`, `HUBSPOT_API_BASE_URL=https://api.hubapi.com`,
    `HUBSPOT_API_VERSION=2026-09`, `HUBSPOT_ASSOCIATIONS_API_VERSION=2026-09`.
-   Optional: `HUBSPOT_DEAL_PIPELINE`, `HUBSPOT_DEAL_STAGE`, `HUBSPOT_DEAL_OPEN_STAGE`, `HUBSPOT_LEAD_PIPELINE`,
+   Optional: `HUBSPOT_DEAL_PIPELINE` (defaults to `941017774`), `HUBSPOT_LEAD_PIPELINE`,
    `HUBSPOT_LEAD_NEW_STAGE`, `HUBSPOT_LEAD_CLOSED_WON_STAGE`, `HUBSPOT_LEAD_OWNER_ID`,
    `HUBSPOT_LEAD_SCORE_PROPERTY` (defaults to `lead_score`), `CRON_SECRET`.
    Leave the lead pipeline settings blank to look them up from HubSpot (recommended).

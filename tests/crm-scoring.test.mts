@@ -11,9 +11,12 @@ const {
   ONE_TIME_SCORES,
   CrmScoreAction,
   ENGAGEMENT_GROUP_LIMIT,
+  DEAL_PIPELINE_ID,
+  DealStage,
   packageScore,
   oneTimeScore,
   computeCombinedScore,
+  resolveDealStage,
   assertScoringConfigIsComplete,
 } = await import("../lib/crm/config");
 const { resolveCreditPack } = await import("../lib/stripe/stripe");
@@ -72,6 +75,66 @@ describe("one-time actions", () => {
 
   it("scores a website package purchase once", () => {
     assert.equal(oneTimeScore(CrmScoreAction.WEBSITE_PACKAGE_PURCHASED), 25);
+  });
+});
+
+describe("HubSpot deal pipeline stages", () => {
+  it("uses the portal pipeline and stage ids from the screenshot", () => {
+    assert.equal(DEAL_PIPELINE_ID, "941017774");
+    assert.equal(DealStage.PREVIEW_GENERATED, "1450553349");
+    assert.equal(DealStage.CONTENT_GENERATION, "1450553351");
+    assert.equal(DealStage.CREDIT_BOUGHT, "1450553350");
+    assert.equal(DealStage.QUOTATION_GENERATED, "1450553352");
+    assert.equal(DealStage.CLOSED_WON, "1450553354");
+    assert.equal(DealStage.CLOSED_LOST, "1450553355");
+  });
+
+  it("advances to the furthest progress stage", () => {
+    assert.equal(
+      resolveDealStage({
+        websitePaid: false,
+        hasQuote: false,
+        hasCreditPurchase: false,
+        hasGeneratedContent: false,
+      }),
+      DealStage.PREVIEW_GENERATED
+    );
+    assert.equal(
+      resolveDealStage({
+        websitePaid: false,
+        hasQuote: false,
+        hasCreditPurchase: false,
+        hasGeneratedContent: true,
+      }),
+      DealStage.CONTENT_GENERATION
+    );
+    assert.equal(
+      resolveDealStage({
+        websitePaid: false,
+        hasQuote: false,
+        hasCreditPurchase: true,
+        hasGeneratedContent: true,
+      }),
+      DealStage.CREDIT_BOUGHT
+    );
+    assert.equal(
+      resolveDealStage({
+        websitePaid: false,
+        hasQuote: true,
+        hasCreditPurchase: true,
+        hasGeneratedContent: true,
+      }),
+      DealStage.QUOTATION_GENERATED
+    );
+    assert.equal(
+      resolveDealStage({
+        websitePaid: true,
+        hasQuote: true,
+        hasCreditPurchase: true,
+        hasGeneratedContent: true,
+      }),
+      DealStage.CLOSED_WON
+    );
   });
 });
 

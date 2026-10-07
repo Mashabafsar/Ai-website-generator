@@ -127,13 +127,19 @@ export const env = {
     baseUrl: (process.env.HUBSPOT_API_BASE_URL ?? "https://api.hubapi.com").replace(/\/+$/, ""),
     apiVersion: process.env.HUBSPOT_API_VERSION ?? "2026-09",
     associationsApiVersion: process.env.HUBSPOT_ASSOCIATIONS_API_VERSION ?? "2026-09",
-    /** Deal placement. Left blank, HubSpot uses Sales Pipeline (`default`). */
+    /**
+     * Deal pipeline id. Default is this portal's custom pipeline (`941017774`).
+     * Override when pointing at another HubSpot account.
+     */
     dealPipeline: process.env.HUBSPOT_DEAL_PIPELINE ?? "",
-    /** Closed Won stage after a website package is paid. Default `closedwon`. */
+    /**
+     * @deprecated Stages are resolved from account progress via `DealStage` in
+     * `lib/crm/config.ts`. Kept only so older env files still parse.
+     */
     dealStage: process.env.HUBSPOT_DEAL_STAGE ?? "",
     /**
-     * Open-deal stage from questionnaire until the website is paid.
-     * Default HubSpot id `qualifiedtobuy` (Qualified To Buy).
+     * @deprecated Open stages are Preview Generated / Content Generation /
+     * Credit Bought / Quotation Generated from progress. Kept for older env files.
      */
     dealOpenStage: process.env.HUBSPOT_DEAL_OPEN_STAGE ?? "",
     /** Lead placement. Blank means look up the portal's lead pipeline and its

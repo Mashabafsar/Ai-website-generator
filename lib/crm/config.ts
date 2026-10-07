@@ -87,6 +87,44 @@ export const CrmJobStatus = {
 } as const;
 export type CrmJobStatus = (typeof CrmJobStatus)[keyof typeof CrmJobStatus];
 
+/**
+ * HubSpot deal pipeline for this portal (Settings → Objects → Deals → Pipelines).
+ * Override with `HUBSPOT_DEAL_PIPELINE` when pointing at another portal.
+ */
+export const DEAL_PIPELINE_ID = "941017774";
+
+/**
+ * Deal stages on pipeline `941017774`, in pipeline order.
+ * Labels match the HubSpot UI (including the "Qoutation" spelling).
+ */
+export const DealStage = {
+  PREVIEW_GENERATED: "1450553349",
+  CONTENT_GENERATION: "1450553351",
+  CREDIT_BOUGHT: "1450553350",
+  QUOTATION_GENERATED: "1450553352",
+  CLOSED_WON: "1450553354",
+  CLOSED_LOST: "1450553355",
+} as const;
+export type DealStage = (typeof DealStage)[keyof typeof DealStage];
+
+/**
+ * Furthest progress wins. Order matches the HubSpot pipeline:
+ * Preview Generated → Content Generation → Credit Bought →
+ * Quotation Generated → Closed Won.
+ */
+export function resolveDealStage(state: {
+  websitePaid: boolean;
+  hasQuote: boolean;
+  hasCreditPurchase: boolean;
+  hasGeneratedContent: boolean;
+}): DealStage {
+  if (state.websitePaid) return DealStage.CLOSED_WON;
+  if (state.hasQuote) return DealStage.QUOTATION_GENERATED;
+  if (state.hasCreditPurchase) return DealStage.CREDIT_BOUGHT;
+  if (state.hasGeneratedContent) return DealStage.CONTENT_GENERATION;
+  return DealStage.PREVIEW_GENERATED;
+}
+
 /** HubSpot-defined association type id for deal -> contact. */
 export const DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID = 3;
 

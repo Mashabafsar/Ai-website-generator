@@ -13,12 +13,14 @@ import {
   CREDIT_PACKS,
   CreditLedgerReason,
   PackageType,
+  PAID_PROJECT_STATUSES,
   PaymentStatus,
   PaymentType,
+  ProjectStatus,
 } from "@/lib/constants";
 import { publicSiteUrl } from "@/lib/deployment/url";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
-import { CrmJobKind, computeCombinedScore } from "@/lib/crm/config";
+import { CrmJobKind, computeCombinedScore, resolveDealStage } from "@/lib/crm/config";
 import { drainCrmOutbox, enqueueCrmJob } from "@/lib/crm/outbox";
 import {
   associateContactWithCompany,
@@ -153,8 +155,9 @@ function projectDetailsFromAnswers(
  * Create or update the HubSpot deal for an account.
  *
  * Opens when the questionnaire is saved. Amount is every credit pack plus the
- * website package once paid. Name is `Company $Amount`. Closed Won only after
- * the website package is paid; until then the deal stays open on the pipeline.
+ * website package once paid. Name is `Company $Amount`. Stage advances on
+ * pipeline `941017774`: Preview Generated → Content Generation → Credit Bought
+ * → Quotation Generated → Closed Won (website paid).
  */
 export async function syncAccountDeal(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -245,6 +248,19 @@ export async function syncAccountDeal(userId: string): Promise<void> {
   const amount = websiteAmount + creditTotal;
   const lineItems = [...websiteLineItems, ...creditLineItems];
   const closedWon = Boolean(websitePayment);
+  const hasGeneratedContent = Boolean(
+    project.blueprint ||
+      project.assembledPages ||
+      project.status === ProjectStatus.GENERATED ||
+      project.status === ProjectStatus.QUOTED ||
+      PAID_PROJECT_STATUSES.has(project.status)
+  );
+  const dealStage = resolveDealStage({
+    websitePaid: closedWon,
+    hasQuote: Boolean(project.quote),
+    hasCreditPurchase: creditLineItems.length > 0,
+    hasGeneratedContent,
+  });
   const businessName = projectDetails?.businessName || project.businessName;
   const currency = websitePayment?.currency || project.quote?.currency || "USD";
 
@@ -269,6 +285,7 @@ export async function syncAccountDeal(userId: string): Promise<void> {
     monthlyTotal,
     packageLabel,
     closedWon,
+    dealStage,
     quotedWebsiteTotal,
     score: {
       combined: combined.combined,

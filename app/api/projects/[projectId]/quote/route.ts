@@ -3,6 +3,7 @@ import { getOwnedProject } from "@/lib/projects/projects";
 import { generateAndSaveQuote } from "@/lib/quote/quote";
 import { isPackageType, ProjectStatus } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { enqueueDealSyncForUser, scheduleCrmDrain } from "@/lib/crm/sync";
 
 type Ctx = { params: Promise<{ projectId: string }> };
 
@@ -27,6 +28,9 @@ export async function POST(req: Request, { params }: Ctx) {
         data: { status: ProjectStatus.QUOTED },
       });
     }
+    // Advance HubSpot deal to Quotation Generated (pipeline stage).
+    await enqueueDealSyncForUser(user.id, projectId);
+    scheduleCrmDrain();
     return jsonOk(quote);
   } catch (err) {
     console.error("Quote error:", err);

@@ -12,9 +12,11 @@ import { env } from "@/lib/env";
 import {
   CONTACT_ANALYTICS_SOURCE,
   CONTACT_TO_COMPANY_ASSOCIATION_TYPE_ID,
+  DEAL_PIPELINE_ID,
   DEAL_TO_COMPANY_ASSOCIATION_TYPE_ID,
   DEAL_TO_CONTACT_ASSOCIATION_TYPE_ID,
   DEAL_TO_LEAD_ASSOCIATION_TYPE_ID,
+  DealStage,
   LEAD_CLOSED_WON_STAGE_LABEL,
   LEAD_NEW_STAGE_LABEL,
   LEAD_TO_PRIMARY_CONTACT_ASSOCIATION_TYPE_ID,
@@ -60,6 +62,11 @@ export type PurchaseDealSnapshot = {
   packageLabel?: string;
   /** True only after the website package is paid — moves the deal to Closed Won. */
   closedWon: boolean;
+  /**
+   * HubSpot `dealstage` id on pipeline `941017774` (or `HUBSPOT_DEAL_PIPELINE`).
+   * Resolved from questionnaire → generate → credits → quote → website paid.
+   */
+  dealStage: string;
   /** Quoted website total before payment; shown in the description, not in amount. */
   quotedWebsiteTotal?: number;
   /**
@@ -304,15 +311,11 @@ function dealProperties(
     dealname: deal.dealName,
     amount: String(deal.amount),
     description,
+    pipeline: env.hubspot.dealPipeline || DEAL_PIPELINE_ID,
+    dealstage: deal.dealStage || DealStage.PREVIEW_GENERATED,
   };
-  // Sales Pipeline by default. Open deals sit in Qualified To Buy until the
-  // website package is paid, then move to Closed Won with a close date.
-  properties.pipeline = env.hubspot.dealPipeline || "default";
-  if (deal.closedWon) {
-    properties.dealstage = env.hubspot.dealStage || "closedwon";
+  if (deal.closedWon || deal.dealStage === DealStage.CLOSED_WON) {
     properties.closedate = new Date().toISOString();
-  } else {
-    properties.dealstage = env.hubspot.dealOpenStage || "qualifiedtobuy";
   }
   return properties;
 }

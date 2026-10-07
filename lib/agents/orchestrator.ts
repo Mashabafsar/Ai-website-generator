@@ -38,6 +38,7 @@ import { withUsageCapture } from "@/lib/ai/usage";
 import { persistUsageEvents } from "@/lib/ai/usage-record";
 import { newFailureLog, withAiDiagnostics } from "@/lib/ai/diagnostics";
 import { recordAiIncidents } from "@/lib/ai/incidents";
+import { enqueueDealSyncForUser, scheduleCrmDrain } from "@/lib/crm/sync";
 import type { AiFailure } from "@/lib/ai/failure";
 import { trySyncPaidProjectToGitHub } from "@/lib/github/github";
 import { slugify } from "@/lib/utils";
@@ -444,6 +445,10 @@ async function runGeneration(params: {
 
     // Paid sites are committed into AI-WEBSITE-BUILDER-WEBSITE. Unpaid drafts stay local.
     if (keepPaidStatus) await trySyncPaidProjectToGitHub(projectId);
+
+    // Advance HubSpot deal to Content Generation (pipeline stage).
+    await enqueueDealSyncForUser(userId, projectId);
+    scheduleCrmDrain();
 
     return {
       status: "GENERATED",
