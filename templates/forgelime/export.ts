@@ -156,7 +156,7 @@ export function renderForgeLimePage(site: AssembledSite): string {
 
   const footerLinks = list(footer.content, "linkLabels", [...NAV.map((n) => n.label), "Contact Us"]);
   const footerNav = footerLinks
-    .map((label, i) => `<a href="${i < NAV.length ? NAV[i].href : "#fl-contact"}" class="transition-colors hover:text-[#A9FF5C]">${esc(label)}</a>`)
+    .map((label, i) => `<a href="${i < NAV.length ? NAV[i].href : "#fl-contact"}" class="transition-colors hover:text-[color:var(--brand,#A9FF5C)]">${esc(label)}</a>`)
     .join("");
 
   const body = `
@@ -168,17 +168,17 @@ export function renderForgeLimePage(site: AssembledSite): string {
   <div class="relative z-10 mx-auto flex min-h-[900px] max-w-[90rem] flex-col px-4 pb-20 pt-8 lg:px-20">
     <div class="flex items-center justify-between">
       <a href="#fl-top" class="inline-flex items-center gap-3">${customLogo ? `<img src="${esc(customLogo)}" alt="" class="h-11 w-11 object-contain" />` : `<img src="${ASSETS.logoHeader}" alt="" class="h-12 w-12 object-contain" />`}</a>
-      <nav class="hidden items-center gap-4 md:flex">${NAV.map((item) => `<a href="${item.href}" class="rounded-lg px-2 py-1 text-base text-[#F1FBE8] transition-colors hover:text-[#A9FF5C]">${esc(item.label)}</a>`).join("")}</nav>
-      <a href="${contactHref}" class="rounded-xl border border-[#A9FF5C] px-5 py-3 text-sm font-semibold text-[#F1FBE8] transition-colors hover:bg-[#A9FF5C]/10">Get In Touch</a>
+      <nav class="hidden items-center gap-4 md:flex">${NAV.map((item) => `<a href="${item.href}" class="rounded-lg px-2 py-1 text-base text-[#F1FBE8] transition-colors hover:text-[color:var(--brand,#A9FF5C)]">${esc(item.label)}</a>`).join("")}</nav>
+      <a href="${contactHref}" class="rounded-xl border border-[color:var(--brand,#A9FF5C)] px-5 py-3 text-sm font-semibold text-[#F1FBE8] transition-colors hover:bg-[color:var(--brand,#A9FF5C)]/10">Get In Touch</a>
     </div>
     <div class="mx-auto mt-24 flex max-w-[52rem] flex-col items-center text-center">
       <div class="flex items-center gap-4 rounded-full border border-[#426027] bg-[#1F2B15] px-3 py-2">
         <div class="flex items-center">${ASSETS.heroAvatars.map((src, i) => `<img src="${src}" alt="" class="h-8 w-8 rounded-full border-2 border-[#1F2B15] object-cover ${i > 0 ? "-ml-2" : ""}" />`).join("")}</div>
-        <div class="flex items-center gap-2 text-sm text-[#E1FFC7]"><span>${esc(text(hero.content, "eyebrow", "What Others Say About Us"))}</span><img src="${ASSETS.heroArrow}" alt="" class="h-4 w-4 object-contain" /></div>
+        <div class="flex items-center gap-2 text-sm text-[color:var(--brand-soft,#E1FFC7)]"><span>${esc(text(hero.content, "eyebrow", "What Others Say About Us"))}</span><img src="${ASSETS.heroArrow}" alt="" class="h-4 w-4 object-contain" /></div>
       </div>
       <h1 class="mt-8 text-[clamp(3rem,9vw,6.5rem)] uppercase leading-[0.9] tracking-[-1.6px]" style="font-family:var(--fl-display)">${accentWords(text(hero.content, "headline", "Grow Sales With Our Strategy First Approach"), 2)}</h1>
       <p class="mt-6 max-w-[40rem] text-lg leading-relaxed text-[#979F90]">${esc(text(hero.content, "subheadline", "Forge's sales and marketing solutions are strategically assigned each month to adapt quickly and hit your goals."))}</p>
-      <a href="#fl-contact" class="mt-10 rounded-xl bg-[#A9FF5C] px-8 py-5 text-base font-bold text-[#090D06]">${esc(text(hero.content, "ctaPrimary", "Book a Free Consultation"))}</a>
+      <a href="#fl-contact" class="mt-10 rounded-xl bg-[color:var(--brand,#A9FF5C)] px-8 py-5 text-base font-bold text-[#090D06]">${esc(text(hero.content, "ctaPrimary", "Book a Free Consultation"))}</a>
     </div>
   </div>
 </section>
@@ -191,8 +191,8 @@ export function renderForgeLimePage(site: AssembledSite): string {
   <div class="mt-14 grid gap-4">
     <article class="grid overflow-hidden rounded-[28px] lg:grid-cols-2" style="background:${FL.brandSoft}">
       <div class="p-8 lg:p-14">
-        <span class="inline-grid h-20 w-20 place-items-center rounded-full bg-[#356905]"><img src="${ASSETS.aboutRocket}" alt="" class="h-10 w-10 object-contain" /></span>
-        <h3 class="mt-10 text-[clamp(2rem,5vw,3rem)] uppercase leading-[0.92] tracking-[-0.8px]" style="font-family:var(--fl-display);color:#356905">${esc(aboutTitles[0])}</h3>
+        <span class="inline-grid h-20 w-20 place-items-center rounded-full bg-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]"><img src="${ASSETS.aboutRocket}" alt="" class="h-10 w-10 object-contain" /></span>
+        <h3 class="mt-10 text-[clamp(2rem,5vw,3rem)] uppercase leading-[0.92] tracking-[-0.8px]" style="font-family:var(--fl-display);color:${FL.brandOnSoft}">${esc(aboutTitles[0])}</h3>
         <p class="mt-4 text-lg leading-relaxed text-[#090D06]">${esc(aboutBodies[0] || "As a dynamic and forward-thinking powerhouse, we craft innovative strategies that move beyond convention.")}</p>
       </div>
       <div class="relative min-h-[320px]"><img src="${esc(aboutMain)}" alt="" class="absolute inset-0 h-full w-full object-cover" /></div>
@@ -219,8 +219,8 @@ export function renderForgeLimePage(site: AssembledSite): string {
     ${solutionTitles
       .map(
         (title, i) => `<article class="flex flex-col items-center rounded-[28px] px-8 pb-12 pt-8 text-center" style="background:${FL.brandSoft}">
-      <div class="relative h-[264px] w-[264px]"><div class="absolute inset-[12%] rounded-full bg-[#7FD136]"></div><img src="${esc(solutionIcon(i))}" alt="" class="absolute inset-0 h-full w-full object-cover" /></div>
-      <h3 class="mt-8 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#356905]" style="font-family:var(--fl-display)">${esc(title)}</h3>
+      <div class="relative h-[264px] w-[264px]"><div class="absolute inset-[12%] rounded-full bg-[color:var(--brand-strong,#7FD136)]"></div><img src="${esc(solutionIcon(i))}" alt="" class="absolute inset-0 h-full w-full object-cover" /></div>
+      <h3 class="mt-8 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]" style="font-family:var(--fl-display)">${esc(title)}</h3>
       <p class="mt-4 text-lg leading-relaxed text-[#090D06]">${esc(solutionBodies[i] || "Our experts design practical, high-impact systems that improve consistency and growth performance.")}</p>
     </article>`
       )
@@ -232,11 +232,11 @@ export function renderForgeLimePage(site: AssembledSite): string {
   <h2 class="mx-auto max-w-[36rem] text-center text-[clamp(2.5rem,7vw,4.5rem)] uppercase leading-[0.92] tracking-[-1.4px]" style="font-family:var(--fl-display)">${accentWords(text(process.content, "heading", "A Deep Dive into Our Collaborative Work Methodology"), 7)}</h2>
   <div class="mt-20 grid gap-10 lg:grid-cols-[1fr_692px]">
     <div class="grid grid-cols-[4px_1fr] gap-10">
-      <div class="rounded-full bg-[#1F2B15]"><div class="h-28 w-[4px] rounded-full bg-[#A9FF5C]"></div></div>
+      <div class="rounded-full bg-[#1F2B15]"><div class="h-28 w-[4px] rounded-full bg-[color:var(--brand,#A9FF5C)]"></div></div>
       <div class="space-y-16">
         ${stepTitles
           .map(
-            (title, i) => `<article><h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#A9FF5C]" style="font-family:var(--fl-display)">${esc(title)}</h3><p class="mt-4 text-lg leading-relaxed text-[#979F90]">${esc(stepBodies[i] || "We collaborate closely with your team, iterate with feedback, and keep progress aligned to measurable outcomes.")}</p></article>`
+            (title, i) => `<article><h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:var(--brand,#A9FF5C)]" style="font-family:var(--fl-display)">${esc(title)}</h3><p class="mt-4 text-lg leading-relaxed text-[#979F90]">${esc(stepBodies[i] || "We collaborate closely with your team, iterate with feedback, and keep progress aligned to measurable outcomes.")}</p></article>`
           )
           .join("")}
       </div>
@@ -250,16 +250,16 @@ export function renderForgeLimePage(site: AssembledSite): string {
     <img src="${ASSETS.statsCard}" alt="" class="pointer-events-none absolute -left-40 top-24 z-0 hidden h-[420px] w-[420px] object-contain opacity-40 lg:block" />
     <img src="${ASSETS.statsMedal}" alt="" class="pointer-events-none absolute -right-16 top-8 z-0 hidden h-[220px] w-[220px] object-contain opacity-40 lg:block" />
     <div class="relative z-10 flex flex-col items-center text-center">
-      <div class="inline-flex items-center gap-3 rounded-full border border-[#356905] bg-[#002D00] px-5 py-2"><img src="${ASSETS.iconChat}" alt="" class="h-5 w-5 object-contain" /><span class="text-base text-[#7FD136]">Have Questions?</span><img src="${ASSETS.iconArrow}" alt="" class="h-4 w-4 object-contain" /></div>
+      <div class="inline-flex items-center gap-3 rounded-full border px-5 py-2" style="border-color:${FL.brandOnSoft};background:${FL.sectionDeepGreen}"><img src="${ASSETS.iconChat}" alt="" class="h-5 w-5 object-contain" /><span class="text-base text-[color:var(--brand-strong,#7FD136)]">Have Questions?</span><img src="${ASSETS.iconArrow}" alt="" class="h-4 w-4 object-contain" /></div>
       <h2 class="mt-6 max-w-[36rem] text-[clamp(2.5rem,7vw,4.5rem)] uppercase leading-[1.05] tracking-[-1.4px] break-words" style="font-family:var(--fl-display)">${accentWords(text(stats.content, "heading", "Empowering Success in Numbers"), 1)}</h2>
       <p class="mt-5 max-w-[36rem] text-xl leading-relaxed text-[#F1FBE8]">${esc(text(stats.content, "subheading", "We redefine collaboration, innovation, and success through a practical strategy and delivery model."))}</p>
-      <a href="#fl-contact" class="mt-8 rounded-xl bg-[#A9FF5C] px-8 py-5 text-base font-bold text-[#090D06]">Get In Touch</a>
+      <a href="#fl-contact" class="mt-8 rounded-xl bg-[color:var(--brand,#A9FF5C)] px-8 py-5 text-base font-bold text-[#090D06]">Get In Touch</a>
     </div>
   </div>
   <div class="relative z-10 grid gap-8 rounded-[28px] bg-[#002D00] px-6 py-12 text-center md:px-16 ${statsAreCompact ? "md:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3"}">
     ${statValues
       .map(
-        (value, i) => `<div class="min-w-0 px-2"><div class="${statsAreCompact ? "text-[clamp(3.5rem,8vw,7rem)] uppercase leading-none tracking-[-2px] text-[#A9FF5C]" : "text-[clamp(1.65rem,3vw,2.5rem)] uppercase leading-snug tracking-[-0.4px] text-[#A9FF5C] break-words"}" style="font-family:var(--fl-display)">${esc(value)}</div><p class="mt-3 text-lg leading-relaxed text-[#F1FBE8]">${esc(statLabels[i] || "Measured growth")}</p></div>`
+        (value, i) => `<div class="min-w-0 px-2"><div class="${statsAreCompact ? "text-[clamp(3.5rem,8vw,7rem)] uppercase leading-none tracking-[-2px] text-[color:var(--brand,#A9FF5C)]" : "text-[clamp(1.65rem,3vw,2.5rem)] uppercase leading-snug tracking-[-0.4px] text-[color:var(--brand,#A9FF5C)] break-words"}" style="font-family:var(--fl-display)">${esc(value)}</div><p class="mt-3 text-lg leading-relaxed text-[#F1FBE8]">${esc(statLabels[i] || "Measured growth")}</p></div>`
       )
       .join("")}
   </div>
@@ -277,7 +277,7 @@ export function renderForgeLimePage(site: AssembledSite): string {
           (col) => `<div class="space-y-4">
         ${col
           .map(
-            (i) => `<article class="rounded-[20px] bg-[#1F2B15] px-6 pb-8 pt-6"><div class="mb-4 flex items-center gap-3"><img src="${ASSETS.avatars[i % ASSETS.avatars.length]}" alt="" class="h-9 w-9 rounded-full border border-[#7FD136] object-cover" /><span class="text-base text-[#7FD136]">${esc(authorList[i] || "Client")}</span></div><p class="text-base leading-relaxed text-[#979F90]">${esc(quoteList[i])}</p>${roleList[i] ? `<p class="mt-4 text-sm text-[#E1FFC7]/70">${esc(roleList[i])}</p>` : ""}</article>`
+            (i) => `<article class="rounded-[20px] bg-[#1F2B15] px-6 pb-8 pt-6"><div class="mb-4 flex items-center gap-3"><img src="${ASSETS.avatars[i % ASSETS.avatars.length]}" alt="" class="h-9 w-9 rounded-full border border-[color:var(--brand-strong,#7FD136)] object-cover" /><span class="text-base text-[color:var(--brand-strong,#7FD136)]">${esc(authorList[i] || "Client")}</span></div><p class="text-base leading-relaxed text-[#979F90]">${esc(quoteList[i])}</p>${roleList[i] ? `<p class="mt-4 text-sm text-[color:var(--brand-soft,#E1FFC7)]/70">${esc(roleList[i])}</p>` : ""}</article>`
           )
           .join("")}
       </div>`
@@ -307,11 +307,11 @@ export function renderForgeLimePage(site: AssembledSite): string {
     ${questions
       .map(
         (question, i) => `<details ${i === 0 ? "open" : ""} class="group overflow-hidden rounded-[20px] bg-[#1F2B15]">
-      <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[20px] bg-[#E1FFC7] px-8 py-6">
-        <span class="text-2xl text-[#003800]">${esc(question)}</span>
-        <span class="grid h-[76px] w-[76px] place-items-center rounded-[20px] bg-[#7FD136]"><img src="${ASSETS.faqAdd}" alt="" class="h-7 w-7 object-contain group-open:hidden" /><img src="${ASSETS.faqDismiss}" alt="" class="hidden h-7 w-7 object-contain group-open:block" /></span>
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[20px] bg-[color:var(--brand-soft,#E1FFC7)] px-8 py-6">
+        <span class="text-2xl text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">${esc(question)}</span>
+        <span class="grid h-[76px] w-[76px] place-items-center rounded-[20px] bg-[color:var(--brand-strong,#7FD136)]"><img src="${ASSETS.faqAdd}" alt="" class="h-7 w-7 object-contain group-open:hidden" /><img src="${ASSETS.faqDismiss}" alt="" class="hidden h-7 w-7 object-contain group-open:block" /></span>
       </summary>
-      <p class="px-8 pb-7 pt-6 text-xl leading-relaxed text-[#E1FFC7]">${esc(answers[i] || "Our team will tailor the solution to your goals, timeline, and team setup while keeping communication transparent.")}</p>
+      <p class="px-8 pb-7 pt-6 text-xl leading-relaxed text-[color:var(--brand-soft,#E1FFC7)]">${esc(answers[i] || "Our team will tailor the solution to your goals, timeline, and team setup while keeping communication transparent.")}</p>
     </details>`
       )
       .join("")}
@@ -324,31 +324,40 @@ export function renderForgeLimePage(site: AssembledSite): string {
     <p class="mt-5 text-xl leading-relaxed text-[#979F90]">${esc(text(contact.content, "subheading", "Ready to take the next step? Contact us to explore how our strategies can propel your business forward."))}</p>
   </div>
   <div class="mt-14 grid gap-4 md:grid-cols-2">
-    <article class="rounded-[28px] bg-[#E1FFC7] px-8 py-12 text-center"><h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#356905]" style="font-family:var(--fl-display)">Drop Us a Line</h3><p class="mt-2 text-xl text-[#003800]">${esc(contactEmail)}</p></article>
-    <article class="rounded-[28px] bg-[#E1FFC7] px-8 py-12 text-center"><h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#356905]" style="font-family:var(--fl-display)">Book a Call</h3><p class="mt-2 text-xl text-[#003800]">${esc(contactPhone)}</p></article>
+    <article class="rounded-[28px] bg-[color:var(--brand-soft,#E1FFC7)] px-8 py-12 text-center"><h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]" style="font-family:var(--fl-display)">Drop Us a Line</h3><p class="mt-2 text-xl text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">${esc(contactEmail)}</p></article>
+    <article class="rounded-[28px] bg-[color:var(--brand-soft,#E1FFC7)] px-8 py-12 text-center"><h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]" style="font-family:var(--fl-display)">Book a Call</h3><p class="mt-2 text-xl text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">${esc(contactPhone)}</p></article>
   </div>
   <div class="mt-4 grid gap-4 lg:grid-cols-[524px_1fr]">
-    <article class="rounded-[28px] bg-[#243317] p-10">
-      <h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#E1FFC7]" style="font-family:var(--fl-display)">Connect with Ease</h3>
-      <p class="mt-4 text-xl leading-relaxed text-[#E1FFC7]">Your inquiries, ideas, and collaboration opportunities are just a click away.</p>
-      <div class="mt-8 space-y-7">
-        <div><div class="mb-2 text-base text-[#F1FBE8]">Full Name</div><div class="rounded-xl border border-[#F1FBE8]/30 px-6 py-5 text-base text-[#F1FBE8]/50">${esc(businessName)}</div></div>
-        <div><div class="mb-2 text-base text-[#F1FBE8]">Email</div><div class="rounded-xl border border-[#F1FBE8]/30 px-6 py-5 text-base text-[#F1FBE8]/50">${esc(contactEmail)}</div></div>
-        <div><div class="mb-2 text-base text-[#F1FBE8]">Question</div><div class="rounded-xl border border-[#F1FBE8]/30 px-6 py-5 text-base text-[#F1FBE8]/50">How can we help you?</div></div>
-      </div>
-      <a href="${contactHref}" class="mt-8 inline-block rounded-xl bg-[#A9FF5C] px-8 py-5 text-base font-bold text-[#090D06]">${esc(contactCta)}</a>
-      <p class="mt-6 text-sm text-[#F1FBE8]/65">${esc(contactAddress)}</p>
+    <article class="rounded-[28px] p-10" style="background:${FL.card}">
+      <h3 class="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:var(--brand-soft,#E1FFC7)]" style="font-family:var(--fl-display)">Connect with Ease</h3>
+      <p class="mt-4 text-xl leading-relaxed text-[color:var(--brand-soft,#E1FFC7)]">Your inquiries, ideas, and collaboration opportunities are just a click away.</p>
+      <form class="mt-8 space-y-7" action="${contactEmail ? `mailto:${esc(contactEmail)}` : "#"}" method="get" enctype="text/plain">
+        <label class="block">
+          <span class="mb-2 block text-base" style="color:${FL.ink}">Full Name</span>
+          <input name="name" required autocomplete="name" placeholder="Jane Doe" class="w-full rounded-xl border bg-transparent px-6 py-5 text-base outline-none placeholder:opacity-50" style="border-color:color-mix(in oklab, var(--theme-fg, #F1FBE8) 30%, transparent);color:${FL.ink}" />
+        </label>
+        <label class="block">
+          <span class="mb-2 block text-base" style="color:${FL.ink}">Email</span>
+          <input name="email" type="email" required autocomplete="email" placeholder="you@example.com" class="w-full rounded-xl border bg-transparent px-6 py-5 text-base outline-none placeholder:opacity-50" style="border-color:color-mix(in oklab, var(--theme-fg, #F1FBE8) 30%, transparent);color:${FL.ink}" />
+        </label>
+        <label class="block">
+          <span class="mb-2 block text-base" style="color:${FL.ink}">Question</span>
+          <textarea name="body" required rows="3" placeholder="How can we help you?" class="min-h-[5.5rem] w-full resize-y rounded-xl border bg-transparent px-6 py-5 text-base outline-none placeholder:opacity-50" style="border-color:color-mix(in oklab, var(--theme-fg, #F1FBE8) 30%, transparent);color:${FL.ink}"></textarea>
+        </label>
+        <button type="submit" class="inline-block rounded-xl px-8 py-5 text-base font-bold" style="background:${FL.brand};color:${FL.onLight}">${esc(contactCta)}</button>
+        <p class="text-sm opacity-65" style="color:${FL.ink}">${esc(contactAddress)}</p>
+      </form>
     </article>
     <div class="relative min-h-[480px] overflow-hidden rounded-[28px]"><img src="${ASSETS.contactImage}" alt="" class="absolute inset-0 h-full w-full object-cover" /></div>
   </div>
 </section>
 
 <footer class="px-4 pb-10 lg:px-20" style="${sectionBandCss(footer.theme)}">
-  <div class="rounded-[28px] bg-[#131C0B] p-8 lg:p-12">
+  <div class="rounded-[28px] p-8 lg:p-12" style="background:${FL.panel}">
     <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-      <a href="#fl-top" class="inline-flex items-center gap-3">${customLogo ? `<img src="${esc(customLogo)}" alt="" class="h-11 w-11 object-contain" />` : `<img src="${ASSETS.logoFooter}" alt="" class="h-11 w-11 object-contain" />`}<span class="text-2xl uppercase tracking-wide text-[#E1FFC7]" style="font-family:var(--fl-display)">${esc(businessName)}</span></a>
-      <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[#E1FFC7]">${footerNav}</nav>
-      <div class="flex items-center gap-2"><span class="grid h-10 w-10 place-items-center rounded-[10px] bg-[#A9FF5C]"><img src="${ASSETS.socialFacebook}" alt="" class="h-[18px] w-[18px] object-contain" /></span><span class="grid h-10 w-10 place-items-center rounded-[10px] bg-[#A9FF5C]"><img src="${ASSETS.socialLinkedin}" alt="" class="h-[18px] w-[18px] object-contain" /></span><span class="grid h-10 w-10 place-items-center rounded-[10px] bg-[#A9FF5C]"><img src="${ASSETS.socialTwitter}" alt="" class="h-[18px] w-[18px] object-contain" /></span></div>
+      <a href="#fl-top" class="inline-flex items-center gap-3">${customLogo ? `<img src="${esc(customLogo)}" alt="" class="h-11 w-11 object-contain" />` : `<img src="${ASSETS.logoFooter}" alt="" class="h-11 w-11 object-contain" />`}<span class="text-2xl uppercase tracking-wide text-[color:var(--brand-soft,#E1FFC7)]" style="font-family:var(--fl-display)">${esc(businessName)}</span></a>
+      <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-[color:var(--brand-soft,#E1FFC7)]">${footerNav}</nav>
+      <div class="flex items-center gap-2"><span class="grid h-10 w-10 place-items-center rounded-[10px] bg-[color:var(--brand,#A9FF5C)]"><img src="${ASSETS.socialFacebook}" alt="" class="h-[18px] w-[18px] object-contain" /></span><span class="grid h-10 w-10 place-items-center rounded-[10px] bg-[color:var(--brand,#A9FF5C)]"><img src="${ASSETS.socialLinkedin}" alt="" class="h-[18px] w-[18px] object-contain" /></span><span class="grid h-10 w-10 place-items-center rounded-[10px] bg-[color:var(--brand,#A9FF5C)]"><img src="${ASSETS.socialTwitter}" alt="" class="h-[18px] w-[18px] object-contain" /></span></div>
     </div>
     <div class="mt-8 border-t border-[#1F2B15] pt-6 text-center text-sm text-[#979F90]">© ${new Date().getFullYear()} ${esc(businessName)}, All Rights Reserved</div>
   </div>

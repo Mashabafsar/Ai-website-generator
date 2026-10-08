@@ -4,17 +4,20 @@ export const FL = {
   brand: "var(--brand, #A9FF5C)",
   brandStrong: "var(--brand-strong, #7FD136)",
   brandSoft: "var(--brand-soft, #E1FFC7)",
+  /** Dark text on brand-soft panels — follows the chosen brand. */
+  brandOnSoft: "color-mix(in oklab, var(--brand, #A9FF5C) 55%, black)",
   ink: "var(--theme-fg, #F1FBE8)",
   body: "var(--theme-muted, #979F90)",
   line: "var(--theme-line, #1F2B15)",
   canvas: "var(--theme-bg, #090D06)",
   panel: "var(--theme-surface, #131C0B)",
   card: "var(--theme-card, #1F2B15)",
-  sectionGreen: "#003800",
-  sectionDeepGreen: "#002D00",
+  /** Deep band behind stats — tinted from brand instead of fixed lime green. */
+  sectionGreen: "color-mix(in oklab, var(--brand, #A9FF5C) 28%, #090D06)",
+  sectionDeepGreen: "color-mix(in oklab, var(--brand, #A9FF5C) 18%, #090D06)",
   orangeSoft: "#FFC295",
   orangeInk: "#602606",
   yellowSoft: "#FFE27D",
   yellowInk: "#564801",
-  onLight: "#090D06",
+  onLight: "var(--theme-bg, #090D06)",
 } as const;

@@ -1,5 +1,6 @@
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FL } from "./tokens";
+import { ForgeLimeContactForm } from "./contact-form";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
@@ -205,14 +206,14 @@ export function ForgeLimeSite({
             </a>
             <nav className="hidden items-center gap-4 md:flex">
               {NAV.map((item) => (
-                <a key={item.href} href={item.href} className="rounded-lg px-2 py-1 text-base text-[#F1FBE8] transition-colors hover:text-[#A9FF5C]">
+                <a key={item.href} href={item.href} className="rounded-lg px-2 py-1 text-base text-[#F1FBE8] transition-colors hover:text-[color:var(--brand,#A9FF5C)]">
                   {item.label}
                 </a>
               ))}
             </nav>
             <a
               href={contactHref}
-              className="rounded-xl border border-[#A9FF5C] px-5 py-3 text-sm font-semibold text-[#F1FBE8] transition-colors hover:bg-[#A9FF5C]/10"
+              className="rounded-xl border border-[color:var(--brand,#A9FF5C)] px-5 py-3 text-sm font-semibold text-[#F1FBE8] transition-colors hover:bg-[color:var(--brand,#A9FF5C)]/10"
             >
               Get In Touch
             </a>
@@ -231,7 +232,7 @@ export function ForgeLimeSite({
                   />
                 ))}
               </div>
-              <div className="flex items-center gap-2 text-sm text-[#E1FFC7]">
+              <div className="flex items-center gap-2 text-sm text-[color:var(--brand-soft,#E1FFC7)]">
                 <span>{text(hero.content, "eyebrow", "What Others Say About Us")}</span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={ASSETS.heroArrow} alt="" className="h-4 w-4 object-contain" />
@@ -253,7 +254,7 @@ export function ForgeLimeSite({
             </p>
             <a
               href="#fl-contact"
-              className="mt-10 rounded-xl bg-[#A9FF5C] px-8 py-5 text-base font-bold text-[#090D06] transition hover:bg-[#95EA4F]"
+              className="mt-10 rounded-xl bg-[color:var(--brand,#A9FF5C)] px-8 py-5 text-base font-bold text-[#090D06] transition hover:bg-[color:var(--brand-strong,#7FD136)]"
             >
               {text(hero.content, "ctaPrimary", "Book a Free Consultation")}
             </a>
@@ -278,13 +279,13 @@ export function ForgeLimeSite({
         <div className="mt-14 grid gap-4">
           <article className="grid overflow-hidden rounded-[28px] lg:grid-cols-2" style={{ backgroundColor: FL.brandSoft }}>
             <div className="p-8 lg:p-14">
-              <span className="inline-grid h-20 w-20 place-items-center rounded-full bg-[#356905]">
+              <span className="inline-grid h-20 w-20 place-items-center rounded-full bg-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={ASSETS.aboutRocket} alt="" className="h-10 w-10 object-contain" />
               </span>
               <h3
                 className="mt-10 text-[clamp(2rem,5vw,3rem)] uppercase leading-[0.92] tracking-[-0.8px]"
-                style={{ color: "#356905", fontFamily: "var(--fl-display)" }}
+                style={{ color: FL.brandOnSoft, fontFamily: "var(--fl-display)" }}
               >
                 {aboutTitles[0]}
               </h3>
@@ -359,11 +360,11 @@ export function ForgeLimeSite({
               style={{ backgroundColor: FL.brandSoft }}
             >
               <div className="relative h-[264px] w-[264px]">
-                <div className="absolute inset-[12%] rounded-full bg-[#7FD136]" />
+                <div className="absolute inset-[12%] rounded-full bg-[color:var(--brand-strong,#7FD136)]" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={solutionIcon(i)} alt="" className="absolute inset-0 h-full w-full object-cover" />
               </div>
-              <h3 className="mt-8 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#356905]" style={{ fontFamily: "var(--fl-display)" }}>
+              <h3 className="mt-8 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]" style={{ fontFamily: "var(--fl-display)" }}>
                 {title}
               </h3>
               <p className="mt-4 text-lg leading-relaxed text-[#090D06]">
@@ -386,12 +387,12 @@ export function ForgeLimeSite({
         <div className="mt-20 grid gap-10 lg:grid-cols-[1fr_692px]">
           <div className="grid grid-cols-[4px_1fr] gap-10">
             <div className="rounded-full bg-[#1F2B15]">
-              <div className="h-28 w-[4px] rounded-full bg-[#A9FF5C]" />
+              <div className="h-28 w-[4px] rounded-full bg-[color:var(--brand,#A9FF5C)]" />
             </div>
             <div className="space-y-16">
               {stepTitles.map((title, i) => (
                 <article key={`${title}-${i}`}>
-                  <h3 className="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#A9FF5C]" style={{ fontFamily: "var(--fl-display)" }}>
+                  <h3 className="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:var(--brand,#A9FF5C)]" style={{ fontFamily: "var(--fl-display)" }}>
                     {title}
                   </h3>
                   <p className="mt-4 text-lg leading-relaxed text-[#979F90]">
@@ -417,10 +418,16 @@ export function ForgeLimeSite({
           <img src={ASSETS.statsMedal} alt="" className="pointer-events-none absolute -right-16 top-8 z-0 hidden h-[220px] w-[220px] object-contain opacity-40 lg:block" />
 
           <div className="relative z-10 flex flex-col items-center text-center">
-            <div className="inline-flex items-center gap-3 rounded-full border border-[#356905] bg-[#002D00] px-5 py-2">
+            <div
+              className="inline-flex items-center gap-3 rounded-full border px-5 py-2"
+              style={{
+                borderColor: FL.brandOnSoft,
+                backgroundColor: FL.sectionDeepGreen,
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={ASSETS.iconChat} alt="" className="h-5 w-5 object-contain" />
-              <span className="text-base text-[#7FD136]">Have Questions?</span>
+              <span className="text-base text-[color:var(--brand-strong,#7FD136)]">Have Questions?</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={ASSETS.iconArrow} alt="" className="h-4 w-4 object-contain" />
             </div>
@@ -435,7 +442,7 @@ export function ForgeLimeSite({
                 "We redefine collaboration, innovation, and success through a practical strategy and delivery model."
               )}
             </p>
-            <a href="#fl-contact" className="mt-8 rounded-xl bg-[#A9FF5C] px-8 py-5 text-base font-bold text-[#090D06]">
+            <a href="#fl-contact" className="mt-8 rounded-xl bg-[color:var(--brand,#A9FF5C)] px-8 py-5 text-base font-bold text-[#090D06]">
               Get In Touch
             </a>
           </div>
@@ -451,8 +458,8 @@ export function ForgeLimeSite({
               <div
                 className={
                   statsAreCompact
-                    ? "text-[clamp(3.5rem,8vw,7rem)] uppercase leading-none tracking-[-2px] text-[#A9FF5C]"
-                    : "text-[clamp(1.65rem,3vw,2.5rem)] uppercase leading-snug tracking-[-0.4px] text-[#A9FF5C] break-words"
+                    ? "text-[clamp(3.5rem,8vw,7rem)] uppercase leading-none tracking-[-2px] text-[color:var(--brand,#A9FF5C)]"
+                    : "text-[clamp(1.65rem,3vw,2.5rem)] uppercase leading-snug tracking-[-0.4px] text-[color:var(--brand,#A9FF5C)] break-words"
                 }
                 style={{ fontFamily: "var(--fl-display)" }}
               >
@@ -485,12 +492,12 @@ export function ForgeLimeSite({
                       <img
                         src={ASSETS.testimonialAvatars[i % ASSETS.testimonialAvatars.length]}
                         alt=""
-                        className="h-9 w-9 rounded-full border border-[#7FD136] object-cover"
+                        className="h-9 w-9 rounded-full border border-[color:var(--brand-strong,#7FD136)] object-cover"
                       />
-                      <span className="text-base text-[#7FD136]">{authorList[i] || "Client"}</span>
+                      <span className="text-base text-[color:var(--brand-strong,#7FD136)]">{authorList[i] || "Client"}</span>
                     </div>
                     <p className="text-base leading-relaxed text-[#979F90]">{quoteList[i]}</p>
-                    {roleList[i] ? <p className="mt-4 text-sm text-[#E1FFC7]/70">{roleList[i]}</p> : null}
+                    {roleList[i] ? <p className="mt-4 text-sm text-[color:var(--brand-soft,#E1FFC7)]/70">{roleList[i]}</p> : null}
                   </article>
                 ))}
               </div>
@@ -571,16 +578,16 @@ export function ForgeLimeSite({
         <div className="mx-auto mt-14 max-w-[53rem] space-y-4">
           {questions.map((question, i) => (
             <details key={`${question}-${i}`} open={i === 0} className="group overflow-hidden rounded-[20px] bg-[#1F2B15]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[20px] bg-[#E1FFC7] px-8 py-6">
-                <span className="text-2xl text-[#003800]">{question}</span>
-                <span className="grid h-[76px] w-[76px] place-items-center rounded-[20px] bg-[#7FD136]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[20px] bg-[color:var(--brand-soft,#E1FFC7)] px-8 py-6">
+                <span className="text-2xl text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">{question}</span>
+                <span className="grid h-[76px] w-[76px] place-items-center rounded-[20px] bg-[color:var(--brand-strong,#7FD136)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={ASSETS.faqAdd} alt="" className="h-7 w-7 object-contain group-open:hidden" />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={ASSETS.faqDismiss} alt="" className="hidden h-7 w-7 object-contain group-open:block" />
                 </span>
               </summary>
-              <p className="px-8 pb-7 pt-6 text-xl leading-relaxed text-[#E1FFC7]">
+              <p className="px-8 pb-7 pt-6 text-xl leading-relaxed text-[color:var(--brand-soft,#E1FFC7)]">
                 {answers[i] ||
                   "Our team will tailor the solution to your goals, timeline, and team setup while keeping communication transparent."}
               </p>
@@ -604,46 +611,42 @@ export function ForgeLimeSite({
         </div>
 
         <div className="mt-14 grid gap-4 md:grid-cols-2">
-          <article className="rounded-[28px] bg-[#E1FFC7] px-8 py-12 text-center">
-            <span className="mx-auto inline-grid h-16 w-16 place-items-center rounded-[20px] bg-[#356905]">
+          <article className="rounded-[28px] bg-[color:var(--brand-soft,#E1FFC7)] px-8 py-12 text-center">
+            <span className="mx-auto inline-grid h-16 w-16 place-items-center rounded-[20px] bg-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={ASSETS.contactMail} alt="" className="h-8 w-8 object-contain" />
             </span>
-            <h3 className="mt-6 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#356905]" style={{ fontFamily: "var(--fl-display)" }}>
+            <h3 className="mt-6 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]" style={{ fontFamily: "var(--fl-display)" }}>
               Drop Us a Line
             </h3>
-            <p className="mt-2 text-xl text-[#003800]">{contactEmail || "hello@forgelime.example"}</p>
+            <p className="mt-2 text-xl text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">{contactEmail || "hello@forgelime.example"}</p>
           </article>
 
-          <article className="rounded-[28px] bg-[#E1FFC7] px-8 py-12 text-center">
-            <span className="mx-auto inline-grid h-16 w-16 place-items-center rounded-[20px] bg-[#356905]">
+          <article className="rounded-[28px] bg-[color:var(--brand-soft,#E1FFC7)] px-8 py-12 text-center">
+            <span className="mx-auto inline-grid h-16 w-16 place-items-center rounded-[20px] bg-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={ASSETS.contactCalendly} alt="" className="h-8 w-8 object-contain" />
             </span>
-            <h3 className="mt-6 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#356905]" style={{ fontFamily: "var(--fl-display)" }}>
+            <h3 className="mt-6 text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]" style={{ fontFamily: "var(--fl-display)" }}>
               Book a Call
             </h3>
-            <p className="mt-2 text-xl text-[#003800]">{contactPhone || "(555) 016-7740"}</p>
+            <p className="mt-2 text-xl text-[color:color-mix(in_oklab,var(--brand,#A9FF5C)_55%,black)]">{contactPhone || "(555) 016-7740"}</p>
           </article>
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[524px_1fr]">
-          <article className="rounded-[28px] bg-[#243317] p-10">
-            <h3 className="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[#E1FFC7]" style={{ fontFamily: "var(--fl-display)" }}>
+          <article className="rounded-[28px] p-10" style={{ backgroundColor: FL.card }}>
+            <h3 className="text-[2.5rem] uppercase leading-[0.92] tracking-[-0.8px] text-[color:var(--brand-soft,#E1FFC7)]" style={{ fontFamily: "var(--fl-display)" }}>
               Connect with Ease
             </h3>
-            <p className="mt-4 text-xl leading-relaxed text-[#E1FFC7]">
+            <p className="mt-4 text-xl leading-relaxed text-[color:var(--brand-soft,#E1FFC7)]">
               Your inquiries, ideas, and collaboration opportunities are just a click away.
             </p>
-            <div className="mt-8 space-y-7">
-              <InputField label="Full Name" placeholder={businessName} />
-              <InputField label="Email" placeholder={contactEmail || "john.anderson@gmail.com"} />
-              <InputField label="Question" placeholder="How can we help you?" />
-            </div>
-            <a href={contactHref} className="mt-8 inline-block rounded-xl bg-[#A9FF5C] px-8 py-5 text-base font-bold text-[#090D06]">
-              {contactCta}
-            </a>
-            <p className="mt-6 text-sm text-[#F1FBE8]/65">{contactAddress}</p>
+            <ForgeLimeContactForm
+              ctaLabel={contactCta}
+              contactEmail={contactEmail || ""}
+              address={contactAddress}
+            />
           </article>
 
           <div className="relative min-h-[480px] overflow-hidden rounded-[28px]">
@@ -654,7 +657,7 @@ export function ForgeLimeSite({
       </section>
 
       <footer className="px-4 pb-10 lg:px-20" style={sectionBandStyle(footer.theme)}>
-        <div className="rounded-[28px] bg-[#131C0B] p-8 lg:p-12">
+        <div className="rounded-[28px] p-8 lg:p-12" style={{ backgroundColor: FL.panel }}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <a href="#fl-top" className="inline-flex items-center gap-3">
               {customLogo ? (
@@ -664,13 +667,13 @@ export function ForgeLimeSite({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={ASSETS.logoFooter} alt="" className="h-11 w-11 object-contain" />
               )}
-              <span className="text-2xl uppercase tracking-wide text-[#E1FFC7]" style={{ fontFamily: "var(--fl-display)" }}>
+              <span className="text-2xl uppercase tracking-wide text-[color:var(--brand-soft,#E1FFC7)]" style={{ fontFamily: "var(--fl-display)" }}>
                 {businessName}
               </span>
             </a>
-            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[#E1FFC7]">
+            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[color:var(--brand-soft,#E1FFC7)]">
               {footerLinks.map((label, i) => (
-                <a key={`${label}-${i}`} href={i < NAV.length ? NAV[i].href : "#fl-contact"} className="transition-colors hover:text-[#A9FF5C]">
+                <a key={`${label}-${i}`} href={i < NAV.length ? NAV[i].href : "#fl-contact"} className="transition-colors hover:text-[color:var(--brand,#A9FF5C)]">
                   {label}
                 </a>
               ))}
@@ -716,18 +719,9 @@ function AccentWords({
   );
 }
 
-function InputField({ label, placeholder }: { label: string; placeholder: string }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-base text-[#F1FBE8]">{label}</span>
-      <span className="flex rounded-xl border border-[#F1FBE8]/30 px-6 py-5 text-base text-[#F1FBE8]/50">{placeholder}</span>
-    </label>
-  );
-}
-
 function SocialIcon({ src }: { src: string }) {
   return (
-    <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-[#A9FF5C]">
+    <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-[color:var(--brand,#A9FF5C)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" className="h-[18px] w-[18px] object-contain" />
     </span>
