@@ -12,6 +12,7 @@ import { resolveCreditPack } from "@/lib/stripe/stripe";
 import { CrmJobKind } from "@/lib/crm/config";
 import { enqueueCrmJob } from "@/lib/crm/outbox";
 import { awardCreditPackPurchase, awardWebsitePackagePurchase } from "@/lib/crm/scoring";
+import { enqueueDealSyncForUser } from "@/lib/crm/sync";
 
 /** Statuses that already mean the website was bought — never downgrade them. */
 const DELIVERED_STATUSES: string[] = [
@@ -67,6 +68,11 @@ export async function fulfillCreditPackCheckout(
   } catch (err) {
     console.error("[crm] credit pack score failed:", err instanceof Error ? err.message : err);
   }
+
+  // Always refresh the account deal (including Closed Won) so amount + line
+  // items include this pack even when scoring throws. Scoring also enqueues a
+  // deal refresh; the outbox dedupes on the same key.
+  await enqueueDealSyncForUser(userId);
 
   return { credited: pack.credits };
 }

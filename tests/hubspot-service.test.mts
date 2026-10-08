@@ -254,6 +254,8 @@ describe("purchase deal", () => {
   it("overflows a long description onto a note body", () => {
     const { description, overflowBody } = splitDealDescription(deal, 40);
     assert.match(description, /Full project details and itemized breakdown attached as a note/);
+    assert.match(description, /Deal score: 60 \(A1\)/);
+    assert.match(description, /Amount paid: 557 USD/);
     assert.ok(overflowBody && overflowBody.includes("Website creation: 499 USD"));
     assert.ok(overflowBody.includes("Business: Bright Smile Dental"));
   });
@@ -278,6 +280,39 @@ describe("purchase deal", () => {
     assert.ok(props.closedate);
     assert.ok(!("website_builder_payment_id" in props));
     assert.ok(!("website_url" in props));
+  });
+
+  it("refreshes amount and credit lines on an already Closed Won deal", async () => {
+    calls = [];
+    stubHubSpot([]);
+
+    const paidAt = new Date("2026-10-01T12:00:00.000Z");
+    const afterCredits = {
+      ...deal,
+      amount: 586,
+      dealName: formatDealName("Bright Smile Dental", 586),
+      closeDate: paidAt,
+      lineItems: [
+        { name: "Website creation", amount: 499 },
+        { name: "Monthly hosting", amount: 29 },
+        { name: "Medium credit pack (60 credits)", amount: 29 },
+        { name: "Small credit pack (20 credits)", amount: 10 },
+      ],
+    };
+
+    const id = await upsertPurchaseDeal(afterCredits, "d-closed");
+    assert.equal(id, "d-closed");
+
+    const props = (calls[0].body as { properties: Record<string, string> }).properties;
+    assert.equal(props.dealstage, "1450553354");
+    assert.equal(props.amount, "586");
+    assert.equal(props.dealname, "Bright Smile Dental $586");
+    assert.equal(props.closedate, paidAt.toISOString());
+    assert.match(props.description, /Deal score: 60 \(A1\)/);
+    assert.match(props.description, /Website creation: 499 USD/);
+    assert.match(props.description, /Medium credit pack \(60 credits\): 29 USD/);
+    assert.match(props.description, /Small credit pack \(20 credits\): 10 USD/);
+    assert.match(props.description, /Total paid: 586 USD/);
   });
 
   it("keeps an unpaid deal on Preview Generated without a close date", async () => {

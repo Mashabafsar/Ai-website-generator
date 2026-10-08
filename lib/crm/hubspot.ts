@@ -63,6 +63,11 @@ export type PurchaseDealSnapshot = {
   /** True only after the website package is paid — moves the deal to Closed Won. */
   closedWon: boolean;
   /**
+   * Stable close timestamp (website payment time). Reused on every Closed Won
+   * refresh so later credit packs do not rewrite `closedate` to "now".
+   */
+  closeDate?: Date;
+  /**
    * HubSpot `dealstage` id on pipeline `941017774` (or `HUBSPOT_DEAL_PIPELINE`).
    * Resolved from questionnaire → generate → credits → quote → website paid.
    */
@@ -193,10 +198,18 @@ export function splitDealDescription(
     return { description: full, overflowBody: null };
   }
   const currency = deal.currency.toUpperCase();
-  return {
-    description: `Website: ${deal.websiteUrl}\nAmount paid: ${deal.amount} ${currency}\nFull project details and itemized breakdown attached as a note.`,
-    overflowBody: full,
-  };
+  // Keep score + total on the deal itself when the questionnaire overflows
+  // onto a note — operators open the description field first.
+  const scoreLine = formatDealScore(deal);
+  const description = [
+    `Website: ${deal.websiteUrl}`,
+    scoreLine,
+    `Amount paid: ${deal.amount} ${currency}`,
+    "Full project details and itemized breakdown attached as a note.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return { description, overflowBody: full };
 }
 
 /**
@@ -315,7 +328,7 @@ function dealProperties(
     dealstage: deal.dealStage || DealStage.PREVIEW_GENERATED,
   };
   if (deal.closedWon || deal.dealStage === DealStage.CLOSED_WON) {
-    properties.closedate = new Date().toISOString();
+    properties.closedate = (deal.closeDate ?? new Date()).toISOString();
   }
   return properties;
 }

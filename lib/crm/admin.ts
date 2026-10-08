@@ -264,7 +264,10 @@ export async function getClientDetail(userId: string): Promise<ClientDetail | nu
     websitePurchases: (user.project?.payments ?? []).map((payment) => ({
       id: payment.id,
       websiteUrl: projectUrl(user.project!.id, user.project!.deployment),
-      price: payment.amountCents != null ? payment.amountCents / 100 : payment.amount,
+      price:
+        payment.amountCents != null && payment.amountCents > 0
+          ? payment.amountCents / 100
+          : payment.amount,
       currency: payment.currency,
       breakdown: parseLineItems(payment.breakdown),
       createdAt: payment.createdAt,

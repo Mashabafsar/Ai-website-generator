@@ -220,8 +220,10 @@ export async function syncAccountDeal(userId: string): Promise<void> {
   let quotedWebsiteTotal: number | undefined;
 
   if (websitePayment) {
+    // Prefer Stripe's settled cents when present; `amount` is the quote dollars
+    // frozen at checkout and can differ from what was actually charged.
     websiteAmount =
-      websitePayment.amountCents != null
+      websitePayment.amountCents != null && websitePayment.amountCents > 0
         ? websitePayment.amountCents / 100
         : websitePayment.amount;
     websiteLineItems = safeLineItems(websitePayment.breakdown ?? project.quote?.lineItems);
@@ -285,6 +287,7 @@ export async function syncAccountDeal(userId: string): Promise<void> {
     monthlyTotal,
     packageLabel,
     closedWon,
+    closeDate: websitePayment?.createdAt,
     dealStage,
     quotedWebsiteTotal,
     score: {

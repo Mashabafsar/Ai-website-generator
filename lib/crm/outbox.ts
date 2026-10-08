@@ -52,6 +52,11 @@ export async function enqueueCrmJob(params: {
         attempts: 0,
         nextAttemptAt: new Date(),
         lastError: null,
+        // Refresh subjects so a credit-pack reopen of a legacy payment-scoped
+        // row still carries the account id the worker needs.
+        ...(params.userId ? { userId: params.userId } : {}),
+        ...(params.projectId ? { projectId: params.projectId } : {}),
+        ...(params.paymentId ? { paymentId: params.paymentId } : {}),
       },
     });
   } catch (err) {
@@ -90,9 +95,16 @@ async function dueJobs(limit: number): Promise<CrmOutbox[]> {
   });
 }
 
+/**
+ * Finish a claimed job only while it is still RUNNING.
+ *
+ * `enqueueCrmJob` may reopen the same dedupe key to PENDING while this worker
+ * is mid-flight (e.g. go-live deal refresh overlapping a credit-pack purchase).
+ * An unconditional DONE would clobber that reopen and drop the newer sync.
+ */
 async function markDone(id: string): Promise<void> {
-  await prisma.crmOutbox.update({
-    where: { id },
+  await prisma.crmOutbox.updateMany({
+    where: { id, status: CrmJobStatus.RUNNING },
     data: { status: CrmJobStatus.DONE, lastError: null, nextAttemptAt: new Date() },
   });
 }
@@ -116,8 +128,9 @@ async function recordProfileError(userId: string | null, message: string): Promi
 async function markFailed(job: CrmOutbox, message: string): Promise<void> {
   const exhausted = job.attempts + 1 >= env.hubspot.maxJobAttempts;
   const lastError = message.slice(0, 500);
-  await prisma.crmOutbox.update({
-    where: { id: job.id },
+  // Same race as markDone: only rewrite the row we still own as RUNNING.
+  await prisma.crmOutbox.updateMany({
+    where: { id: job.id, status: CrmJobStatus.RUNNING },
     data: {
       status: exhausted ? CrmJobStatus.FAILED : CrmJobStatus.PENDING,
       lastError,

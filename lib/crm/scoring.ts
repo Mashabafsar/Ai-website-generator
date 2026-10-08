@@ -14,7 +14,15 @@ import {
   packageScore,
 } from "@/lib/crm/config";
 import { enqueueCrmJob } from "@/lib/crm/outbox";
-import { enqueueDealRefreshForUser } from "@/lib/crm/sync";
+
+/** Queue the account deal rebuild without importing sync.ts (avoids a cycle). */
+async function enqueueDealSync(userId: string): Promise<void> {
+  await enqueueCrmJob({
+    kind: CrmJobKind.PURCHASE_DEAL,
+    userId,
+    dedupeKey: `${CrmJobKind.PURCHASE_DEAL}:${userId}`,
+  });
+}
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -128,8 +136,8 @@ export async function awardCreditPackPurchase(params: {
     idempotencyKey: `${CrmScoreAction.CREDIT_PACK_PURCHASED}:${params.stripeSessionId}`,
   });
   await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId: params.userId });
-  // Fold this pack into the website purchase deal when one exists.
-  await enqueueDealRefreshForUser(params.userId);
+  // Same deal row after Closed Won — amount/description must include this pack.
+  await enqueueDealSync(params.userId);
   return awarded;
 }
 
@@ -148,7 +156,7 @@ export async function awardWebsitePackagePurchase(params: {
     idempotencyKey: `${CrmScoreAction.WEBSITE_PACKAGE_PURCHASED}:${params.paymentId}`,
   });
   await enqueueCrmJob({ kind: CrmJobKind.CONTACT_SYNC, userId: params.userId });
-  await enqueueDealRefreshForUser(params.userId);
+  await enqueueDealSync(params.userId);
   return awarded;
 }
 
