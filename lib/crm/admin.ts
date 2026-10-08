@@ -83,6 +83,7 @@ export type ClientListRow = {
   name: string;
   email: string;
   createdAt: Date;
+  deactivatedAt: Date | null;
   leadScore: number;
   marketingConsent: boolean;
   marketingConsentAt: Date | null;
@@ -111,6 +112,7 @@ export async function listClients(query: ClientListQuery): Promise<{
         name: true,
         email: true,
         createdAt: true,
+        deactivatedAt: true,
         crmProfile: {
           select: {
             leadScore: true,
@@ -131,6 +133,7 @@ export async function listClients(query: ClientListQuery): Promise<{
       name: user.name,
       email: user.email,
       createdAt: user.createdAt,
+      deactivatedAt: user.deactivatedAt,
       leadScore: user.crmProfile?.leadScore ?? 0,
       marketingConsent: user.crmProfile?.marketingConsent ?? false,
       marketingConsentAt: user.crmProfile?.marketingConsentAt ?? null,
@@ -155,6 +158,7 @@ export function clientsToCsv(rows: ClientListRow[]): string {
     "name",
     "email",
     "registered",
+    "deactivated",
     "lead_score",
     "marketing_consent",
     "consent_at",
@@ -171,6 +175,7 @@ export function clientsToCsv(rows: ClientListRow[]): string {
       row.name,
       row.email,
       iso(row.createdAt),
+      iso(row.deactivatedAt),
       String(row.leadScore),
       row.marketingConsent ? "yes" : "no",
       iso(row.marketingConsentAt),

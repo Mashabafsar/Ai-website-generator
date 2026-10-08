@@ -17,6 +17,8 @@
     "test": "node --import tsx --test tests/*.test.mts",
     "hubspot:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-hubspot.ts",
     "hubspot:backfill": "node --env-file-if-exists=.env --import tsx scripts/backfill-hubspot-leads.ts",
+    "hubspot:deals-sample": "node --env-file-if-exists=.env --import tsx scripts/sync-hubspot-deals-sample.ts",
+    "accounts:deactivate": "node --env-file-if-exists=.env --import tsx scripts/deactivate-stale-accounts.ts",
     "validate": "npm run templates:validate && npm run icons:validate && npm run templates:locks",
     "admin:grant": "node scripts/set-admin.mjs"
   },

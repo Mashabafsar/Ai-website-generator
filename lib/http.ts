@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/admin";
+import { isAccountDeactivated } from "@/lib/accounts/deactivation";
 
 export type ApiError = { error: string; code?: string; details?: unknown };
 
@@ -17,6 +18,16 @@ export async function requireUser() {
   const session = await getCurrentSession();
   if (!session?.user) {
     return { user: null, response: jsonError("Please log in to continue.", 401, "UNAUTHORIZED") };
+  }
+  if (await isAccountDeactivated(session.user.id)) {
+    return {
+      user: null,
+      response: jsonError(
+        "This account has been deactivated. Contact support if you need access.",
+        403,
+        "ACCOUNT_DEACTIVATED"
+      ),
+    };
   }
   return { user: session.user, response: null };
 }

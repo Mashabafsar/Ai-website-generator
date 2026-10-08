@@ -257,6 +257,7 @@ describe("admin client helpers", () => {
         name: 'Jane "Founder"',
         email: "jane@example.com",
         createdAt: new Date("2026-01-02T03:04:05.000Z"),
+        deactivatedAt: null,
         leadScore: 30,
         marketingConsent: true,
         marketingConsentAt: new Date("2026-01-02T03:04:05.000Z"),

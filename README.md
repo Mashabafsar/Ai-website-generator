@@ -313,6 +313,13 @@ Deploy note: the Vercel cron in `vercel.json` needs `CRON_SECRET` set in the
 project environment. Without it the endpoint returns 503 and the queue is only
 drained by the post-response nudge.
 
+### Account deactivation
+
+Accounts older than **14 days** that never bought a website package **and** never
+bought a credit pack are deactivated automatically (`/api/cron/deactivate-accounts`
+daily, or `npm run accounts:deactivate -- --apply`). Website buyers, credit-pack
+buyers, and admins stay active. Deactivated users cannot sign in.
+
 #### Testing it
 
 ```bash

@@ -1,7 +1,10 @@
 import { after } from "next/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
 import { getCurrentSession } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/admin";
+import { isAccountDeactivated } from "@/lib/accounts/deactivation";
 import { getBalance } from "@/lib/credits/credits";
 import { ensureLeadRegistered } from "@/lib/crm/scoring";
 import { runCrmOutbox } from "@/lib/crm/sync";
@@ -14,6 +17,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+  if (await isAccountDeactivated(userId)) {
+    try {
+      await auth.api.signOut({ headers: await headers() });
+    } catch {
+      // Session may already be gone; still send them to login.
+    }
+    redirect("/login?deactivated=1");
+  }
+
   after(async () => {
     try {
       if (await ensureLeadRegistered(userId)) await runCrmOutbox(5);

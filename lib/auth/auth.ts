@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +7,9 @@ import { getAuthBaseURL, getAuthTrustedOrigins } from "@/lib/auth/config";
 import { CrmScoreAction } from "@/lib/crm/config";
 import { awardOneTimeAction } from "@/lib/crm/scoring";
 import { scheduleCrmDrain } from "@/lib/crm/sync";
+
+const DEACTIVATED_MESSAGE =
+  "This account has been deactivated because it had no website or credit purchase within 14 days. Contact support if you need access.";
 
 export const auth = betterAuth({
   appName: "Agency Partner AI Website Builder",
@@ -37,6 +40,23 @@ export const auth = betterAuth({
             scheduleCrmDrain();
           } catch (err) {
             console.error("[crm] registration score failed:", err instanceof Error ? err.message : err);
+          }
+        },
+      },
+    },
+    session: {
+      create: {
+        // Deactivated accounts cannot open a new session (login / refresh).
+        before: async (session) => {
+          const user = await prisma.user.findUnique({
+            where: { id: session.userId },
+            select: { deactivatedAt: true },
+          });
+          if (user?.deactivatedAt) {
+            throw new APIError("FORBIDDEN", {
+              message: DEACTIVATED_MESSAGE,
+              code: "ACCOUNT_DEACTIVATED",
+            });
           }
         },
       },

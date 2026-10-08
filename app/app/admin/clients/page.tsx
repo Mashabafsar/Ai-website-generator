@@ -83,6 +83,7 @@ export default async function AdminClientsPage({
                     <th className="py-2 pr-4 font-medium">Name</th>
                     <th className="py-2 pr-4 font-medium">Email</th>
                     <th className="py-2 pr-4 font-medium">Registered</th>
+                    <th className="py-2 pr-4 font-medium">Status</th>
                     <th className="py-2 pr-4 text-right font-medium">Score</th>
                     <th className="py-2 pr-4 font-medium">Consent</th>
                     <th className="py-2 font-medium">HubSpot</th>
@@ -102,6 +103,13 @@ export default async function AdminClientsPage({
                       <td className="py-2.5 pr-4 whitespace-nowrap">{row.email}</td>
                       <td className="py-2.5 pr-4 whitespace-nowrap text-muted-foreground">
                         {fmtDate(row.createdAt)}
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        {row.deactivatedAt ? (
+                          <Badge variant="outline">Deactivated</Badge>
+                        ) : (
+                          <Badge variant="secondary">Active</Badge>
+                        )}
                       </td>
                       <td className="py-2.5 pr-4 text-right font-semibold tabular-nums">
                         {row.leadScore}
