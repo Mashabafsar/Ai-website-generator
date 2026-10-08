@@ -238,6 +238,7 @@ export async function getClientDetail(userId: string): Promise<ClientDetail | nu
     name: user.name,
     email: user.email,
     createdAt: user.createdAt,
+    deactivatedAt: user.deactivatedAt,
     leadScore: user.crmProfile?.leadScore ?? 0,
     marketingConsent: user.crmProfile?.marketingConsent ?? false,
     marketingConsentAt: user.crmProfile?.marketingConsentAt ?? null,
