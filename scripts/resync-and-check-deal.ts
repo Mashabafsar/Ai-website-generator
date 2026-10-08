@@ -91,7 +91,8 @@ async function main() {
       const deal = await hubspotRequest<{
         properties?: Record<string, string | null>;
       }>(
-        `${objectPath("deals", after.dealId)}?properties=dealname,amount,pipeline,dealstage,description`
+        `${objectPath("deals", after.dealId)}?properties=dealname,amount,pipeline,dealstage,description`,
+        { method: "GET" }
       );
       console.log("hubspot", {
         dealname: deal.properties?.dealname,
