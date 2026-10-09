@@ -274,19 +274,22 @@ model AiUsage {
   user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   projectId        String?
 
-  operation        String   // heavy_generate | light_edit
+  operation        String   // heavy_generate | light_edit | scrape_extract | site_plan | image_analysis
   provider         String   // cursor | gemini | mock
   model            String
 
   promptTokens     Int      @default(0)
   completionTokens Int      @default(0)
   totalTokens      Int      @default(0)
-  // True when tokens were measured from the provider; false = estimated locally.
+  // True = tokens were estimated locally; false = measured from the provider.
   estimated        Boolean  @default(false)
+  // Estimated provider cost in USD cents (model rate × tokens).
+  costUsdCents     Int      @default(0)
 
   @@index([createdAt])
   @@index([userId])
   @@index([operation])
+  @@index([projectId])
 }
 
 // Every AI call that did not produce model-written output: a provider that

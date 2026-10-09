@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { UsageEvent } from "@/lib/ai/usage";
+import { estimateCostUsdCents } from "@/lib/ai/pricing";
 
 /**
  * Persists captured token-usage events to the admin ledger. Best-effort: a
@@ -26,6 +27,11 @@ export async function persistUsageEvents(params: {
         completionTokens: e.completionTokens,
         totalTokens: e.totalTokens,
         estimated: e.estimated,
+        costUsdCents: estimateCostUsdCents({
+          model: e.model,
+          promptTokens: e.promptTokens,
+          completionTokens: e.completionTokens,
+        }),
       })),
     });
   } catch (err) {

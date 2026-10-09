@@ -3,6 +3,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { extractJson } from "@/lib/blueprint/schema";
 import { runCursorText } from "@/lib/ai/cursor-runtime";
+import { estimateTokens, recordUsage } from "@/lib/ai/usage";
 import { fetchGuarded, readCappedText, ScrapeError } from "@/lib/scraper/fetch-guard";
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 
@@ -390,12 +391,24 @@ async function runLightPrompt(prompt: string): Promise<string> {
   if (!env.ai.cursorApiKey) {
     throw new Error("CURSOR_API_KEY is not configured");
   }
-  return runCursorText(
+  const model = env.ai.lightModel;
+  const output = await runCursorText(
     env.ai.cursorApiKey,
-    env.ai.lightModel,
+    model,
     prompt,
     env.ai.cursorLightTimeoutMs
   );
+  const promptTokens = estimateTokens(prompt);
+  const completionTokens = estimateTokens(output);
+  recordUsage({
+    provider: "cursor",
+    model,
+    promptTokens,
+    completionTokens,
+    totalTokens: promptTokens + completionTokens,
+    estimated: true,
+  });
+  return output;
 }
 
 function sanitize(value: unknown): unknown {

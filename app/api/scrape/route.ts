@@ -101,7 +101,12 @@ export async function POST(req: Request) {
     const { result: fields, events } = await withUsageCapture(() =>
       extractQuestionnaireFields(site)
     );
-    await persistUsageEvents({ userId: user.id, operation: "scrape_extract", events });
+    await persistUsageEvents({
+      userId: user.id,
+      projectId,
+      operation: "scrape_extract",
+      events,
+    });
 
     const { result: brand, events: photoEvents } = await brandTask;
     await persistUsageEvents({

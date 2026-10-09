@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AlertTriangle, Coins, Cpu, Gauge, Sparkles, Wrench } from "lucide-react";
+import { AlertTriangle, Coins, Cpu, DollarSign, Gauge, Sparkles, Wrench } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
 import { FAILURE_LABEL, TEMPLATE_FALLBACK, isPermanent, type AiFailureKind } from "@/lib/ai/failure";
+import { formatUsdCents } from "@/lib/ai/pricing";
+import {
+  USAGE_OPERATION_LABEL,
+  WEBSITE_PHASES,
+  costCentsForRow,
+  loadWebsiteUsage,
+} from "@/lib/ai/usage-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Admin · AI usage" };
 
-const OPERATION_LABEL: Record<string, string> = {
-  heavy_generate: "Website generation",
-  light_edit: "AI section edit",
-  scrape_extract: "Website import",
-  site_plan: "Site plan",
-  image_analysis: "Photo analysis",
-};
+const OPERATION_LABEL = USAGE_OPERATION_LABEL;
 
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString();
 
@@ -25,6 +26,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const kindLabel = (kind: string) =>
   FAILURE_LABEL[kind as AiFailureKind] ?? kind.replace(/_/g, " ");
+
+const PHASE_SHORT: Record<string, string> = {
+  heavy_generate: "Generation",
+  site_plan: "Site plan",
+  scrape_extract: "Scraper AI",
+  image_analysis: "Photos",
+  light_edit: "Edits",
+};
 
 export default async function AdminUsagePage({
   searchParams,
@@ -49,6 +58,7 @@ export default async function AdminUsagePage({
     fallbackTotal,
     recentFallbacks,
     openMisconfigurations,
+    websiteUsage,
   ] = await Promise.all([
     prisma.aiUsage.findMany({
       orderBy: { createdAt: "desc" },
@@ -56,17 +66,17 @@ export default async function AdminUsagePage({
       include: { user: { select: { email: true } } },
     }),
     prisma.aiUsage.aggregate({
-      _sum: { totalTokens: true, promptTokens: true, completionTokens: true },
+      _sum: { totalTokens: true, promptTokens: true, completionTokens: true, costUsdCents: true },
       _count: true,
     }),
     prisma.aiUsage.groupBy({
       by: ["operation"],
-      _sum: { totalTokens: true },
+      _sum: { totalTokens: true, costUsdCents: true },
       _count: true,
     }),
     prisma.aiUsage.groupBy({
       by: ["provider"],
-      _sum: { totalTokens: true },
+      _sum: { totalTokens: true, costUsdCents: true },
       _count: true,
     }),
     prisma.aiUsage.count({ where: { operation: "heavy_generate" } }),
@@ -93,19 +103,36 @@ export default async function AdminUsagePage({
       distinct: ["provider", "model", "kind"],
       take: 5,
     }),
+    loadWebsiteUsage(80),
   ]);
 
   const totalTokens = totals._sum.totalTokens ?? 0;
+  const totalCostCents = websiteUsage.reduce((sum, w) => sum + w.costUsdCents, 0);
   const avgPerGenerate = generateCount > 0 ? Math.round(totalTokens / generateCount) : 0;
   const failureKinds = byKind.filter((k) => k.kind !== TEMPLATE_FALLBACK);
+
+  const recentProjectIds = [
+    ...new Set(rows.map((r) => r.projectId).filter((id): id is string => Boolean(id))),
+  ];
+  const recentProjects =
+    recentProjectIds.length > 0
+      ? await prisma.project.findMany({
+          where: { id: { in: recentProjectIds } },
+          select: { id: true, businessName: true },
+        })
+      : [];
+  const projectNames = new Map([
+    ...websiteUsage.map((w) => [w.projectId, w.businessName] as const),
+    ...recentProjects.map((p) => [p.id, p.businessName] as const),
+  ]);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-3xl font-bold tracking-tight">AI usage</h1>
         <p className="mt-1 text-muted-foreground">
-          How much the writing tools used per website and edit. Credits stay a fixed
-          price; this is the underlying usage.
+          Tokens and estimated provider cost per website — generation, site plan, scraper AI,
+          and edits. Customer credit prices stay separate from this ledger.
         </p>
       </div>
 
@@ -136,8 +163,13 @@ export default async function AdminUsagePage({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <StatCard icon={<Cpu className="h-5 w-5 text-primary" />} label="Total tokens" value={fmt(totalTokens)} />
+        <StatCard
+          icon={<DollarSign className="h-5 w-5 text-primary" />}
+          label="Est. provider cost"
+          value={formatUsdCents(totalCostCents)}
+        />
         <StatCard
           icon={<Gauge className="h-5 w-5 text-primary" />}
           label="Avg tokens / generation"
@@ -163,6 +195,79 @@ export default async function AdminUsagePage({
           value={fmt(fallbackTotal)}
         />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Cost by website</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Tokens and estimated dollars for each site — broken down by generation, pages &amp;
+            sections plan, scraper AI, photo analysis, and later edits.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {websiteUsage.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No per-website usage yet. New generations, site plans, and scrapes will appear here.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[960px] text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-3 font-medium">Website</th>
+                    <th className="py-2 pr-3 font-medium">Owner</th>
+                    {WEBSITE_PHASES.map((op) => (
+                      <th key={op} className="py-2 pr-3 text-right font-medium">
+                        {PHASE_SHORT[op] ?? op}
+                      </th>
+                    ))}
+                    <th className="py-2 pr-3 text-right font-medium">Tokens</th>
+                    <th className="py-2 text-right font-medium">Est. cost</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {websiteUsage.map((w) => (
+                    <tr key={w.projectId}>
+                      <td className="py-2.5 pr-3">
+                        <div className="font-medium">{w.businessName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {w.status}
+                          {w.lastAt ? ` · ${new Date(w.lastAt).toLocaleDateString()}` : ""}
+                        </div>
+                      </td>
+                      <td className="py-2.5 pr-3 whitespace-nowrap text-muted-foreground">
+                        {w.userEmail}
+                      </td>
+                      {WEBSITE_PHASES.map((op) => {
+                        const phase = w.byOperation[op];
+                        if (!phase) {
+                          return (
+                            <td key={op} className="py-2.5 pr-3 text-right text-muted-foreground tabular-nums">
+                              —
+                            </td>
+                          );
+                        }
+                        return (
+                          <td key={op} className="py-2.5 pr-3 text-right tabular-nums">
+                            <div className="font-medium">{formatUsdCents(phase.costUsdCents)}</div>
+                            <div className="text-xs text-muted-foreground">{fmt(phase.tokens)} tok</div>
+                          </td>
+                        );
+                      })}
+                      <td className="py-2.5 pr-3 text-right font-semibold tabular-nums">
+                        {fmt(w.totalTokens)}
+                      </td>
+                      <td className="py-2.5 text-right font-semibold tabular-nums">
+                        {formatUsdCents(w.costUsdCents)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -279,6 +384,7 @@ export default async function AdminUsagePage({
                   label={OPERATION_LABEL[o.operation] ?? o.operation}
                   count={o._count}
                   tokens={o._sum.totalTokens ?? 0}
+                  costCents={o._sum.costUsdCents ?? 0}
                 />
               ))
             )}
@@ -299,6 +405,7 @@ export default async function AdminUsagePage({
                   label={p.provider}
                   count={p._count}
                   tokens={p._sum.totalTokens ?? 0}
+                  costCents={p._sum.costUsdCents ?? 0}
                 />
               ))
             )}
@@ -315,16 +422,18 @@ export default async function AdminUsagePage({
             <p className="text-sm text-muted-foreground">No AI usage recorded yet.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[880px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-4 font-medium">When</th>
+                    <th className="py-2 pr-4 font-medium">Website</th>
                     <th className="py-2 pr-4 font-medium">User</th>
                     <th className="py-2 pr-4 font-medium">Operation</th>
                     <th className="py-2 pr-4 font-medium">Provider / model</th>
                     <th className="py-2 pr-4 text-right font-medium">Prompt</th>
                     <th className="py-2 pr-4 text-right font-medium">Output</th>
                     <th className="py-2 pr-4 text-right font-medium">Total</th>
+                    <th className="py-2 pr-4 text-right font-medium">Est. cost</th>
                     <th className="py-2 font-medium">Source</th>
                   </tr>
                 </thead>
@@ -333,6 +442,11 @@ export default async function AdminUsagePage({
                     <tr key={r.id}>
                       <td className="py-2.5 pr-4 whitespace-nowrap text-muted-foreground">
                         {new Date(r.createdAt).toLocaleString()}
+                      </td>
+                      <td className="py-2.5 pr-4 whitespace-nowrap">
+                        {r.projectId
+                          ? projectNames.get(r.projectId) ?? r.projectId.slice(0, 8)
+                          : "—"}
                       </td>
                       <td className="py-2.5 pr-4 whitespace-nowrap">{r.user?.email ?? "—"}</td>
                       <td className="py-2.5 pr-4 whitespace-nowrap">
@@ -345,6 +459,9 @@ export default async function AdminUsagePage({
                       <td className="py-2.5 pr-4 text-right tabular-nums">{fmt(r.promptTokens)}</td>
                       <td className="py-2.5 pr-4 text-right tabular-nums">{fmt(r.completionTokens)}</td>
                       <td className="py-2.5 pr-4 text-right font-semibold tabular-nums">{fmt(r.totalTokens)}</td>
+                      <td className="py-2.5 pr-4 text-right font-semibold tabular-nums">
+                        {formatUsdCents(costCentsForRow(r))}
+                      </td>
                       <td className="py-2.5">
                         <Badge variant={r.estimated ? "outline" : "secondary"}>
                           {r.estimated ? "estimated" : "measured"}
@@ -376,13 +493,24 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function Row({ label, count, tokens }: { label: string; count: number; tokens: number }) {
+function Row({
+  label,
+  count,
+  tokens,
+  costCents,
+}: {
+  label: string;
+  count: number;
+  tokens: number;
+  costCents: number;
+}) {
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="capitalize">{label}</span>
       <span className="flex items-center gap-4">
         <span className="text-muted-foreground">{fmt(count)} calls</span>
-        <span className="w-24 text-right font-semibold tabular-nums">{fmt(tokens)}</span>
+        <span className="w-20 text-right tabular-nums text-muted-foreground">{fmt(tokens)}</span>
+        <span className="w-20 text-right font-semibold tabular-nums">{formatUsdCents(costCents)}</span>
       </span>
     </div>
   );
