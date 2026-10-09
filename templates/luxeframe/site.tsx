@@ -15,6 +15,8 @@ import {
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
+import { TemplateContactForm } from "../shared/contact-form";
+import { socialHrefForLabel } from "@/lib/contact/links";
 
 type PageRef = { slug: string; title: string };
 
@@ -69,20 +71,26 @@ export function LuxeframeSite({
       <style>{LX_CSS}</style>
       <input id="lx-nav-toggle" type="checkbox" />
       <SiteNav businessName={businessName} customLogo={customLogo} />
-      <Overlay pages={navPages} socials={socials} />
-      <main className="lx-main">{renderPage(active, slots, { businessName, contactEmail, contactPhone })}</main>
+      <Overlay pages={navPages} socials={socials} contact={details} />
+      <main className="lx-main">{renderPage(active, slots, { businessName, contactEmail, contactPhone, contact: details })}</main>
       <SiteFooter
         slots={slots}
         pages={navPages}
         businessName={businessName}
         socials={socials}
         year={new Date().getFullYear()}
+        contact={details}
       />
     </div>
   );
 }
 
-type Meta = { businessName: string; contactEmail: string; contactPhone: string };
+type Meta = {
+  businessName: string;
+  contactEmail: string;
+  contactPhone: string;
+  contact?: SiteContact | null;
+};
 
 function renderPage(active: string, slots: TemplateSlot[], meta: Meta) {
   if (active === "about") return <AboutBody slots={slots} businessName={meta.businessName} />;
@@ -124,7 +132,15 @@ function SiteNav({ businessName, customLogo }: { businessName: string; customLog
   );
 }
 
-function Overlay({ pages, socials }: { pages: PageRef[]; socials: string[] }) {
+function Overlay({
+  pages,
+  socials,
+  contact,
+}: {
+  pages: PageRef[];
+  socials: string[];
+  contact?: SiteContact | null;
+}) {
   return (
     <div className="lx-menu" data-motion-skip>
       <div className="lx-menu-img">
@@ -142,11 +158,14 @@ function Overlay({ pages, socials }: { pages: PageRef[]; socials: string[] }) {
           ))}
         </div>
         <div className="lx-menu-bottom">
-          {socials.map((label) => (
-            <a key={label} href="#lx-end" className="lx-under">
-              {label}
-            </a>
-          ))}
+          {socials.map((label) => {
+            const href = socialHrefForLabel(contact, label);
+            return href ? (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="lx-under">
+                {label}
+              </a>
+            ) : null;
+          })}
         </div>
       </div>
     </div>
@@ -496,14 +515,29 @@ function ContactBody({ slots, meta }: { slots: TemplateSlot[]; meta: Meta }) {
                   <h2 className="lx-font24">{phone}</h2>
                 </a>
               ) : null}
+              <TemplateContactForm
+                contactEmail={mail}
+                className="mt-10 max-w-xl space-y-4 text-left"
+                buttonStyle={{ backgroundColor: "var(--brand, #C8FF3D)", color: "#111" }}
+              />
             </div>
             <div style={{ marginTop: 100 }}>
               <Heading label="Socials" />
-              {socials.map((label) => (
-                <a key={label} href="#lx-end" className="lx-under" style={{ marginTop: 12 }}>
-                  <h2 className="lx-font24">{label}</h2>
-                </a>
-              ))}
+              {socials.map((label) => {
+                const href = socialHrefForLabel(meta.contact, label);
+                return href ? (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lx-under"
+                    style={{ marginTop: 12 }}
+                  >
+                    <h2 className="lx-font24">{label}</h2>
+                  </a>
+                ) : null;
+              })}
             </div>
           </div>
         </div>
@@ -518,12 +552,14 @@ function SiteFooter({
   businessName,
   socials,
   year,
+  contact,
 }: {
   slots: TemplateSlot[];
   pages: PageRef[];
   businessName: string;
   socials: string[];
   year: number;
+  contact?: SiteContact | null;
 }) {
   const footer = slotAt(slots, "footer");
   const tagline = text(footer.content, "tagline", "LuxeFrame is a visionary production.");
@@ -546,11 +582,14 @@ function SiteFooter({
             ))}
           </div>
           <div className="lx-foot-links">
-            {socials.map((label) => (
-              <a key={label} href="#lx-end" className="lx-under">
-                {label}
-              </a>
-            ))}
+            {socials.map((label) => {
+              const href = socialHrefForLabel(contact, label);
+              return href ? (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="lx-under">
+                  {label}
+                </a>
+              ) : null;
+            })}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { CW } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -70,6 +71,7 @@ export function renderCarewebPage(site: AssembledSite): string {
   <div class="mx-auto max-w-6xl">
     <h2 class="text-2xl" style="font-family:var(--cw-display)">${esc(text(contact.content, "heading", "Contact"))}</h2>
     <p class="mt-3" style="color:${CW.body}">${esc(text(contact.content, "subheading", ""))}</p>
+    ${contactFormHtml({ contactEmail })}
   </div>
 </section>\n<footer id="cw-end" class="border-t px-6 py-12" style="border-color:${CW.line};background:${CW.inverse};color:${CW.inverseFg};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-6xl">
@@ -104,6 +106,7 @@ export function renderCarewebPage(site: AssembledSite): string {
 </head>
 <body id="cw-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

@@ -4,6 +4,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { TemplateContactForm } from "../shared/contact-form";
 
 const faces = templateFaces([
   { family: "Poppins", variable: "--rs-sans", weights: ["500", "600"] },
@@ -265,6 +266,18 @@ export function ResumeSite({
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="px-6 py-16" data-template-contact-section="1">
+
+        <div className="mx-auto max-w-6xl">
+
+          <h2 className="text-2xl font-semibold">Contact</h2>
+
+          <TemplateContactForm contactEmail={contactEmail} />
+
+        </div>
+
       </section>
 
       <footer

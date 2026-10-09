@@ -3,6 +3,7 @@ import { RS } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -211,6 +212,7 @@ export function renderResumePage(site: AssembledSite): string {
   ${pageTitle("contact/", text(contact.content, "heading", "Contact\nInformation"))}
   <div class="mx-auto max-w-[1440px] px-6 py-24 md:px-10">
     <div class="flex flex-col gap-2.5">${contactRows}</div>
+    ${contactFormHtml({ contactEmail })}
   </div>
 </section>
 <footer class="px-6 py-6 text-xs tracking-[-0.03em] md:px-10" style="color:${RS.body};${sectionBandCss(footer.theme)}">
@@ -248,6 +250,7 @@ export function renderResumePage(site: AssembledSite): string {
 </head>
 <body id="rs-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

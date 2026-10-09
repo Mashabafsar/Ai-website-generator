@@ -51,7 +51,15 @@ const STEP_FIELDS: Record<number, (keyof QuestionnaireAnswers)[]> = {
   1: ["businessName", "industry", "description", "location"],
   2: ["targetAudience", "demographics", "goals", "services"],
   3: ["tone", "colorPreference", "customPrimary", "customSecondary", "customAccent", "visualStyle", "brandingNotes", "fontFamily"],
-  4: ["contactEmail", "contactPhone"],
+  4: [
+    "contactEmail",
+    "contactPhone",
+    "socialInstagram",
+    "socialLinkedin",
+    "socialTwitter",
+    "socialFacebook",
+    "socialYoutube",
+  ],
   5: [],
 };
 
@@ -782,9 +790,56 @@ export function QuestionnaireWizard({
                     <Input placeholder="(555) 123-4567" {...register("contactPhone")} />
                   </Field>
                 </div>
+                <div className="space-y-3 rounded-xl border p-4">
+                  <div>
+                    <p className="text-sm font-medium">Social profiles (optional)</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Paste your profile links. Instagram, LinkedIn, and other icons on your
+                      site will open these URLs.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Instagram">
+                      <Input
+                        type="url"
+                        placeholder="https://instagram.com/yourbusiness"
+                        {...register("socialInstagram")}
+                      />
+                    </Field>
+                    <Field label="LinkedIn">
+                      <Input
+                        type="url"
+                        placeholder="https://linkedin.com/company/yourbusiness"
+                        {...register("socialLinkedin")}
+                      />
+                    </Field>
+                    <Field label="X (Twitter)">
+                      <Input
+                        type="url"
+                        placeholder="https://x.com/yourbusiness"
+                        {...register("socialTwitter")}
+                      />
+                    </Field>
+                    <Field label="Facebook">
+                      <Input
+                        type="url"
+                        placeholder="https://facebook.com/yourbusiness"
+                        {...register("socialFacebook")}
+                      />
+                    </Field>
+                    <Field label="YouTube">
+                      <Input
+                        type="url"
+                        placeholder="https://youtube.com/@yourbusiness"
+                        {...register("socialYoutube")}
+                      />
+                    </Field>
+                  </div>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   After we write your site, you&apos;ll see the price and choose whether to
-                  download the files or have us put the site online.
+                  download the files or have us put the site online. You can also edit these
+                  links later in the editor.
                 </p>
               </>
             )}

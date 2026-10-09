@@ -4,6 +4,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { TemplateContactForm } from "../shared/contact-form";
 
 const faces = templateFaces([
   { family: "Inter", variable: "--ts-display", weights: ["500","600","700","800"] },
@@ -171,6 +172,12 @@ export function TeaserSite({
         <a href={contactEmail ? `mailto:${contactEmail}` : "#ts-end"} className="mt-8 inline-flex rounded-full px-8 py-3 font-semibold" style={{ backgroundColor: TS.brand, color: TS.inverseFg }}>
           {text(cta.content, "ctaPrimary", "Join the waitlist")}
         </a>
+      </section>
+      <section className="px-6 py-16" data-template-contact-section="1">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-2xl font-semibold">Contact</h2>
+          <TemplateContactForm contactEmail={contactEmail} />
+        </div>
       </section>
       <footer id="ts-end" className="border-t px-6 py-12" style={{ borderColor: TS.line, backgroundColor: TS.inverse, color: TS.inverseFg, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-8">

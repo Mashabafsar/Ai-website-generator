@@ -3,6 +3,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 // Static HTML twin of templates/forgetech/site.tsx. Exported
 // and deployed sites must look like the design the customer chose, so the
@@ -476,6 +477,13 @@ ${
   </div>
 </section>
 
+<section class="px-4 py-16 md:px-8" data-template-contact-section="1">
+  <div class="mx-auto max-w-[1400px] text-white">
+    <h2 class="text-2xl font-semibold" style="font-family:var(--ft-display)">Contact</h2>
+    ${contactFormHtml({ contactEmail })}
+  </div>
+</section>
+
 <footer class="px-4 py-14 text-white md:px-8" style="background:${FT.woodsmoke};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[1400px]">
     <div class="flex flex-wrap items-start justify-between gap-8">
@@ -526,6 +534,7 @@ ${
 </head>
 <body id="ft-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

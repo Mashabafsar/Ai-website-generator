@@ -1,6 +1,7 @@
 import type { AssembledSite, SiteContact, WebsiteBlueprint } from "@/lib/blueprint/types";
 import { FL } from "./tokens";
 import { ForgeLimeContactForm } from "./contact-form";
+import { SocialIconLinks } from "../shared/social-links";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
@@ -678,11 +679,20 @@ export function ForgeLimeSite({
                 </a>
               ))}
             </nav>
-            <div className="flex items-center gap-2">
-              <SocialIcon src={ASSETS.socialFacebook} />
-              <SocialIcon src={ASSETS.socialLinkedin} />
-              <SocialIcon src={ASSETS.socialTwitter} />
-            </div>
+            <SocialIconLinks
+              contact={details}
+              className="flex items-center gap-2"
+              linkClassName="grid h-10 w-10 place-items-center rounded-[10px] bg-[color:var(--brand,#A9FF5C)]"
+              imgClassName="h-[18px] w-[18px] object-contain"
+              imgWidth={18}
+              imgHeight={18}
+              icons={{
+                facebook: ASSETS.socialFacebook,
+                linkedin: ASSETS.socialLinkedin,
+                twitter: ASSETS.socialTwitter,
+              }}
+              order={["facebook", "linkedin", "twitter"]}
+            />
           </div>
           <div className="mt-8 border-t border-[#1F2B15] pt-6 text-center text-sm text-[#979F90]">
             © {new Date().getFullYear()} {businessName}, All Rights Reserved
@@ -719,11 +729,3 @@ function AccentWords({
   );
 }
 
-function SocialIcon({ src }: { src: string }) {
-  return (
-    <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-[color:var(--brand,#A9FF5C)]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" className="h-[18px] w-[18px] object-contain" />
-    </span>
-  );
-}

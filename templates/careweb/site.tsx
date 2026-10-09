@@ -4,6 +4,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { TemplateContactForm } from "../shared/contact-form";
 
 
 
@@ -186,6 +187,7 @@ export function CarewebSite({
           <h2 className="text-2xl" style={{ fontFamily: "var(--cw-display)" }}>{text(contactSlot.content, "heading", "Contact")}</h2>
           <p className="mt-3 max-w-xl" style={{ color: CW.body }}>{text(contactSlot.content, "subheading", "")}</p>
           {contactEmail ? <a className="mt-4 inline-block underline" href={`mailto:${contactEmail}`}>{contactEmail}</a> : null}
+          <TemplateContactForm contactEmail={contactEmail} />
         </div>
       </section>
       <footer id="cw-end" className="border-t px-6 py-12" style={{ borderColor: CW.line, backgroundColor: CW.inverse, color: CW.inverseFg, ...sectionBandStyle(footer.theme) }}>

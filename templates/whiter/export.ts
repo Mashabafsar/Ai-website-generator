@@ -4,6 +4,7 @@ import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 // Static HTML twin of templates/whiter/site.tsx. Exported and deployed sites
 // must look like the design the customer chose, so the Whiter layout is mirrored
@@ -392,14 +393,15 @@ function contactBlock(slot: TemplateSlot, contactEmail: string, contactPhone: st
           ${address ? row("Office", address) : ""}
         </div>
       </div>
-      <form class="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(29,38,58,0.3)]" style="border-color:${WH.line};background-color:${WH.card}" data-motion-skip>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <input class="rounded-2xl border px-4 py-3 text-sm" style="border-color:${WH.line};background-color:${WH.card}" placeholder="Your name" />
-          <input class="rounded-2xl border px-4 py-3 text-sm" style="border-color:${WH.line};background-color:${WH.card}" placeholder="Email" />
-        </div>
-        <textarea rows="4" class="mt-4 w-full rounded-2xl border px-4 py-3 text-sm" style="border-color:${WH.line};background-color:${WH.card}" placeholder="How can we help?"></textarea>
-        <button type="button" class="mt-4 w-full rounded-full py-3 text-sm font-semibold text-white" style="background:${WH.brand};font-family:var(--wh-display)">${esc(text(slot.content, "ctaLabel", "Send message"))}</button>
-      </form>
+      <div class="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(29,38,58,0.3)]" style="border-color:${WH.line};background-color:${WH.card}" data-motion-skip>
+        ${contactFormHtml({
+          contactEmail: email,
+          ctaLabel: text(slot.content, "ctaLabel", "Send message"),
+          className: "space-y-4 text-left",
+          buttonStyle: `background:${WH.brand};color:#fff;width:100%;border-radius:999px;padding:0.75rem 1.5rem;font-size:0.875rem;font-weight:600;font-family:var(--wh-display)`,
+          inputStyle: `width:100%;border-radius:1rem;border:1px solid ${WH.line};background:transparent;padding:0.875rem 1.125rem;font-size:0.875rem;outline:none`,
+        })}
+      </div>
     </div>`);
 }
 
@@ -558,6 +560,7 @@ ${header(pages, active, businessName, customLogo)}
 ${pageBody(active, slots, contactEmail, contactPhone)}
 </main>
 ${footer(pages, businessName, customLogo, tagline, contactEmail, contactPhone, footerSlot.theme)}
+${contactFormScript()}
 </body>
 </html>`;
 

@@ -6,6 +6,8 @@ import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
+import { TemplateContactForm } from "../shared/contact-form";
+import { SocialIconLinks } from "../shared/social-links";
 
 const faces = templateFaces([
   { family: "Sora", variable: "--cs-font", weights: ["400", "500", "600"] },
@@ -533,6 +535,13 @@ export function CraftedSpacesSite({
                 {text(cta.content, "ctaPrimary", "Let's Talk")}
               </Pill>
             </div>
+            <TemplateContactForm
+              contactEmail={contactEmail}
+              className="mt-10 max-w-xl space-y-4 text-left"
+              buttonStyle={{ backgroundColor: "var(--brand, #fff)", color: "#111" }}
+              inputStyle={{ borderColor: "rgba(255,255,255,0.35)", color: "#fff" }}
+              labelStyle={{ color: "rgba(255,255,255,0.75)" }}
+            />
           </div>
           <p className="text-sm leading-7 text-[color:var(--theme-muted,#B0B0B0)] lg:text-base">
             {text(
@@ -564,11 +573,20 @@ export function CraftedSpacesSite({
               <p className="mt-4 max-w-sm text-sm leading-7 text-[color:var(--theme-muted,#B0B0B0)]">
                 {text(footer.content, "tagline", "Designing spaces that feel as good as they look.")}
               </p>
-              <div className="mt-6 flex items-center gap-3">
-                {A.social.map((src) => (
-                  <img key={src} src={src} alt="" width={56} height={56} className="size-10 lg:size-14" />
-                ))}
-              </div>
+              <SocialIconLinks
+                contact={details}
+                className="mt-6 flex items-center gap-3"
+                imgClassName="size-10 lg:size-14"
+                imgWidth={56}
+                imgHeight={56}
+                icons={{
+                  instagram: A.social[0],
+                  linkedin: A.social[1],
+                  twitter: A.social[2],
+                  facebook: A.social[3],
+                  youtube: A.social[4],
+                }}
+              />
             </div>
 
             <FooterCol title="Navigation">

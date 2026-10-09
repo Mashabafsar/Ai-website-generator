@@ -4,6 +4,7 @@ import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 // Static HTML twin of templates/techvantage/site.tsx.
 // Exported and deployed sites must look like the design the customer chose, so
@@ -550,6 +551,9 @@ export function renderTechvantagePage(site: AssembledSite): string {
         </div>
       </div>
     </div>
+    <div class="${SHELL} pt-10">
+      ${contactFormHtml({ contactEmail })}
+    </div>
   </div>
 
   <footer class="${SHELL} pb-10 pt-14 lg:pt-[80px]">
@@ -657,6 +661,7 @@ export function renderTechvantagePage(site: AssembledSite): string {
 </head>
 <body id="tv-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

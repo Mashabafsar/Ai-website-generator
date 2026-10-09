@@ -4,6 +4,7 @@ import { CS } from "./tokens";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -408,6 +409,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
         text(cta.content, "headline", "Ready to Transform Your Space? Let's Talk!")
       )}</h2>
       <div class="mt-8">${pill(contactEmail ? `mailto:${contactEmail}` : "#cs-top", text(cta.content, "ctaPrimary", "Let's Talk"))}</div>
+    ${contactFormHtml({ contactEmail })}
     </div>
     <p class="text-sm leading-7 text-[#B0B0B0] lg:text-base">${esc(text(cta.content, "subheadline"))}</p>
   </div>
@@ -496,6 +498,7 @@ export function renderCraftedSpacesPage(site: AssembledSite): string {
 </head>
 <body id="cs-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

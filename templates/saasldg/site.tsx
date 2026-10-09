@@ -6,6 +6,8 @@ import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
+import { TemplateContactForm } from "../shared/contact-form";
+import { NewsletterForm } from "../shared/newsletter-form";
 
 const faces = templateFaces([
   { family: "Plus Jakarta Sans", variable: "--sl-display", weights: ["600", "700", "800"] },
@@ -477,29 +479,26 @@ export function SaasLandingSite({
           <p className="mt-3 text-base" style={{ color: SL.body }}>
             And stay in touch with us!
           </p>
-          <div className="mx-auto mt-8 flex w-full max-w-md gap-3">
-            <label className="sr-only" htmlFor="sl-newsletter">
-              Email address
-            </label>
-            <input
-              id="sl-newsletter"
-              type="email"
-              placeholder="Enter your email"
-              className="min-w-0 flex-1 rounded-full border px-5 py-3.5 text-sm outline-none focus:border-[color:var(--sl-accent)]"
-              style={{ backgroundColor: SL.surface, borderColor: SL.line, ["--sl-accent" as string]: SL.brand }}
-            />
-            <button
-              type="button"
-              className="shrink-0 rounded-full px-6 py-3.5 text-sm font-semibold text-white"
-              style={{ backgroundColor: SL.brand, fontFamily: "var(--sl-display)" }}
-            >
-              Subscribe
-            </button>
-          </div>
+          <NewsletterForm
+            contactEmail={contactEmail}
+            placeholder="Enter your email"
+            ctaLabel="Subscribe"
+            className="mx-auto mt-8 flex w-full max-w-md flex-wrap gap-3"
+            inputClassName="min-w-0 flex-1 rounded-full border px-5 py-3.5 text-sm outline-none"
+            buttonClassName="shrink-0 rounded-full px-6 py-3.5 text-sm font-semibold text-white"
+            inputStyle={{ backgroundColor: SL.surface, borderColor: SL.line }}
+            buttonStyle={{ backgroundColor: SL.brand, fontFamily: "var(--sl-display)" }}
+          />
         </div>
       </section>
 
       {/* Footer */}
+      <section className="px-6 py-16" data-template-contact-section="1">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-2xl font-semibold">Contact</h2>
+          <TemplateContactForm contactEmail={contactEmail} />
+        </div>
+      </section>
       <footer className="border-t px-6 py-14" style={{ borderColor: SL.line, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[80rem]">
           <div className="flex flex-wrap items-start justify-between gap-8">

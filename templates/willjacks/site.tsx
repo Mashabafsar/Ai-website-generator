@@ -5,8 +5,8 @@ import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../
 import { brandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
-
-
+import { TemplateContactForm } from "../shared/contact-form";
+import { configuredSocialLinks, socialHrefForLabel } from "@/lib/contact/links";
 
 const faces = templateFaces([
   { family: "Inter", variable: "--wj-sans", weights: ["400", "500", "600"] },
@@ -80,7 +80,14 @@ export function WilljacksSite({
       <style>{WJ_CSS}</style>
       <SiteNav pages={pages} active={active} businessName={businessName} customLogo={customLogo} location={location} />
       <main>{renderPageBody(active, slots, { businessName, contactEmail, location }, demo)}</main>
-      <SiteFooter slots={slots} businessName={businessName} contactEmail={contactEmail} location={location} demo={demo} />
+      <SiteFooter
+        slots={slots}
+        businessName={businessName}
+        contactEmail={contactEmail}
+        location={location}
+        demo={demo}
+        siteContact={contact ?? site?.contact}
+      />
     </div>
   );
 }
@@ -359,12 +366,14 @@ function SiteFooter({
   contactEmail,
   location,
   demo,
+  siteContact,
 }: {
   slots: TemplateSlot[];
   businessName: string;
   contactEmail: string;
   location: string;
   demo: boolean;
+  siteContact?: SiteContact | null;
 }) {
   const contact = slotAt(slots, "contact");
   const footer = slotAt(slots, "footer");
@@ -381,6 +390,11 @@ function SiteFooter({
             {text(contact.content, "subheading", "Out")}
           </h2>
         </div>
+        <TemplateContactForm
+          contactEmail={contactEmail}
+          className="mt-10 ml-auto max-w-xl space-y-4 text-left"
+          buttonStyle={{ backgroundColor: "var(--brand, #181818)", color: "#fff" }}
+        />
         <p className="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">{text(footer.content, "tagline", demo ? "Currently available for freelance projects" : "").replace(" for ", "\nfor ")}</p>
         <div className="flex gap-[6vw] py-[10vw] max-md:flex-col max-md:gap-[10vw] max-md:py-[20vw]">
           <p className="w-1/4 whitespace-pre-line text-[16px] tracking-[-0.3px] max-md:w-full">{location.replace(/^(Based in)\s+/i, "$1\n")}</p>
@@ -406,15 +420,28 @@ function SiteFooter({
           </div>
         </div>
       </div>
-      <SocialBand socials={socials} />
+      <SocialBand socials={socials} siteContact={siteContact} demo={demo} />
     </footer>
   );
 }
 
-function SocialBand({ socials }: { socials: string[] }) {
-  const row1 = socials.slice(0, 1);
-  const row2 = socials.slice(1, 3);
-  const row3 = socials.slice(3, 4);
+function SocialBand({
+  socials,
+  siteContact,
+  demo,
+}: {
+  socials: string[];
+  siteContact?: SiteContact | null;
+  demo: boolean;
+}) {
+  const labels =
+    socials.length > 0
+      ? socials
+      : configuredSocialLinks(siteContact).map((l) => l.label);
+  const row1 = labels.slice(0, 1);
+  const row2 = labels.slice(1, 3);
+  const row3 = labels.slice(3, 4);
+  if (labels.length === 0) return null;
   return (
     <div className="relative z-10 flex h-screen flex-col justify-between" style={{ backgroundColor: WJ.inverse, color: WJ.inverseFg }}>
       <div className="flex h-full items-center justify-center">
@@ -431,17 +458,23 @@ function SocialBand({ socials }: { socials: string[] }) {
         <div className="flex w-full flex-col items-center justify-between">
           <div className="flex gap-[5vw] max-md:flex-col max-md:items-center max-md:gap-[10vw] max-[560px]:gap-[15vw]">
             {row1.map((label) => (
-              <SocialLink key={label}>{label}</SocialLink>
+              <SocialLink key={label} href={socialHrefForLabel(siteContact, label)} demo={demo}>
+                {label}
+              </SocialLink>
             ))}
           </div>
           <div className="flex gap-[5vw] max-md:flex-col max-md:items-center max-md:gap-[10vw]">
             {row2.map((label) => (
-              <SocialLink key={label}>{label}</SocialLink>
+              <SocialLink key={label} href={socialHrefForLabel(siteContact, label)} demo={demo}>
+                {label}
+              </SocialLink>
             ))}
           </div>
           <div className="flex gap-[5vw] max-md:flex-col max-md:items-center max-md:gap-[10vw]">
             {row3.map((label) => (
-              <SocialLink key={label}>{label}</SocialLink>
+              <SocialLink key={label} href={socialHrefForLabel(siteContact, label)} demo={demo}>
+                {label}
+              </SocialLink>
             ))}
           </div>
         </div>
@@ -450,12 +483,33 @@ function SocialBand({ socials }: { socials: string[] }) {
   );
 }
 
-function SocialLink({ children }: { children: ReactNode }) {
-  return (
-    <span className="wj-social relative block h-[11vw] text-[11vw] tracking-[-0.5vw] max-md:h-[18vw] max-md:text-[18vw] max-md:tracking-[-0.8vw] max-[560px]:h-[21vw] max-[560px]:text-[21vw]" style={{ color: WJ.inverseFg }}>
-      {children}
-    </span>
-  );
+function SocialLink({
+  children,
+  href,
+  demo,
+}: {
+  children: ReactNode;
+  href?: string;
+  demo: boolean;
+}) {
+  const className =
+    "wj-social relative block h-[11vw] text-[11vw] tracking-[-0.5vw] max-md:h-[18vw] max-md:text-[18vw] max-md:tracking-[-0.8vw] max-[560px]:h-[21vw] max-[560px]:text-[21vw]";
+  const style = { color: WJ.inverseFg };
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={style}>
+        {children}
+      </a>
+    );
+  }
+  if (demo) {
+    return (
+      <span className={className} style={style}>
+        {children}
+      </span>
+    );
+  }
+  return null;
 }
 
 const WJ_CSS = `

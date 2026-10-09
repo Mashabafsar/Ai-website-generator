@@ -1,6 +1,8 @@
 import type { QuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import type { SectionContext } from "@/lib/sections/registry";
 import type { SiteTemplate, TemplatePageDef } from "@/lib/templates/types";
+import type { SiteContact } from "@/lib/blueprint/types";
+import { buildSiteContact } from "@/lib/contact/links";
 import { featuresFromVariants } from "@/lib/quote/features";
 import { parseUserColor } from "@/lib/theme/parse-color";
 import type { CustomThemeColors } from "@/lib/agents/theme";
@@ -25,7 +27,7 @@ export type NormalizedRequirements = {
   /** Typed hexes when the customer wrote their own colors. */
   customColors?: CustomThemeColors;
   features: string[];
-  contact: { email?: string; phone?: string; address?: string };
+  contact: SiteContact;
   packageType: string;
   quoteSignals: string[];
   context: SectionContext;
@@ -113,7 +115,18 @@ export function analyzeRequirements(
     colorPreferenceExplicit: Boolean(colorPreferenceAnswer) || Boolean(customColors),
     ...(customColors ? { customColors } : {}),
     features,
-    contact: { email: context.contactEmail, phone: context.contactPhone, address: location },
+    contact: buildSiteContact({
+      email: context.contactEmail,
+      phone: context.contactPhone,
+      address: location,
+      social: {
+        instagram: answers.socialInstagram,
+        linkedin: answers.socialLinkedin,
+        twitter: answers.socialTwitter,
+        facebook: answers.socialFacebook,
+        youtube: answers.socialYoutube,
+      },
+    }) ?? {},
     packageType: answers.packageType,
     quoteSignals,
     context,

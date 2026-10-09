@@ -7,6 +7,8 @@ import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { industryAwareContactHeading, industryAwareCta } from "./cta";
 import { ReboContactForm } from "./contact-form";
+import { SocialIconLinks, SocialTextLinks } from "../shared/social-links";
+import { mailtoHref, telHref } from "@/lib/contact/links";
 
 const faces = templateFaces([
   { family: "Space Grotesk", variable: "--rb-display", weights: ["400", "500", "600", "700"] },
@@ -87,7 +89,7 @@ export function ReboSite({
         @media (prefers-reduced-motion: reduce) { .rb-marquee { animation: none; } }
       `}</style>
       <Header pages={pages} active={active} businessName={businessName} customLogo={customLogo} dark={isHome} />
-      <main>{renderPageBody(active, slots, { businessName, contactEmail, contactPhone, industry })}</main>
+      <main>{renderPageBody(active, slots, { businessName, contactEmail, contactPhone, industry, contact: details })}</main>
       {isHome ? (
         <HomeContact
           slots={slots}
@@ -96,6 +98,7 @@ export function ReboSite({
           businessName={businessName}
           customLogo={customLogo}
           industry={industry}
+          contact={details}
         />
       ) : (
         <InnerFooter
@@ -104,13 +107,20 @@ export function ReboSite({
           tagline={text(footer.content, "tagline", "WE ARE PRIORITIZE COLLABORATION WITH OUR CLIENTS")}
           contactEmail={contactEmail}
           contactPhone={contactPhone}
+          contact={details}
         />
       )}
     </div>
   );
 }
 
-type PageMeta = { businessName: string; contactEmail: string; contactPhone: string; industry: string };
+type PageMeta = {
+  businessName: string;
+  contactEmail: string;
+  contactPhone: string;
+  industry: string;
+  contact?: SiteContact | null;
+};
 
 function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta) {
   switch (active) {
@@ -129,7 +139,7 @@ function renderPageBody(active: string, slots: TemplateSlot[], meta: PageMeta) {
     case "portfolio":
       return <PortfolioBody slots={slots} />;
     default:
-      return <HomeBody slots={slots} industry={meta.industry} />;
+      return <HomeBody slots={slots} industry={meta.industry} contact={meta.contact} />;
   }
 }
 
@@ -235,7 +245,15 @@ function PillButton({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-function HomeBody({ slots, industry }: { slots: TemplateSlot[]; industry: string }) {
+function HomeBody({
+  slots,
+  industry,
+  contact,
+}: {
+  slots: TemplateSlot[];
+  industry: string;
+  contact?: SiteContact | null;
+}) {
   const hero = slotAt(slots, "hero");
   const services = slotAt(slots, "services");
   const about = slotAt(slots, "about");
@@ -512,13 +530,21 @@ function HomeBody({ slots, industry }: { slots: TemplateSlot[]; industry: string
                 <div className="relative h-[441px] w-full overflow-hidden rounded-[10px] border-[5px] border-black">
                   <img src={team.itemImages[i] || FALLBACK.team[i]} alt={name} className="absolute inset-0 size-full object-cover grayscale" />
                   {i === 0 ? (
-                    <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-[11px]">
-                      {[`${A}/social-fb.svg`, `${A}/social-x.svg`, `${A}/social-in.svg`, `${A}/social-ig.svg`].map((src) => (
-                        <span key={src} className="grid size-[38px] place-items-center rounded-full bg-white">
-                          <img src={src} alt="" width={24} height={24} className="size-6" />
-                        </span>
-                      ))}
-                    </div>
+                    <SocialIconLinks
+                      contact={contact}
+                      className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-[11px]"
+                      linkClassName="grid size-[38px] place-items-center rounded-full bg-white"
+                      imgClassName="size-6"
+                      imgWidth={24}
+                      imgHeight={24}
+                      icons={{
+                        facebook: `${A}/social-fb.svg`,
+                        twitter: `${A}/social-x.svg`,
+                        linkedin: `${A}/social-in.svg`,
+                        instagram: `${A}/social-ig.svg`,
+                      }}
+                      order={["facebook", "twitter", "linkedin", "instagram"]}
+                    />
                   ) : null}
                 </div>
                 <h3 className="text-[32px] font-medium" style={displayFont()}>
@@ -541,6 +567,7 @@ function HomeContact({
   businessName,
   customLogo,
   industry,
+  contact: siteContact,
 }: {
   slots: TemplateSlot[];
   contactEmail: string;
@@ -548,6 +575,7 @@ function HomeContact({
   businessName: string;
   customLogo: string;
   industry: string;
+  contact?: SiteContact | null;
 }) {
   const contact = slotAt(slots, "contact");
   const footer = slotAt(slots, "footer");
@@ -573,19 +601,40 @@ function HomeContact({
             <p className="text-[18px]" style={{ color: RB.brand }}>
               Give us a call:
             </p>
-            <p className="mt-3.5 text-[18px] text-white">{contactPhone || "(123)456-780"}</p>
+            {telHref(siteContact) ? (
+              <a href={telHref(siteContact)} className="mt-3.5 block text-[18px] text-white hover:underline">
+                {contactPhone}
+              </a>
+            ) : (
+              <p className="mt-3.5 text-[18px] text-white">{contactPhone || "(123)456-780"}</p>
+            )}
           </div>
           <div>
             <p className="text-[18px]" style={{ color: RB.brand }}>
               Send us an email:
             </p>
-            <p className="mt-3.5 text-[18px] text-white">{contactEmail || "info@rebo.com"}</p>
+            {mailtoHref(siteContact) ? (
+              <a href={mailtoHref(siteContact)} className="mt-3.5 block text-[18px] text-white hover:underline">
+                {contactEmail}
+              </a>
+            ) : (
+              <p className="mt-3.5 text-[18px] text-white">{contactEmail || "info@rebo.com"}</p>
+            )}
           </div>
-          <div className="flex gap-[21px]">
-            {[`${A}/social-fb-light.svg`, `${A}/social-x-light.svg`, `${A}/social-ig-light.svg`, `${A}/social-in-light.svg`].map((src) => (
-              <img key={src} src={src} alt="" width={24} height={24} className="size-6" />
-            ))}
-          </div>
+          <SocialIconLinks
+            contact={siteContact}
+            className="flex gap-[21px]"
+            imgClassName="size-6"
+            imgWidth={24}
+            imgHeight={24}
+            icons={{
+              facebook: `${A}/social-fb-light.svg`,
+              twitter: `${A}/social-x-light.svg`,
+              instagram: `${A}/social-ig-light.svg`,
+              linkedin: `${A}/social-in-light.svg`,
+            }}
+            order={["facebook", "twitter", "instagram", "linkedin"]}
+          />
         </div>
         {/*
           Homepage keeps contact details + a CTA into the Contact page.
@@ -624,12 +673,14 @@ function InnerFooter({
   tagline,
   contactEmail,
   contactPhone,
+  contact,
 }: {
   businessName: string;
   customLogo: string;
   tagline: string;
   contactEmail: string;
   contactPhone: string;
+  contact?: SiteContact | null;
 }) {
   return (
     <footer className="relative overflow-hidden px-8 py-20" style={{ backgroundColor: RB.inverse, color: RB.inverseFg }}>
@@ -648,17 +699,28 @@ function InnerFooter({
               get in <span style={{ color: RB.brand }}>touch</span>
             </p>
             <div className="mt-[27px] flex gap-[102px] text-[24px] font-bold text-[#8E8E8E]">
-              <p>{contactPhone || "(+23)456-780"}</p>
-              <p>{contactEmail || "info@rebo.com"}</p>
+              {telHref(contact) ? (
+                <a href={telHref(contact)} className="hover:underline">
+                  {contactPhone}
+                </a>
+              ) : (
+                <p>{contactPhone || "(+23)456-780"}</p>
+              )}
+              {mailtoHref(contact) ? (
+                <a href={mailtoHref(contact)} className="hover:underline">
+                  {contactEmail}
+                </a>
+              ) : (
+                <p>{contactEmail || "info@rebo.com"}</p>
+              )}
             </div>
           </div>
-          <div className="flex gap-2.5">
-            {["twitter", "linkedin", "instagram"].map((label) => (
-              <span key={label} className="inline-flex w-[105px] items-center justify-center rounded-[33px] border border-[#FFFFF5] p-[5px] text-[18px] text-[#FFFFF5]">
-                {label}
-              </span>
-            ))}
-          </div>
+          <SocialTextLinks
+            contact={contact}
+            labels={["Twitter", "LinkedIn", "Instagram"]}
+            className="flex gap-2.5"
+            linkClassName="inline-flex w-[105px] items-center justify-center rounded-[33px] border border-[#FFFFF5] p-[5px] text-[18px] text-[#FFFFF5] hover:bg-white/10"
+          />
         </div>
         <div className="flex items-center justify-between border-t pt-6" style={{ borderColor: "#2E3545" }}>
           <p className="text-[16px]" style={{ color: RB.graySoft }}>

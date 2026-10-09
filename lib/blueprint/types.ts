@@ -146,13 +146,22 @@ export type AssembledPage = {
 /**
  * The business's real contact details. Designs without a contact section still
  * need them — ForgeTech, for example, puts the email in its header and wires
- * its closing call-to-action to a mailto link.
+ * its closing call-to-action to a mailto link. Social profile URLs power
+ * Instagram / LinkedIn / etc. icons in footers so those logos are real links.
  */
 export type SiteContact = {
   email?: string;
   phone?: string;
   /** The business's own location, as given in the questionnaire. */
   address?: string;
+  /** Optional profile URLs. Empty keys are omitted at render time. */
+  social?: {
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+    facebook?: string;
+    youtube?: string;
+  };
 };
 
 export type AssembledSite = {

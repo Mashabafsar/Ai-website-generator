@@ -6,6 +6,9 @@ import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
+import { TemplateContactForm } from "../shared/contact-form";
+import { SocialIconLinks } from "../shared/social-links";
+import { NewsletterForm } from "../shared/newsletter-form";
 
 const faces = templateFaces([
   { family: "Urbanist", variable: "--tv-display", weights: ["500", "600", "700"] },
@@ -707,6 +710,13 @@ export function TechvantageSite({
               </div>
             </div>
           </Shell>
+          <Shell className="pt-10">
+            <TemplateContactForm
+              contactEmail={contactEmail}
+              className="max-w-xl space-y-4 text-left"
+              buttonStyle={{ backgroundColor: "var(--brand, #2563EB)", color: "#fff" }}
+            />
+          </Shell>
         </div>
 
         {/* Footer */}
@@ -739,20 +749,16 @@ export function TechvantageSite({
                 <p className="mt-3 max-w-[340px] text-[16px] leading-[26px]" style={{ color: TV.onDarkMuted }}>
                   {text(footer.content, "tagline", "Technology partners for teams that need results.")}
                 </p>
-                <div
-                  className="mt-5 flex max-w-[377px] items-center gap-4 rounded-full border px-6 py-2.5"
-                  style={{ borderColor: TV.lineDark }}
-                >
-                  <span className="flex-1 text-[17px]" style={{ color: TV.onDarkMuted }}>
-                    Email Address
-                  </span>
-                  <span
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: TV.wash }}
-                  >
-                    <ArrowUpRight />
-                  </span>
-                </div>
+                <NewsletterForm
+                  contactEmail={contactEmail}
+                  placeholder="Email Address"
+                  ctaLabel="→"
+                  className="mt-5 flex max-w-[377px] flex-wrap items-center gap-4 rounded-full border px-6 py-2.5"
+                  inputClassName="min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:opacity-70"
+                  buttonClassName="flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                  inputStyle={{ color: TV.onDarkMuted }}
+                  buttonStyle={{ backgroundColor: TV.wash, color: "#fff" }}
+                />
               </div>
             </div>
 
@@ -797,11 +803,21 @@ export function TechvantageSite({
 
           <div className="mt-14 flex items-center gap-5">
             <span className="hidden h-px flex-1 sm:block" style={{ backgroundColor: "rgba(255,255,255,0.12)" }} />
-            <span className="mx-auto flex items-center gap-3 sm:mx-0">
-              {ASSETS.social.map((src) => (
-                <img key={src} src={src} alt="" width={37} height={37} className="size-[37px]" />
-              ))}
-            </span>
+            <SocialIconLinks
+              contact={details}
+              className="mx-auto flex items-center gap-3 sm:mx-0"
+              imgClassName="size-[37px]"
+              imgWidth={37}
+              imgHeight={37}
+              icons={{
+                facebook: ASSETS.social[0],
+                twitter: ASSETS.social[1],
+                linkedin: ASSETS.social[2],
+                instagram: ASSETS.social[3],
+                youtube: ASSETS.social[4],
+              }}
+              order={["facebook", "twitter", "linkedin", "instagram", "youtube"]}
+            />
             <span className="hidden h-px flex-1 sm:block" style={{ backgroundColor: "rgba(255,255,255,0.12)" }} />
           </div>
 

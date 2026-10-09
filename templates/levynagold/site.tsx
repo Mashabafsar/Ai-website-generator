@@ -4,6 +4,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { TemplateContactForm } from "../shared/contact-form";
 
 
 
@@ -164,6 +165,12 @@ export function LevynagoldSite({
         <a href={contactEmail ? `mailto:${contactEmail}` : "#lg-end"} className="mt-8 inline-flex rounded-xl px-8 py-3 font-semibold" style={{ backgroundColor: LG.brand, color: LG.inverseFg }}>
           {text(cta.content, "ctaPrimary", "Request a lookbook")}
         </a>
+      </section>
+      <section className="px-6 py-16" data-template-contact-section="1">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-2xl font-semibold">Contact</h2>
+          <TemplateContactForm contactEmail={contactEmail} />
+        </div>
       </section>
       <footer id="lg-end" className="border-t px-6 py-12" style={{ borderColor: LG.line, backgroundColor: LG.inverse, color: LG.inverseFg, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-8">

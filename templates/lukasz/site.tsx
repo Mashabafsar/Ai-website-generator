@@ -4,6 +4,7 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { TemplateContactForm } from "../shared/contact-form";
 
 
 
@@ -157,6 +158,7 @@ export function LukaszSite({
           <h2 className="text-3xl" style={{ fontFamily: "var(--lu-display)" }}>{text(contactSlot.content, "heading", "Contact")}</h2>
           <p className="mt-3 max-w-xl" style={{ color: LU.body }}>{text(contactSlot.content, "subheading", "")}</p>
           {contactEmail ? <a className="mt-4 inline-block" href={`mailto:${contactEmail}`}>{contactEmail}</a> : null}
+          <TemplateContactForm contactEmail={contactEmail} />
         </div>
       </section>
       <footer id="lu-end" className="border-t px-6 py-12" style={{ borderColor: LU.line, backgroundColor: LU.inverse, color: LU.inverseFg, ...sectionBandStyle(footer.theme) }}>

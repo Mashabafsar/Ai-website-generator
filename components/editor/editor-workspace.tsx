@@ -21,6 +21,7 @@ import { getVariantSpec, iconCount } from "@/lib/sections/registry";
 import { SitePreview } from "@/components/editor/site-preview";
 import { ImagePicker } from "@/components/editor/image-picker";
 import { IconPickerList } from "@/components/editor/icon-picker";
+import { ContactLinksEditor } from "@/components/editor/contact-links-editor";
 import { FONT_CATALOG_HREF, THEME_FONTS, resolveThemeFont } from "@/templates/shared/fonts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,13 +55,14 @@ export function EditorWorkspace({
   const router = useRouter();
   const [blueprint, setBlueprint] = useState<WebsiteBlueprint>(initialBlueprint);
   const [theme, setTheme] = useState<ThemeTokens>(initialTheme);
+  const [siteContact, setSiteContact] = useState<SiteContact>(contact ?? {});
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeSlug, setActiveSlug] = useState(initialBlueprint.pages[0]?.slug ?? "home");
 
   const site = useMemo(
-    () => ({ ...assembleSite(blueprint, theme), renderer, templateSlug, contact }),
-    [blueprint, theme, renderer, templateSlug, contact]
+    () => ({ ...assembleSite(blueprint, theme), renderer, templateSlug, contact: siteContact }),
+    [blueprint, theme, renderer, templateSlug, siteContact]
   );
   const activePage =
     blueprint.pages.find((p) => p.slug === activeSlug) ?? blueprint.pages[0];
@@ -147,7 +149,7 @@ export function EditorWorkspace({
       const res = await fetch(`/api/projects/${projectId}/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ blueprint, theme }),
+        body: JSON.stringify({ blueprint, theme, contact: siteContact }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "We couldn't save your site");
@@ -189,6 +191,14 @@ export function EditorWorkspace({
           theme={theme}
           onChange={(t) => {
             setTheme(t);
+            setDirty(true);
+          }}
+        />
+
+        <ContactLinksEditor
+          contact={siteContact}
+          onChange={(next) => {
+            setSiteContact(next);
             setDirty(true);
           }}
         />

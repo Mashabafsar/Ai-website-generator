@@ -6,6 +6,7 @@ import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
+import { TemplateContactForm } from "../shared/contact-form";
 
 const faces = templateFaces([
   { family: "Rubik", variable: "--wh-display", weights: ["500", "600", "700", "800"] },
@@ -655,16 +656,24 @@ function Contact({ slot, meta }: { slot: TemplateSlot; meta: PageMeta }) {
             {address ? <ContactRow label="Office" value={address} /> : null}
           </div>
         </div>
-        <form className="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(29,38,58,0.3)]" style={{ borderColor: WH.line, backgroundColor: WH.card }} data-motion-skip>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <input className="rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: WH.line }} placeholder="Your name" />
-            <input className="rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: WH.line }} placeholder="Email" />
-          </div>
-          <textarea rows={4} className="mt-4 w-full rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: WH.line }} placeholder="How can we help?" />
-          <button type="button" className="mt-4 w-full rounded-full py-3 text-sm font-semibold text-white" style={{ background: WH.brand, fontFamily: "var(--wh-display)" }}>
-            {text(slot.content, "ctaLabel", "Send message")}
-          </button>
-        </form>
+        <div
+          className="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(29,38,58,0.3)]"
+          style={{ borderColor: WH.line, backgroundColor: WH.card }}
+          data-motion-skip
+        >
+          <TemplateContactForm
+            contactEmail={email}
+            ctaLabel={text(slot.content, "ctaLabel", "Send message")}
+            className="space-y-4 text-left"
+            buttonStyle={{
+              backgroundColor: WH.brand,
+              color: "#fff",
+              width: "100%",
+              fontFamily: "var(--wh-display)",
+            }}
+            inputStyle={{ borderColor: WH.line, borderRadius: "1rem" }}
+          />
+        </div>
       </div>
     </Section>
   );

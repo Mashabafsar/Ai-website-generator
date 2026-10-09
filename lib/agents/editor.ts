@@ -23,6 +23,7 @@ import { getTemplateById } from "@/lib/templates/store";
 import { findTemplateLockViolation } from "@/lib/templates/lock";
 import { parseQuestionnaireAnswers } from "@/lib/questionnaire/schema";
 import { analyzeRequirements } from "@/lib/agents/requirement-analyst";
+import { buildSiteContact, mergeSocial } from "@/lib/contact/links";
 import type {
   AssembledSite,
   SiteContact,
@@ -66,11 +67,12 @@ async function loadBlueprint(projectId: string): Promise<{ blueprint: WebsiteBlu
 async function persistAndSync(
   projectId: string,
   blueprint: WebsiteBlueprint,
-  theme: ThemeTokens
+  theme: ThemeTokens,
+  contactOverride?: SiteContact | null
 ): Promise<void> {
   const clean = sanitizeBlueprint(blueprint);
   const withImages = await sourceImages(clean);
-  const metadata = await siteMetadata(projectId);
+  const metadata = await siteMetadata(projectId, contactOverride);
   const site = { ...assembleSite(withImages, theme), ...metadata };
   await prisma.project.update({
     where: { id: projectId },
@@ -91,7 +93,8 @@ async function persistAndSync(
  * the contact details that designs without a contact block rely on.
  */
 async function siteMetadata(
-  projectId: string
+  projectId: string,
+  contactOverride?: SiteContact | null
 ): Promise<{ renderer?: string; templateSlug?: string; contact?: SiteContact }> {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
@@ -108,9 +111,15 @@ async function siteMetadata(
     // A corrupt cache is not worth failing a save over.
   }
 
-  const contact = project.questionnaire
+  const fromQuestionnaire = project.questionnaire
     ? contactFromQuestionnaire(project.questionnaire.answers)
-    : existing?.contact;
+    : undefined;
+  const contact =
+    contactOverride === null
+      ? undefined
+      : contactOverride
+        ? contactOverride
+        : mergeContact(fromQuestionnaire, existing?.contact);
 
   if (project.templateId) {
     const template = await getTemplateById(project.templateId);
@@ -126,19 +135,76 @@ async function siteMetadata(
   return { contact };
 }
 
+function mergeContact(
+  fromQuestionnaire?: SiteContact,
+  existing?: SiteContact
+): SiteContact | undefined {
+  if (!fromQuestionnaire && !existing) return undefined;
+  return buildSiteContact({
+    email: fromQuestionnaire?.email ?? existing?.email,
+    phone: fromQuestionnaire?.phone ?? existing?.phone,
+    address: fromQuestionnaire?.address ?? existing?.address,
+    social: mergeSocial(existing?.social, fromQuestionnaire?.social),
+  });
+}
+
 function contactFromQuestionnaire(answers: string): SiteContact | undefined {
   try {
     const parsed = JSON.parse(answers) as {
       contactEmail?: string;
       contactPhone?: string;
       location?: string;
+      socialInstagram?: string;
+      socialLinkedin?: string;
+      socialTwitter?: string;
+      socialFacebook?: string;
+      socialYoutube?: string;
     };
-    const email = parsed.contactEmail?.trim() || undefined;
-    const phone = parsed.contactPhone?.trim() || undefined;
-    const address = parsed.location?.trim() || undefined;
-    return email || phone || address ? { email, phone, address } : undefined;
+    return buildSiteContact({
+      email: parsed.contactEmail,
+      phone: parsed.contactPhone,
+      address: parsed.location,
+      social: {
+        instagram: parsed.socialInstagram,
+        linkedin: parsed.socialLinkedin,
+        twitter: parsed.socialTwitter,
+        facebook: parsed.socialFacebook,
+        youtube: parsed.socialYoutube,
+      },
+    });
   } catch {
     return undefined;
+  }
+}
+
+async function syncContactToQuestionnaire(
+  projectId: string,
+  contact: SiteContact
+): Promise<void> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { questionnaire: true },
+  });
+  if (!project?.questionnaire) return;
+  try {
+    const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
+    const next = {
+      ...answers,
+      contactEmail: contact.email ?? "",
+      contactPhone: contact.phone ?? "",
+      location: contact.address ?? answers.location ?? "",
+      socialInstagram: contact.social?.instagram ?? "",
+      socialLinkedin: contact.social?.linkedin ?? "",
+      socialTwitter: contact.social?.twitter ?? "",
+      socialFacebook: contact.social?.facebook ?? "",
+      socialYoutube: contact.social?.youtube ?? "",
+    };
+    await prisma.questionnaire.update({
+      where: { projectId },
+      data: { answers: JSON.stringify(next) },
+    });
+  } catch {
+    // Questionnaire sync is best-effort; the assembled site still has contact.
   }
 }
 
@@ -152,11 +218,16 @@ export async function saveProjectContent(params: {
   projectId: string;
   blueprint: WebsiteBlueprint;
   theme: ThemeTokens;
+  /** When provided, replaces SiteContact on the assembled site (and questionnaire). */
+  contact?: SiteContact;
 }): Promise<void> {
   const result = validateBlueprint(params.blueprint);
   if (!result.valid) throw new BlueprintInvalidError(result.errors);
   await assertMatchesTemplate(params.projectId, result.blueprint);
-  await persistAndSync(params.projectId, result.blueprint, params.theme);
+  if (params.contact) {
+    await syncContactToQuestionnaire(params.projectId, params.contact);
+  }
+  await persistAndSync(params.projectId, result.blueprint, params.theme, params.contact);
 }
 
 /**

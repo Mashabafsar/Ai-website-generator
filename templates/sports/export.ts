@@ -4,6 +4,7 @@ import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
 import { ownPhotos, photoFor } from "./photos";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 // Static HTML twin of templates/sports/site.tsx. Exported and deployed sites
 // must look like the design the customer chose, so the Athlo layout is mirrored
@@ -431,6 +432,12 @@ ${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px
   </div>
 </section>
 
+<section class="px-6 py-16" data-template-contact-section="1">
+  <div class="mx-auto max-w-6xl">
+    <h2 class="text-2xl font-semibold">Contact</h2>
+    ${contactFormHtml({ contactEmail })}
+  </div>
+</section>
 <footer id="sp-contact" class="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style="background:${SP.white};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[82.5rem]">
     <div class="flex flex-col items-start gap-10 lg:flex-row lg:gap-24">
@@ -494,6 +501,7 @@ ${faq.type ? `<section id="sp-faq" class="mx-auto max-w-[90rem] px-4 py-16 lg:px
 </head>
 <body id="sp-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

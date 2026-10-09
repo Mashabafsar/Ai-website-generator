@@ -1,0 +1,717 @@
+[
+  {
+    "slug": "astra",
+    "ok": true,
+    "status": 200,
+    "brand": "#3B6BFF",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(91, 100, 120)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "atelierpf",
+    "ok": true,
+    "status": 200,
+    "brand": "#222420",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 94, 90)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "azurio",
+    "ok": true,
+    "status": 200,
+    "brand": "#002BBA",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(87, 89, 96)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "careweb",
+    "ok": true,
+    "status": 200,
+    "brand": "#0EA4E7",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 111, 140)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "clinically",
+    "ok": true,
+    "status": 200,
+    "brand": "#1E5DBC",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "CLClinically",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(15, 47, 100)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "craftedspaces",
+    "ok": true,
+    "status": 200,
+    "brand": "#FFF6D2",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(26, 26, 26)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "elektra",
+    "ok": true,
+    "status": 200,
+    "brand": "#3B82F6",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(149, 160, 178)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "flowmint",
+    "ok": true,
+    "status": 200,
+    "brand": "#1A1A1A",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(106, 106, 106)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "foks",
+    "ok": true,
+    "status": 200,
+    "brand": "#171717",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(104, 104, 104)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "forgelime",
+    "ok": true,
+    "status": 200,
+    "brand": "#A9FF5C",
+    "inputs": 3,
+    "forms": 1,
+    "mailto": 1,
+    "typedOk": true,
+    "issues": [],
+    "sampleCta": {
+      "text": "Get In Touch",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(241, 251, 232)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "forgetech",
+    "ok": true,
+    "status": 200,
+    "brand": "#FF750B",
+    "inputs": 1,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": true,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact Us",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(79, 79, 79)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "fusion",
+    "ok": true,
+    "status": 200,
+    "brand": "#8758FF",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 88, 112)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "grit",
+    "ok": true,
+    "status": 200,
+    "brand": "#FF5050",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(102, 102, 102)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "healia",
+    "ok": true,
+    "status": 200,
+    "brand": "#F38660",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(137, 119, 112)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "healspace",
+    "ok": true,
+    "status": 200,
+    "brand": "#E47565",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 101, 94)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "healthdoc",
+    "ok": true,
+    "status": 200,
+    "brand": "#8246FB",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(139, 145, 158)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "kael",
+    "ok": true,
+    "status": 200,
+    "brand": "#111111",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(85, 85, 85)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "levyna",
+    "ok": true,
+    "status": 200,
+    "brand": "#D8F366",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(185, 185, 185)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "levynablush",
+    "ok": true,
+    "status": 200,
+    "brand": "#FF8FFC",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 111, 140)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "levynagold",
+    "ok": true,
+    "status": 200,
+    "brand": "#E5BE68",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(168, 165, 156)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "lukasz",
+    "ok": true,
+    "status": 200,
+    "brand": "#1A1A1A",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(102, 102, 102)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "luxeframe",
+    "ok": false,
+    "status": 200,
+    "brand": "#E0FD60",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 0,
+    "typedOk": null,
+    "issues": [
+      "no form inputs and no mailto contact path"
+    ],
+    "sampleCta": {
+      "text": "Contact Us",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "mainfile",
+    "ok": true,
+    "status": 200,
+    "brand": "#7DBCFF",
+    "inputs": 1,
+    "forms": 1,
+    "mailto": 1,
+    "typedOk": true,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(52, 49, 75)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "medhealth",
+    "ok": true,
+    "status": 200,
+    "brand": "#224171",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 107, 132)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "olivia",
+    "ok": true,
+    "status": 200,
+    "brand": "#161616",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 92, 88)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "omega",
+    "ok": true,
+    "status": 200,
+    "brand": "#0F53FA",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(105, 104, 113)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "onix",
+    "ok": true,
+    "status": 200,
+    "brand": "#6F5BEB",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(106, 101, 120)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "portra",
+    "ok": true,
+    "status": 200,
+    "brand": "#68BDE7",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(90, 90, 90)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "rebel",
+    "ok": true,
+    "status": 200,
+    "brand": "#111111",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(168, 164, 156)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "rebo",
+    "ok": false,
+    "status": 200,
+    "brand": "#E44F39",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 0,
+    "typedOk": null,
+    "issues": [
+      "no form inputs and no mailto contact path"
+    ],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "resume",
+    "ok": true,
+    "status": 200,
+    "brand": "#000000",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 1,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(0, 0, 0)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "ricardo",
+    "ok": true,
+    "status": 200,
+    "brand": "#DB2777",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(122, 74, 98)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "saasldg",
+    "ok": true,
+    "status": 200,
+    "brand": "#2A85FF",
+    "inputs": 1,
+    "forms": 0,
+    "mailto": 1,
+    "typedOk": true,
+    "issues": [],
+    "sampleCta": {
+      "text": "Start free trial",
+      "bg": "rgb(42, 133, 255)",
+      "color": "rgb(255, 255, 255)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "sarahfolio",
+    "ok": true,
+    "status": 200,
+    "brand": "#FFBF38",
+    "inputs": 1,
+    "forms": 1,
+    "mailto": 3,
+    "typedOk": true,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(15, 15, 15)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "sports",
+    "ok": false,
+    "status": 200,
+    "brand": "#ffc857",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 0,
+    "typedOk": null,
+    "issues": [
+      "no form inputs and no mailto contact path"
+    ],
+    "sampleCta": {
+      "text": "Contact us",
+      "bg": "rgb(255, 200, 87)",
+      "color": "rgb(14, 18, 27)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "teaser",
+    "ok": true,
+    "status": 200,
+    "brand": "#111111",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(107, 107, 107)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "techvantage",
+    "ok": true,
+    "status": 200,
+    "brand": "#0C3DFF",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 4,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact Us",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "oklab(0.999994 0.0000455678 0.0000200868 / 0.9)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "timeless",
+    "ok": true,
+    "status": 200,
+    "brand": "#0885FF",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(92, 101, 112)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "veil",
+    "ok": true,
+    "status": 200,
+    "brand": "#C8F04D",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(136, 136, 128)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "webcanvas",
+    "ok": true,
+    "status": 200,
+    "brand": "#EEEBDE",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 2,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(168, 164, 152)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "whiter",
+    "ok": true,
+    "status": 200,
+    "brand": "#1787FC",
+    "inputs": 1,
+    "forms": 1,
+    "mailto": 1,
+    "typedOk": true,
+    "issues": [],
+    "sampleCta": {
+      "text": "Contact",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(90, 103, 133)",
+      "border": "rgb(237, 237, 237)"
+    }
+  },
+  {
+    "slug": "willjacks",
+    "ok": true,
+    "status": 200,
+    "brand": "#181818",
+    "inputs": 0,
+    "forms": 0,
+    "mailto": 1,
+    "typedOk": null,
+    "issues": [],
+    "sampleCta": null
+  }
+]

@@ -3,6 +3,7 @@ import { AP } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -65,6 +66,7 @@ export function renderAtelierpfPage(site: AssembledSite): string {
   <div class="mx-auto max-w-6xl">
     <h2 class="text-2xl" style="font-family:var(--ap-display)">${esc(text(contact.content, "heading", "Contact"))}</h2>
     <p class="mt-3" style="color:${AP.body}">${esc(text(contact.content, "subheading", ""))}</p>
+    ${contactFormHtml({ contactEmail })}
   </div>
 </section>\n<footer id="ap-end" class="border-t px-6 py-12" style="border-color:${AP.line};background:${AP.inverse};color:${AP.inverseFg};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-6xl">
@@ -99,6 +101,7 @@ export function renderAtelierpfPage(site: AssembledSite): string {
 </head>
 <body id="ap-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

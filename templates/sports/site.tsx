@@ -5,6 +5,9 @@ import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { ownPhotos, photoFor } from "./photos";
+import { TemplateContactForm } from "../shared/contact-form";
+import { SocialTextLinks } from "../shared/social-links";
+import { mailtoHref, telHref } from "@/lib/contact/links";
 
 // The design's display/body face is Clash Grotesk (Fontshare — not on Google
 // Fonts), so we load it via a stylesheet and expose it through --sp-display.
@@ -832,6 +835,16 @@ export function SportsSite({
         </div>
       </section>
 
+      <section className="px-4 py-16 lg:px-[3.75rem]" data-template-contact-section="1">
+        <div className="mx-auto max-w-[82.5rem]">
+          <h2 className="text-3xl font-semibold uppercase tracking-tight" style={{ fontFamily: "var(--sp-display)" }}>Contact</h2>
+          <TemplateContactForm
+            contactEmail={contactEmail}
+            buttonStyle={{ backgroundColor: "var(--brand)", color: "#111" }}
+          />
+        </div>
+      </section>
+
       {/* Footer */}
       <footer id="sp-contact" className="px-4 pb-6 pt-16 lg:px-[3.75rem] lg:pt-24" style={{ backgroundColor: SP.white, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[82.5rem]">
@@ -878,11 +891,15 @@ export function SportsSite({
               </div>
               <div className="flex flex-col gap-4">
                 <div className="text-lg font-semibold" style={{ color: SP.ink }}>Social media</div>
-                {["Instagram", "Twitter (X)", "YouTube", "Facebook"].map((label) => (
-                  <span key={label} className="text-base font-medium" style={{ color: SP.body }}>
-                    {label}
-                  </span>
-                ))}
+                <SocialTextLinks
+                  contact={details}
+                  labels={["Instagram", "Twitter (X)", "YouTube", "Facebook"]}
+                  showEmptyAsText={demoChrome}
+                  className="flex flex-col gap-4"
+                  linkClassName="text-base font-medium hover:underline"
+                  emptyClassName="text-base font-medium"
+                  style={{ color: SP.body }}
+                />
               </div>
             </div>
           </div>
@@ -890,8 +907,16 @@ export function SportsSite({
           <div className="mt-16 flex flex-col items-start justify-between gap-3 text-base font-medium lg:flex-row lg:items-center" style={{ color: SP.body }}>
             <div>{demoChrome ? "San Francisco — California · Paris — France" : contactAddress}</div>
             <div className="flex flex-col gap-2 lg:flex-row lg:gap-10">
-              {contactEmail && <span>{contactEmail}</span>}
-              {contactPhone && <span>{contactPhone}</span>}
+              {contactEmail ? (
+                <a href={mailtoHref(details)} className="hover:underline">
+                  {contactEmail}
+                </a>
+              ) : null}
+              {contactPhone ? (
+                <a href={telHref(details)} className="hover:underline">
+                  {contactPhone}
+                </a>
+              ) : null}
               <span>© {new Date().getFullYear()} {businessName}. All rights reserved.</span>
             </div>
           </div>

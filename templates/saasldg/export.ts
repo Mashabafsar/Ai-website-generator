@@ -4,6 +4,7 @@ import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import { iconSvg } from "@/lib/icons/registry";
 import type { AssembledSite } from "@/lib/blueprint/types";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 // Static HTML twin of templates/saasldg/site.tsx. Exported and deployed sites
 // must look like the design the customer chose, so the Stratus layout is
@@ -319,6 +320,13 @@ ${faq.type ? `<section id="sl-faq" class="px-6 py-8 md:py-12">
   </div>
 </section>
 
+<section class="px-4 pb-16 sm:px-6" data-template-contact-section="1">
+  <div class="mx-auto max-w-6xl">
+    <h2 class="text-2xl font-semibold">Contact</h2>
+    ${contactFormHtml({ contactEmail })}
+  </div>
+</section>
+
 <footer class="border-t px-6 py-14" style="border-color:${SL.line};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-[80rem]">
     <div class="flex flex-wrap items-start justify-between gap-8">
@@ -369,6 +377,7 @@ ${faq.type ? `<section id="sl-faq" class="px-6 py-8 md:py-12">
 </head>
 <body id="sl-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

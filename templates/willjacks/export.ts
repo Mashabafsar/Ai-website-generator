@@ -3,6 +3,7 @@ import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../
 import { brandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
 import type { AssembledSite } from "@/lib/blueprint/types";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 // Static HTML twin of templates/willjacks/site.tsx. Exported and deployed sites
 // must look like the design the customer chose. Multi-page: home -> "/", others
@@ -219,6 +220,7 @@ function footerBlock(slots: TemplateSlot[], businessName: string, contactEmail: 
         <h2 class="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style="${dFont()}">${esc(text(contact.content, "heading", "Reach"))}</h2>
         <h2 class="text-[9vw] font-normal leading-none tracking-[-0.4vw] max-md:text-[15vw] max-[560px]:text-[20vw]" style="${dFont()}">${esc(text(contact.content, "subheading", "Out"))}</h2>
       </div>
+      ${contactFormHtml({ contactEmail })}
       <p class="mt-[10vw] whitespace-pre-line text-[16px] tracking-[-0.3px]">${esc(text(footer.content, "tagline", demo ? "Currently available for freelance projects" : ""))}</p>
       <div class="flex gap-[6vw] py-[10vw] max-md:flex-col max-md:gap-[10vw] max-md:py-[20vw]">
         <p class="w-1/4 whitespace-pre-line text-[16px] tracking-[-0.3px] max-md:w-full">${esc(location.replace(/^(Based in)\s+/i, "$1\n"))}</p>
@@ -329,6 +331,7 @@ export function renderWilljacksPage(site: AssembledSite, pageSlug?: string): str
 ${nav(pages, active, businessName, customLogo, location)}
 <main>${body}</main>
 ${footerBlock(slots, businessName, contactEmail, location, demo)}
+${contactFormScript()}
 </body>
 </html>`;
 }

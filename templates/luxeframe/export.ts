@@ -15,6 +15,7 @@ import {
 import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../shared/content";
 import { brandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -166,7 +167,7 @@ function contactBody(slots: TemplateSlot[], businessName: string, email: string,
     .map((label) => `<a href="#lx-end" class="lx-under" style="margin-top:12px"><h2 class="lx-font24">${esc(label)}</h2></a>`)
     .join("");
   return `<header class="lx-pagehead"><div class="lx-wrap"><h1 class="lx-font90">${esc(text(hero.content, "headline", "Get in Touch with LuxeFrame"))}</h1></div></header>
-<section><div class="lx-wrap lx-contact"><div class="lx-contact-visual"><img src="${esc(still)}" alt="" /><img src="${esc(still)}" alt="" /><img src="${esc(still)}" alt="" /><img src="${esc(still)}" alt="" /></div><div class="lx-contact-details"><div>${heading(text(contact.content, "heading", "Studio"))}<h2 class="lx-font24" style="margin-top:30px">${esc(businessName)}</h2><h2 class="lx-font24">${esc(text(contact.content, "subheading", "A Visionary Production Company"))}</h2><h2 class="lx-font24">${esc(text(contact.content, "body", "73 Holburn Street, London, UK"))}</h2>${mail}${tel}</div><div style="margin-top:100px">${heading("Socials")}${socialHtml}</div></div></div></section>`;
+<section><div class="lx-wrap lx-contact"><div class="lx-contact-visual"><img src="${esc(still)}" alt="" /><img src="${esc(still)}" alt="" /><img src="${esc(still)}" alt="" /><img src="${esc(still)}" alt="" /></div><div class="lx-contact-details"><div>${heading(text(contact.content, "heading", "Studio"))}<h2 class="lx-font24" style="margin-top:30px">${esc(businessName)}</h2><h2 class="lx-font24">${esc(text(contact.content, "subheading", "A Visionary Production Company"))}</h2><h2 class="lx-font24">${esc(text(contact.content, "body", "73 Holburn Street, London, UK"))}</h2>${mail}${tel}${contactFormHtml({ contactEmail: email })}</div><div style="margin-top:100px">${heading("Socials")}${socialHtml}</div></div></div></section>`;
 }
 
 function nav(businessName: string, customLogo: string, pages: { slug: string; title: string }[], socials: string[]): string {
@@ -249,6 +250,7 @@ export function renderLuxeframePage(site: AssembledSite, pageSlug?: string): str
 ${nav(businessName, customLogo, navPages, socials)}
 <main class="lx-main">${body}</main>
 ${footerBlock(slots, navPages, businessName, socials)}
+${contactFormScript()}
 </body>
 </html>`;
 }

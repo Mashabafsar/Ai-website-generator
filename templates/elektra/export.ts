@@ -3,6 +3,7 @@ import { EL } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -65,6 +66,11 @@ export function renderElektraPage(site: AssembledSite): string {
 </section>\n<section class="px-6 py-12"><div class="mx-auto max-w-3xl">${list(faq.content, "questions").map((q, i) => `<details class="border-b py-4" style="border-color:${EL.line}"><summary>${esc(q)}</summary><p class="mt-2 text-sm" style="color:${EL.body}">${esc(list(faq.content, "answers")[i] || "")}</p></details>`).join("")}</div></section>\n<section class="px-6 py-20 text-center">
   <h2 class="text-4xl" style="font-family:var(--el-display)">${esc(text(cta.content, "headline", "Ready"))}</h2>
   <a href="${contactEmail ? `mailto:${esc(contactEmail)}` : "#el-end"}" class="mt-8 inline-flex px-8 py-3 font-semibold" style="background:${EL.brand};color:${EL.inverseFg};border-radius:12px">${esc(text(cta.content, "ctaPrimary", "Reserve yours"))}</a>
+</section>\n<section class="px-6 py-16" data-template-contact-section="1">
+  <div class="mx-auto max-w-6xl">
+    <h2 class="text-2xl font-semibold">Contact</h2>
+    ${contactFormHtml({ contactEmail })}
+  </div>
 </section>\n<footer id="el-end" class="border-t px-6 py-12" style="border-color:${EL.line};background:${EL.inverse};color:${EL.inverseFg};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-6xl">
     <div class="text-lg font-semibold" style="font-family:var(--el-display)">${esc(businessName)}</div>
@@ -98,6 +104,7 @@ export function renderElektraPage(site: AssembledSite): string {
 </head>
 <body id="el-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

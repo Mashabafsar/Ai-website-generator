@@ -3,6 +3,7 @@ import { TI } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -63,6 +64,11 @@ export function renderTimelessPage(site: AssembledSite): string {
 </section>\n<section class="px-6 py-20 text-center">
   <h2 class="text-4xl" style="font-family:var(--ti-display)">${esc(text(cta.content, "headline", "Ready"))}</h2>
   <a href="${contactEmail ? `mailto:${esc(contactEmail)}` : "#ti-end"}" class="mt-8 inline-flex px-8 py-3 font-semibold" style="background:${TI.brand};color:${TI.inverseFg};border-radius:12px">${esc(text(cta.content, "ctaPrimary", "See cases"))}</a>
+</section>\n<section class="px-6 py-16" data-template-contact-section="1">
+  <div class="mx-auto max-w-6xl">
+    <h2 class="text-2xl font-semibold">Contact</h2>
+    ${contactFormHtml({ contactEmail })}
+  </div>
 </section>\n<footer id="ti-end" class="border-t px-6 py-12" style="border-color:${TI.line};background:${TI.inverse};color:${TI.inverseFg};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-6xl">
     <div class="text-lg font-semibold" style="font-family:var(--ti-display)">${esc(businessName)}</div>
@@ -96,6 +102,7 @@ export function renderTimelessPage(site: AssembledSite): string {
 </head>
 <body id="ti-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

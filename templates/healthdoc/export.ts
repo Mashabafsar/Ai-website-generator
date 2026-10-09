@@ -3,6 +3,7 @@ import { HD } from "./tokens";
 import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandCss, sectionBandCss } from "../shared/brand";
 import { themeFontBodyCss, themeFontCss, themeFontHref } from "../shared/fonts";
+import { contactFormHtml, contactFormScript } from "../shared/contact-form-html";
 
 function esc(input: unknown): string {
   const s = typeof input === "string" ? input : String(input ?? "");
@@ -61,6 +62,11 @@ ${faq.type ? `<section class="px-6 py-12"><div class="mx-auto max-w-3xl">${list(
 </section>\n<section class="px-6 py-20 text-center">
   <h2 class="text-4xl" style="font-family:var(--hd-display)">${esc(text(cta.content, "headline", "Ready"))}</h2>
   <a href="${contactEmail ? `mailto:${esc(contactEmail)}` : "#hd-end"}" class="mt-8 inline-flex px-8 py-3 font-semibold" style="background:${HD.brand};color:${HD.inverseFg};border-radius:999px">${esc(text(cta.content, "ctaPrimary", "Try the assistant"))}</a>
+</section>\n<section class="px-6 py-16" data-template-contact-section="1">
+  <div class="mx-auto max-w-6xl">
+    <h2 class="text-2xl font-semibold">Contact</h2>
+    ${contactFormHtml({ contactEmail })}
+  </div>
 </section>\n<footer id="hd-end" class="border-t px-6 py-12" style="border-color:${HD.line};background:${HD.inverse};color:${HD.inverseFg};${sectionBandCss(footer.theme)}">
   <div class="mx-auto max-w-6xl">
     <div class="text-lg font-semibold" style="font-family:var(--hd-display)">${esc(businessName)}</div>
@@ -94,6 +100,7 @@ ${faq.type ? `<section class="px-6 py-12"><div class="mx-auto max-w-3xl">${list(
 </head>
 <body id="hd-top">
 ${body}
+${contactFormScript()}
 </body>
 </html>`;
 }

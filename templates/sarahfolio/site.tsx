@@ -5,6 +5,7 @@ import { list, slotAt, text, toSlots, pageSlugsOf, type TemplateSlot } from "../
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { SocialIconLinks } from "../shared/social-links";
 
 const faces = templateFaces([
   { family: "Anton", variable: "--sf-display", weights: ["400"] },
@@ -99,6 +100,7 @@ export function SarahfolioSite({
         tagline={tagline}
         pages={pages}
         contactEmail={contactEmail}
+        contact={details}
       />
     </div>
   );
@@ -902,12 +904,14 @@ function SiteFooter({
   tagline,
   pages,
   contactEmail,
+  contact,
 }: {
   businessName: string;
   customLogo: string;
   tagline: string;
   pages: { slug: string; title: string }[];
   contactEmail: string;
+  contact?: SiteContact | null;
 }) {
   const services = ["Content Strategy", "Website Copy", "Blog Writing", "Email Marketing"];
   return (
@@ -918,22 +922,20 @@ function SiteFooter({
           <p className="mt-3 text-[16px] leading-6" style={{ color: "#404040" }}>
             {tagline}
           </p>
-          <div className="mt-4 flex gap-4">
-            {[
-              ["social-in.svg", "LinkedIn"],
-              ["social-ig.svg", "Instagram"],
-              ["social-x.svg", "X"],
-            ].map(([file, label]) => (
-              <a
-                key={file}
-                href={contactEmail ? `mailto:${contactEmail}` : pageHref("contact")}
-                className="flex size-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-[#fafafa] p-2"
-                aria-label={label}
-              >
-                <img src={`${A}/${file}`} alt="" width={24} height={24} className="size-6" />
-              </a>
-            ))}
-          </div>
+          <SocialIconLinks
+            contact={contact}
+            className="mt-4 flex gap-4"
+            linkClassName="flex size-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-[#fafafa] p-2"
+            imgClassName="size-6"
+            imgWidth={24}
+            imgHeight={24}
+            icons={{
+              linkedin: `${A}/social-in.svg`,
+              instagram: `${A}/social-ig.svg`,
+              twitter: `${A}/social-x.svg`,
+            }}
+            order={["linkedin", "instagram", "twitter"]}
+          />
         </div>
         <div className="flex flex-wrap gap-16">
           <div>

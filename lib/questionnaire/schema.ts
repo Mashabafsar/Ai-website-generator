@@ -89,6 +89,12 @@ export const questionnaireSchema = z.object({
   // Contact
   contactEmail: z.string().email("Enter a valid email").or(z.literal("")).optional(),
   contactPhone: z.string().max(40).optional().or(z.literal("")),
+  /** Optional social profile URLs — wired to footer / contact icons. */
+  socialInstagram: z.string().max(300).optional().or(z.literal("")),
+  socialLinkedin: z.string().max(300).optional().or(z.literal("")),
+  socialTwitter: z.string().max(300).optional().or(z.literal("")),
+  socialFacebook: z.string().max(300).optional().or(z.literal("")),
+  socialYoutube: z.string().max(300).optional().or(z.literal("")),
 
   // Delivery
   packageType: z.nativeEnum(PackageType).default(PackageType.SELF_HOSTING),
@@ -148,6 +154,11 @@ export const defaultQuestionnaire: QuestionnaireAnswers = {
   importedThemeChoice: "",
   contactEmail: "",
   contactPhone: "",
+  socialInstagram: "",
+  socialLinkedin: "",
+  socialTwitter: "",
+  socialFacebook: "",
+  socialYoutube: "",
   packageType: PackageType.SELF_HOSTING,
   layout: [],
 };

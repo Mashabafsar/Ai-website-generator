@@ -6,6 +6,7 @@ import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
 import { IconGlyph } from "@/lib/icons/glyph";
 import { isIconName } from "@/lib/icons/registry";
+import { TemplateContactForm } from "../shared/contact-form";
 
 const faces = templateFaces([
   { family: "Hind", variable: "--mr-display", weights: ["400", "500", "600", "700"] },
@@ -679,16 +680,24 @@ function Contact({ slot, meta }: { slot: TemplateSlot; meta: PageMeta }) {
             {address ? <ContactRow label="Office" value={address} /> : null}
           </div>
         </div>
-        <form className="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]" style={{ borderColor: MR.line, backgroundColor: MR.card }} data-motion-skip>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <input className="rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: MR.line }} placeholder="Your name" />
-            <input className="rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: MR.line }} placeholder="Email" />
-          </div>
-          <textarea rows={4} className="mt-4 w-full rounded-2xl border px-4 py-3 text-sm" style={{ borderColor: MR.line }} placeholder="How can we help?" />
-          <button type="button" className="mt-4 w-full rounded-full py-3 text-sm font-semibold text-white" style={{ backgroundImage: MR_BRAND_GRADIENT, fontFamily: "var(--mr-display)" }}>
-            {text(slot.content, "ctaLabel", "Send message")}
-          </button>
-        </form>
+        <div
+          className="rounded-[28px] border p-8 shadow-[0_20px_60px_-40px_rgba(52,49,75,0.3)]"
+          style={{ borderColor: MR.line, backgroundColor: MR.card }}
+          data-motion-skip
+        >
+          <TemplateContactForm
+            contactEmail={email}
+            ctaLabel={text(slot.content, "ctaLabel", "Send message")}
+            className="space-y-4 text-left"
+            buttonStyle={{
+              backgroundImage: MR_BRAND_GRADIENT,
+              color: "#fff",
+              width: "100%",
+              fontFamily: "var(--mr-display)",
+            }}
+            inputStyle={{ borderColor: MR.line, borderRadius: "1rem" }}
+          />
+        </div>
       </div>
     </Section>
   );

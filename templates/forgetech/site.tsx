@@ -4,6 +4,8 @@ import { list, slotAt, text, toSlots } from "../shared/content";
 import { brandStyle, sectionBandStyle } from "../shared/brand";
 import { themeFontHref, themeFontStyle } from "../shared/fonts";
 import { templateFaces } from "../shared/template-faces";
+import { TemplateContactForm } from "../shared/contact-form";
+import { NewsletterForm } from "../shared/newsletter-form";
 
 const faces = templateFaces([
   { family: "Space Grotesk", variable: "--ft-display", weights: ["500", "600", "700"] },
@@ -674,28 +676,25 @@ export function ForgeTechSite({
               {businessName} team. No noise.
             </p>
           </div>
-          <div className="flex w-full max-w-md gap-3">
-            <label className="sr-only" htmlFor="ft-newsletter">
-              Email address
-            </label>
-            <input
-              id="ft-newsletter"
-              type="email"
-              placeholder="you@company.com"
-              className="min-w-0 flex-1 border border-white/20 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none"
-            />
-            <button
-              type="button"
-              className="shrink-0 px-6 py-3.5 text-sm font-semibold text-white"
-              style={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
-            >
-              Subscribe
-            </button>
-          </div>
+          <NewsletterForm
+            contactEmail={contactEmail}
+            placeholder="you@company.com"
+            ctaLabel="Subscribe"
+            className="flex w-full max-w-md flex-wrap gap-3"
+            inputClassName="min-w-0 flex-1 border border-white/20 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none"
+            buttonClassName="shrink-0 px-6 py-3.5 text-sm font-semibold text-white"
+            buttonStyle={{ backgroundColor: FT.trinidad, fontFamily: "var(--ft-display)" }}
+          />
         </div>
       </section>
 
       {/* Footer */}
+      <section className="px-6 py-16" data-template-contact-section="1">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-2xl font-semibold">Contact</h2>
+          <TemplateContactForm contactEmail={contactEmail} />
+        </div>
+      </section>
       <footer className="px-4 py-14 text-white md:px-8" style={{ backgroundColor: FT.woodsmoke, ...sectionBandStyle(footer.theme) }}>
         <div className="mx-auto max-w-[1400px]">
           <div className="flex flex-wrap items-start justify-between gap-8">
