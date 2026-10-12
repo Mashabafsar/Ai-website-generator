@@ -163,7 +163,7 @@ export default async function AdminUsagePage({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard icon={<Cpu className="h-5 w-5 text-primary" />} label="Total tokens" value={fmt(totalTokens)} />
         <StatCard
           icon={<DollarSign className="h-5 w-5 text-primary" />}
@@ -483,10 +483,10 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   return (
     <Card>
       <CardContent className="flex items-center gap-4 p-5">
-        <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">{icon}</div>
-        <div>
-          <div className="font-display text-2xl font-bold leading-none tabular-nums">{value}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10">{icon}</div>
+        <div className="min-w-0">
+          <div className="font-display text-2xl font-bold leading-none tabular-nums tracking-tight">{value}</div>
+          <div className="mt-1 text-sm text-muted-foreground">{label}</div>
         </div>
       </CardContent>
     </Card>
