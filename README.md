@@ -41,9 +41,10 @@ The core product loop works end to end in this repo.
 3. **Questionnaire** — Structured answers (business, audience, services, tone, style, pages, package). Optional **existing-website import** scrapes brand assets (logo, colors, images) with consent tracking.
 4. **Generate** — Heavy Cursor model, then a deterministic template fallback. Output is Zod-validated, sanitized, and forced onto the chosen template's slots.
 5. **Preview & editor** — Live preview (desktop / tablet / mobile), manual edits (text, images, theme, fonts, icons), and optional lightweight AI section rewrites.
-6. **Credits** — Wallet + ledger with atomic spend, refund on failed generation, and Stripe credit packs. Admin usage page records real token metering separately from credit prices.
-7. **Quote & pay** — Deterministic quote page; Stripe Checkout for website packages and credit packs; webhook + reconcile path.
-8. **Deliver** — ZIP export for self-hosting; after website-package payment, the static site is committed into **AI-WEBSITE-BUILDER-WEBSITE** at `clients/<slug>/`; Vercel deploy + subdomain assignment for managed hosting; HubSpot and Resend hooks when configured.
+6. **Credits** — Wallet + ledger with atomic spend, refund on failed generation, and Stripe credit packs. Customer credit prices stay separate from provider cost.
+7. **Admin AI usage** (`/app/admin/usage`) — Tokens and estimated provider dollars for each website, broken down by generation, pages and sections plan, scraper AI, photo analysis, and later edits. Starter-content fallbacks are counted here and are not billed. Admins review lead scores and marketing consent at `/app/admin/clients`.
+8. **Quote & pay** — Deterministic quote page; Stripe Checkout for website packages and credit packs; webhook + reconcile path.
+9. **Deliver** — ZIP export for self-hosting; after website-package payment, the static site is committed into **AI-WEBSITE-BUILDER-WEBSITE** at `clients/<slug>/`; Vercel deploy + subdomain assignment for managed hosting; HubSpot and Resend hooks when configured.
 
 ### Platform work already done
 
