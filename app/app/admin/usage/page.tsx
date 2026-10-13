@@ -127,7 +127,7 @@ export default async function AdminUsagePage({
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 max-w-full space-y-8">
       <div>
         <h1 className="font-display text-3xl font-bold tracking-tight">AI usage</h1>
         <p className="mt-1 text-muted-foreground">
@@ -163,7 +163,7 @@ export default async function AdminUsagePage({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard icon={<Cpu className="h-5 w-5 text-primary" />} label="Total tokens" value={fmt(totalTokens)} />
         <StatCard
           icon={<DollarSign className="h-5 w-5 text-primary" />}
@@ -210,61 +210,49 @@ export default async function AdminUsagePage({
               No per-website usage yet. New generations, site plans, and scrapes will appear here.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[960px] text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pr-3 font-medium">Website</th>
-                    <th className="py-2 pr-3 font-medium">Owner</th>
-                    {WEBSITE_PHASES.map((op) => (
-                      <th key={op} className="py-2 pr-3 text-right font-medium">
-                        {PHASE_SHORT[op] ?? op}
-                      </th>
-                    ))}
-                    <th className="py-2 pr-3 text-right font-medium">Tokens</th>
-                    <th className="py-2 text-right font-medium">Est. cost</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {websiteUsage.map((w) => (
-                    <tr key={w.projectId}>
-                      <td className="py-2.5 pr-3">
-                        <div className="font-medium">{w.businessName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {w.status}
-                          {w.lastAt ? ` · ${new Date(w.lastAt).toLocaleDateString()}` : ""}
-                        </div>
-                      </td>
-                      <td className="py-2.5 pr-3 whitespace-nowrap text-muted-foreground">
+            <ul className="divide-y">
+              {websiteUsage.map((w) => (
+                <li key={w.projectId} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+                    <div className="min-w-0">
+                      <div className="font-medium">{w.businessName}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {w.status}
+                        {w.lastAt ? ` · ${new Date(w.lastAt).toLocaleDateString()}` : ""}
+                        {" · "}
                         {w.userEmail}
-                      </td>
-                      {WEBSITE_PHASES.map((op) => {
-                        const phase = w.byOperation[op];
-                        if (!phase) {
-                          return (
-                            <td key={op} className="py-2.5 pr-3 text-right text-muted-foreground tabular-nums">
-                              —
-                            </td>
-                          );
-                        }
-                        return (
-                          <td key={op} className="py-2.5 pr-3 text-right tabular-nums">
-                            <div className="font-medium">{formatUsdCents(phase.costUsdCents)}</div>
-                            <div className="text-xs text-muted-foreground">{fmt(phase.tokens)} tok</div>
-                          </td>
-                        );
-                      })}
-                      <td className="py-2.5 pr-3 text-right font-semibold tabular-nums">
-                        {fmt(w.totalTokens)}
-                      </td>
-                      <td className="py-2.5 text-right font-semibold tabular-nums">
-                        {formatUsdCents(w.costUsdCents)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <div className="font-semibold tabular-nums">{formatUsdCents(w.costUsdCents)}</div>
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        {fmt(w.totalTokens)} tokens
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {WEBSITE_PHASES.map((op) => {
+                      const phase = w.byOperation[op];
+                      if (!phase) return null;
+                      return (
+                        <span
+                          key={op}
+                          className="inline-flex items-baseline gap-1.5 border border-line px-2 py-1 text-xs"
+                        >
+                          <span className="text-muted-foreground">{PHASE_SHORT[op] ?? op}</span>
+                          <span className="font-medium tabular-nums">
+                            {formatUsdCents(phase.costUsdCents)}
+                          </span>
+                          <span className="text-muted-foreground tabular-nums">
+                            {fmt(phase.tokens)} tok
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>
@@ -482,11 +470,13 @@ export default async function AdminUsagePage({
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10">{icon}</div>
-        <div className="min-w-0">
-          <div className="font-display text-2xl font-bold leading-none tabular-nums tracking-tight">{value}</div>
-          <div className="mt-1 text-sm text-muted-foreground">{label}</div>
+      <CardContent className="flex flex-col gap-3 p-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10">{icon}</div>
+          <span>{label}</span>
+        </div>
+        <div className="font-display text-2xl font-bold leading-none tabular-nums whitespace-nowrap">
+          {value}
         </div>
       </CardContent>
     </Card>
