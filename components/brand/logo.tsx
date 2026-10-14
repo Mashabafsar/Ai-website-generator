@@ -42,19 +42,24 @@ export function Logo({
     return <BrandMark className={cn("h-8 w-auto", className)} />;
   }
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <BrandMark className="h-7 w-auto" />
-      <span className="flex flex-col leading-none">
-        <span
-          className={cn(
-            "font-display text-lg font-bold tracking-tight",
-            onDark ? "text-white" : "text-foreground"
-          )}
-        >
-          Agency Partner
-        </span>
-        <span className="text-[0.62rem] font-semibold uppercase tracking-[0.32em] text-primary">
-          Interactive
+    <span className={cn("inline-flex items-end gap-[0.09em] text-lg", className)}>
+      <BrandMark className="h-[1.71em] w-auto" />
+      <span
+        className={cn(
+          "inline-flex items-start gap-[0.18em] font-display font-extrabold leading-none tracking-[-0.03em]",
+          onDark ? "text-white" : "text-foreground"
+        )}
+      >
+        <span>Agency</span>
+        <span className="flex flex-col">
+          <span>Partner</span>
+          <span className="mt-[0.19em] leading-none">
+            <span className="flex justify-between text-[0.30em] font-medium uppercase leading-none tracking-normal">
+              {"INTERACTIVE".split("").map((letter, index) => (
+                <span key={index}>{letter}</span>
+              ))}
+            </span>
+          </span>
         </span>
       </span>
     </span>
