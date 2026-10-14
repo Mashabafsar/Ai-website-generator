@@ -1,0 +1,24 @@
+---
+description: Keep new code compatible with SonarQube Cloud automatic analysis
+alwaysApply: true
+---
+
+# SonarQube Cloud
+
+This repo is scanned by SonarQube Cloud automatic analysis on push to `Mashabafsar/Ai-website-generator`. Write code that scan can finish, and that does not add issues.
+
+## Analysis config
+
+- Automatic analysis reads `.sonarcloud.properties` only. It ignores `sonar-project.properties`.
+- That file allows no wildcard patterns. `sonar.sources` is `app,components,lib,prisma,scripts,templates`. `sonar.tests` is `tests`. Do not list a path in both.
+- The scanner loads every `tsconfig.json`. Keep a single root `tsconfig.json`. Do not add another `tsconfig.json` that includes the same files.
+- `next-env.d.ts` is committed because `tsconfig.json` includes it. Do not point it at `.next/` files that are not in git. Do not gitignore it again.
+
+## When writing TypeScript and JavaScript
+
+- Do not leave empty `catch` blocks, unused variables, or unused imports.
+- Do not duplicate a branch, a function body, or a string literal Sonar would flag as copied.
+- Do not swallow errors. Log or rethrow with the original error as the cause.
+- Do not hardcode secrets, tokens, or connection strings.
+- Keep new functions straight. Split them before nested conditionals pile up.
+- Do not commit generated output (`.next/`, `generated-projects/`, `tmp/`) or files under `node_modules`.
