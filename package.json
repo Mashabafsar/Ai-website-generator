@@ -21,7 +21,7 @@
     "accounts:deactivate": "node --env-file-if-exists=.env --import tsx scripts/deactivate-stale-accounts.ts",
     "validate": "npm run templates:validate && npm run icons:validate && npm run templates:locks",
     "admin:grant": "node scripts/set-admin.mjs",
-    "sonar": "sonar-scanner-npm"
+    "sonar": "node --env-file-if-exists=.env.local ./node_modules/sonarqube-scanner/bin/sonar-scanner.js"
   },
   "prisma": {
     "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"
