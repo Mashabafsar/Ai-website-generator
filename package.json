@@ -20,7 +20,8 @@
     "hubspot:deals-sample": "node --env-file-if-exists=.env --import tsx scripts/sync-hubspot-deals-sample.ts",
     "accounts:deactivate": "node --env-file-if-exists=.env --import tsx scripts/deactivate-stale-accounts.ts",
     "validate": "npm run templates:validate && npm run icons:validate && npm run templates:locks",
-    "admin:grant": "node scripts/set-admin.mjs"
+    "admin:grant": "node scripts/set-admin.mjs",
+    "sonar": "sonar-scanner-npm"
   },
   "prisma": {
     "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"
@@ -68,6 +69,7 @@
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
     "prisma": "^6.2.1",
+    "sonarqube-scanner": "^5.0.2",
     "tailwindcss": "^4.0.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.13",

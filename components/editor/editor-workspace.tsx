@@ -24,6 +24,7 @@ import { IconPickerList } from "@/components/editor/icon-picker";
 import { ContactLinksEditor } from "@/components/editor/contact-links-editor";
 import { FONT_CATALOG_HREF, THEME_FONTS, resolveThemeFont } from "@/templates/shared/fonts";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -562,6 +563,7 @@ function SectionEditor({
   const [aiOpen, setAiOpen] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [confirmRewrite, setConfirmRewrite] = useState(false);
   const router = useRouter();
 
   const title = sectionTitle(section) || spec?.label || section.variant;
@@ -599,6 +601,7 @@ function SectionEditor({
         toast.error(err instanceof Error ? err.message : "We couldn't rewrite this section");
     } finally {
       setAiLoading(false);
+      setConfirmRewrite(false);
     }
   }
 
@@ -644,7 +647,7 @@ function SectionEditor({
           <Button
             variant="brand"
             size="sm"
-            onClick={runAiEdit}
+            onClick={() => setConfirmRewrite(true)}
             disabled={aiLoading || !instruction.trim()}
           >
             {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
@@ -738,6 +741,15 @@ function SectionEditor({
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmRewrite}
+        onOpenChange={setConfirmRewrite}
+        title="Rewrite this section?"
+        description={`This uses ${editCost} credits and replaces the copy in this section. The rest of the site stays as it is.`}
+        confirmLabel={`Rewrite (${editCost} credits)`}
+        pending={aiLoading}
+        onConfirm={() => void runAiEdit()}
+      />
     </div>
   );
 }

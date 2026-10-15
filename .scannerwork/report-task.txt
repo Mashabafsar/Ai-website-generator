@@ -1,0 +1,6 @@
+projectKey=ai-website-generator
+serverUrl=https://sonarqube.agencypartnerinteractive.com
+serverVersion=26.8.0.126808
+dashboardUrl=https://sonarqube.agencypartnerinteractive.com/dashboard?id=ai-website-generator
+ceTaskId=8cb22be4-3569-49be-a77e-5bdf65fbc5ec
+ceTaskUrl=https://sonarqube.agencypartnerinteractive.com/api/ce/task?id=8cb22be4-3569-49be-a77e-5bdf65fbc5ec

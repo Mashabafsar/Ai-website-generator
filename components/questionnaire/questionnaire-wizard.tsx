@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -152,6 +153,7 @@ export function QuestionnaireWizard({
   const [serviceInput, setServiceInput] = useState("");
   const [importing, setImporting] = useState(false);
   const [removingAssets, setRemovingAssets] = useState(false);
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [importedSummary, setImportedSummary] = useState<string[]>(() =>
     labelsFromAnswers(initialAnswers)
   );
@@ -431,6 +433,7 @@ export function QuestionnaireWizard({
 
   const progress = ((step + 1) / STEPS.length) * 100;
   const err = formState.errors;
+  const pendingConfirm = stepConfirm(confirmKind, generateCost, importCost);
 
   if (buildStep) {
     return (
@@ -526,7 +529,14 @@ export function QuestionnaireWizard({
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={importFromWebsite}
+                        onClick={() => {
+                          const url = (watch("existingWebsiteUrl") || "").trim();
+                          if (!url) {
+                            toast.error("Enter your website URL first.");
+                            return;
+                          }
+                          setConfirmKind("import");
+                        }}
                         disabled={importing}
                       >
                         {importing ? (
@@ -562,7 +572,7 @@ export function QuestionnaireWizard({
                         { shouldDirty: true }
                       )
                     }
-                    onRemoveAssets={removeImportedAssets}
+                    onRemoveAssets={() => setConfirmKind("delete-assets")}
                     removingAssets={removingAssets}
                   />
                 )}
@@ -873,7 +883,13 @@ export function QuestionnaireWizard({
                   type="button"
                   variant="brand"
                   disabled={submitting || planning}
-                  onClick={handleSubmit(onSubmit)}
+                  onClick={() => {
+                    if (alreadyGenerated) {
+                      void handleSubmit(onSubmit)();
+                      return;
+                    }
+                    void handleSubmit(() => setConfirmKind("generate"))();
+                  }}
                 >
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -889,8 +905,50 @@ export function QuestionnaireWizard({
           </form>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={confirmKind !== null}
+        onOpenChange={(open) => !open && setConfirmKind(null)}
+        title={pendingConfirm.title}
+        description={pendingConfirm.description}
+        confirmLabel={pendingConfirm.confirmLabel}
+        destructive={confirmKind === "delete-assets"}
+        pending={submitting || importing || removingAssets}
+        onConfirm={() => {
+          const kind = confirmKind;
+          setConfirmKind(null);
+          if (kind === "generate") void onSubmit(form.getValues());
+          if (kind === "import") void importFromWebsite();
+          if (kind === "delete-assets") void removeImportedAssets();
+        }}
+      />
     </div>
   );
+}
+
+type ConfirmKind = "generate" | "import" | "delete-assets" | null;
+
+function stepConfirm(kind: ConfirmKind, generateCost: number, importCost: number) {
+  if (kind === "import") {
+    return {
+      title: "Import this website?",
+      description: `Reading your current site uses ${importCost} credits. We'll fill in the answers so you can review them. The credits come back if we can't read the site.`,
+      confirmLabel: `Import (${importCost} credits)`,
+    };
+  }
+  if (kind === "delete-assets") {
+    return {
+      title: "Delete the imported files?",
+      description:
+        "The logo and photos we downloaded will be removed. The answers already filled in stay, and the site will use stock photos instead.",
+      confirmLabel: "Delete files",
+    };
+  }
+  return {
+    title: "Write your website?",
+    description: `Writing the site uses ${generateCost} credits and usually takes about a minute. Stay on this page until it finishes.`,
+    confirmLabel: `Write it (${generateCost} credits)`,
+  };
 }
 
 function Field({

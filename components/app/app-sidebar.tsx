@@ -23,6 +23,8 @@ type NavItem = {
   match: Match;
 };
 
+
+
 const EXPLORE: NavItem[] = [
   {
     href: "/app/dashboard",
@@ -109,41 +111,41 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
 
   return (
     <motion.aside
-    animate={{
-      width: collapsed ? "100px" : "320px",
-    }}
-    transition={transition}
+      animate={{
+        width: collapsed ? "100px" : "320px",
+      }}
+      transition={transition}
       className={cn(
         "sticky top-0 flex h-screen shrink-0 flex-col bg-[#1c1c1c] text-white transition-[width] duration-200",
         locked && "opacity-90",
         // collapsed ? "w-[100px]" : "w-[320px]",
       )}
-      
+
       aria-busy={locked || undefined}
     >
       <div className="relative h-[128px] shrink-0">
-      <AnimatePresence>
-        {!collapsed && (
-          <motion.div  initial={{ opacity: 0, transition: { ...transition, delay: 1 } }} 
-          animate={{ 
-            opacity: 1,
-            transition: { ...transition, delay: 0.2 } // Delay on enter
-          }} 
-          exit={{ 
-            opacity: 0,
-            transition: { ...transition, delay: 0 } // No delay on exit
-          }}>
-          
-            <ShellLink
-              href="/app/dashboard"
-              locked={locked}
-              onBlocked={warnStay}
-              aria-label="Agency Partner Interactive"
-              className="absolute left-[26px] top-[30px] hover:bg-[#272727]"
-            >
-              <ShellLogo />
-            </ShellLink></motion.div>
-        )}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div initial={{ opacity: 0, transition: { ...transition, delay: 1 } }}
+              animate={{
+                opacity: 1,
+                transition: { ...transition, delay: 0.2 } // Delay on enter
+              }}
+              exit={{
+                opacity: 0,
+                transition: { ...transition, delay: 0 } // No delay on exit
+              }}>
+
+              <ShellLink
+                href="/app/dashboard"
+                locked={locked}
+                onBlocked={warnStay}
+                aria-label="Agency Partner Interactive"
+                className="absolute left-[26px] top-[30px] hover:bg-[#1c1c1c]"
+              >
+                <ShellLogo />
+              </ShellLink></motion.div>
+          )}
         </AnimatePresence>
         <motion.button
           type="button"
@@ -155,11 +157,18 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
           onClick={() => setCollapsed((open) => !open)}
           className={cn(
             "absolute top-[44px] focus-visible:outline transition-color focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d71fb] left-[274px]",
-            collapsed ? "text-blue-500" : "text-white"
+            collapsed ? "fill-blue-500" : "fill-[#727272]"
           )}
           aria-label={collapsed ? "Expand menu" : "Collapse menu"}
         >
-          <Glyph src="/shell/collapse.svg" className="h-[19.5px] w-[19.5px]" />
+          <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" overflow="visible" style={{ display: 'block' }} width="19.5" height="19.5" viewBox="0 0 19.5 19.5" fill="inherit">
+            <g id="Left Square 1">
+              <g id="Vector">
+                <path d="M9.47796 6.28269C9.77216 5.99111 9.77427 5.51624 9.48269 5.22204C9.19111 4.92784 8.71624 4.92573 8.42204 5.21731L6.98091 6.64563C6.44474 7.17702 5.99754 7.62022 5.67869 8.01724C5.34427 8.43367 5.08989 8.87131 5.02193 9.4045C5.00731 9.51921 5 9.6346 5 9.75C5 9.8654 5.00731 9.98079 5.02193 10.0955C5.08989 10.6287 5.34426 11.0663 5.67869 11.4828C5.99753 11.8798 6.44472 12.323 6.9809 12.8544L8.42204 14.2827C8.71624 14.5743 9.19111 14.5722 9.48269 14.278C9.77427 13.9838 9.77216 13.5089 9.47796 13.2173L8.06758 11.8195C7.49268 11.2497 7.10733 10.8661 6.84823 10.5435C6.84526 10.5398 6.84231 10.5361 6.83939 10.5325C6.83063 10.5215 6.8221 10.5107 6.81379 10.5H13.75C14.1642 10.5 14.5 10.1642 14.5 9.75C14.5 9.33579 14.1642 9 13.75 9H6.81379C6.82487 8.98578 6.83635 8.97128 6.84823 8.95649C7.10733 8.63386 7.49268 8.25033 8.06758 7.68054L9.47796 6.28269Z" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M14.2135 0.123728C13.0714 -1.45286e-05 11.6318 -8.0335e-06 9.79525 1.32337e-07H9.70475C7.86821 -8.0335e-06 6.42861 -1.45286e-05 5.28648 0.123728C4.12094 0.250006 3.17656 0.512324 2.37024 1.09815C1.88209 1.45281 1.45281 1.88209 1.09815 2.37024C0.512324 3.17656 0.250006 4.12094 0.123728 5.28648C-1.45286e-05 6.42861 -8.0335e-06 7.86821 1.32337e-07 9.70475V9.79525C-8.0335e-06 11.6318 -1.45286e-05 13.0714 0.123728 14.2135C0.250006 15.3791 0.512324 16.3234 1.09815 17.1298C1.45281 17.6179 1.88209 18.0472 2.37024 18.4018C3.17656 18.9877 4.12094 19.25 5.28648 19.3763C6.42859 19.5 7.86817 19.5 9.70465 19.5H9.79527C11.6318 19.5 13.0714 19.5 14.2135 19.3763C15.3791 19.25 16.3234 18.9877 17.1298 18.4018C17.6179 18.0472 18.0472 17.6179 18.4018 17.1298C18.9877 16.3234 19.25 15.3791 19.3763 14.2135C19.5 13.0714 19.5 11.6318 19.5 9.79535V9.70473C19.5 7.86824 19.5 6.42859 19.3763 5.28648C19.25 4.12094 18.9877 3.17656 18.4018 2.37024C18.0472 1.88209 17.6179 1.45281 17.1298 1.09815C16.3234 0.512324 15.3791 0.250006 14.2135 0.123728ZM3.25191 2.31168C3.75992 1.94259 4.41013 1.72745 5.44804 1.615C6.49999 1.50103 7.85843 1.5 9.75 1.5C11.6416 1.5 13 1.50103 14.052 1.615C15.0899 1.72745 15.7401 1.94259 16.2481 2.31168C16.6089 2.57382 16.9262 2.89111 17.1883 3.25191C17.5574 3.75992 17.7725 4.41013 17.885 5.44804C17.999 6.49999 18 7.85843 18 9.75C18 11.6416 17.999 13 17.885 14.052C17.7725 15.0899 17.5574 15.7401 17.1883 16.2481C16.9262 16.6089 16.6089 16.9262 16.2481 17.1883C15.7401 17.5574 15.0899 17.7725 14.052 17.885C13 17.999 11.6416 18 9.75 18C7.85843 18 6.49999 17.999 5.44804 17.885C4.41013 17.7725 3.75992 17.5574 3.25191 17.1883C2.89111 16.9262 2.57382 16.6089 2.31168 16.2481C1.94259 15.7401 1.72745 15.0899 1.615 14.052C1.50103 13 1.5 11.6416 1.5 9.75C1.5 7.85843 1.50103 6.49999 1.615 5.44804C1.72745 4.41013 1.94259 3.75992 2.31168 3.25191C2.57382 2.89111 2.89111 2.57382 3.25191 2.31168Z" />
+              </g>
+            </g>
+          </svg>
         </motion.button>
       </div>
 
@@ -294,14 +303,14 @@ function ShellLink({
     );
   }
   return (
-    <MotionLink href={href} className={cn("transition-all  hover:bg-[#3e3e3e]",className)} title={title} {...rest}
-    whileHover={{
-      paddingLeft: 20,
-    }}
-    transition={{
-      duration: 0.05,
-      ease: 'easeIn',
-    }}
+    <MotionLink href={href} className={cn("transition-all  hover:bg-[#3e3e3e]", className)} title={title} {...rest}
+      whileHover={{
+        paddingLeft: 20,
+      }}
+      transition={{
+        duration: 0.05,
+        ease: 'easeIn',
+      }}
     >
       {children}
     </MotionLink>
@@ -316,7 +325,7 @@ function NavGroup({
   locked,
   onBlocked,
   className,
-}: {
+}: Readonly<{
   label: string;
   items: NavItem[];
   pathname: string;
@@ -324,7 +333,7 @@ function NavGroup({
   locked: boolean;
   onBlocked: () => void;
   className?: string;
-}) {
+}>) {
   return (
     <div className={className}>
       <p className={SECTION_LABEL}>{label}</p>

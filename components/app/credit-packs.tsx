@@ -5,11 +5,13 @@ import { Check, Coins, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CREDIT_PACKS, type CreditPackId } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function CreditPacks() {
   const [loading, setLoading] = useState<CreditPackId | null>(null);
+  const [pendingPack, setPendingPack] = useState<CreditPackId | null>(null);
 
   async function buy(packId: CreditPackId) {
     setLoading(packId);
@@ -31,6 +33,8 @@ export function CreditPacks() {
       setLoading(null);
     }
   }
+
+  const selected = CREDIT_PACKS.find((pack) => pack.id === pendingPack) ?? null;
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
@@ -70,7 +74,7 @@ export function CreditPacks() {
               <Button
                 variant={highlight ? "brand" : "outline"}
                 className="mt-6 w-full"
-                onClick={() => buy(pack.id)}
+                onClick={() => setPendingPack(pack.id)}
                 disabled={loading !== null}
               >
                 {loading === pack.id && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -80,6 +84,21 @@ export function CreditPacks() {
           </Card>
         );
       })}
+      <ConfirmDialog
+        open={selected !== null}
+        onOpenChange={(open) => !open && setPendingPack(null)}
+        title={selected ? `Buy ${selected.credits} credits?` : "Buy credits?"}
+        description={
+          selected
+            ? `You'll pay $${selected.priceUsd} once. ${selected.credits} credits are added to your balance after payment, and they don't expire.`
+            : ""
+        }
+        confirmLabel={selected ? `Pay $${selected.priceUsd}` : "Pay"}
+        pending={loading !== null}
+        onConfirm={() => {
+          if (selected) void buy(selected.id);
+        }}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Download, ExternalLink, Loader2, Rocket, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PackageType } from "@/lib/constants";
 
 type DeploymentLog = { at: string; status: string; message: string };
@@ -32,6 +33,7 @@ export function DeliveryPanel({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [deploying, setDeploying] = useState(false);
+  const [confirmLive, setConfirmLive] = useState(false);
   const autoStarted = useRef(false);
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export function DeliveryPanel({
       toast.error(err instanceof Error ? err.message : "Could not publish the site");
     } finally {
       setDeploying(false);
+      setConfirmLive(false);
     }
   }
 
@@ -113,7 +116,7 @@ export function DeliveryPanel({
                     : "We'll put the site online for you. You don't need to download files or sign up for anything else."}
               </p>
             </div>
-            <Button variant="brand" onClick={deploy} disabled={deploying}>
+            <Button variant="brand" onClick={() => setConfirmLive(true)} disabled={deploying}>
               {deploying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
               {deploying ? "Going live…" : isLive ? "Update live site" : "Make it live"}
             </Button>
@@ -163,6 +166,20 @@ export function DeliveryPanel({
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmLive}
+        onOpenChange={setConfirmLive}
+        title={isLive ? "Update the live site?" : "Put your website online?"}
+        description={
+          isLive
+            ? "The public site will be replaced with the version you have now."
+            : "We'll publish this website so anyone with the link can open it."
+        }
+        confirmLabel={isLive ? "Update live site" : "Make it live"}
+        pending={deploying}
+        onConfirm={() => void deploy()}
+      />
     </div>
   );
 }

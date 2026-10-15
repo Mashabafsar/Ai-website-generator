@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
 import { GenerationLog } from "@/components/app/generation-log";
 import { useHoldGenerationLock } from "@/components/app/generation-lock";
@@ -30,6 +31,7 @@ export function GenerationNotice({
 }) {
   const router = useRouter();
   const [retrying, setRetrying] = useState(false);
+  const [confirmRetry, setConfirmRetry] = useState(false);
   const [buildStep, setBuildStep] = useState<GenerationStepId | "done" | null>(null);
   useHoldGenerationLock(Boolean(buildStep));
 
@@ -56,6 +58,7 @@ export function GenerationNotice({
       toast.error(err instanceof Error ? err.message : "We couldn't rebuild your content.");
     } finally {
       setRetrying(false);
+      setConfirmRetry(false);
     }
   }
 
@@ -82,7 +85,7 @@ export function GenerationNotice({
         </div>
       ) : null}
       {canRetry && (
-        <Button variant="brand" size="sm" onClick={retry} disabled={retrying}>
+        <Button variant="brand" size="sm" onClick={() => setConfirmRetry(true)} disabled={retrying}>
           {retrying ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -91,6 +94,15 @@ export function GenerationNotice({
           Write it again ({generateCost} credits)
         </Button>
       )}
+      <ConfirmDialog
+        open={confirmRetry}
+        onOpenChange={setConfirmRetry}
+        title="Write your website again?"
+        description={`This uses ${generateCost} credits and replaces the starter text with copy written for your business.`}
+        confirmLabel={`Write it again (${generateCost} credits)`}
+        pending={retrying}
+        onConfirm={() => void retry()}
+      />
     </div>
   );
 }

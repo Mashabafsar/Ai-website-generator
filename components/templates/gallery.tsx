@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TemplatePreviewDialog } from "@/components/templates/template-preview-dialog";
 import { SwitchDesignDialog } from "@/components/templates/switch-design-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 /** The project a design switch would rebuild, once a site already exists. */
 export type ExistingSite = {
@@ -36,6 +37,7 @@ export function TemplateGallery({
   const router = useRouter();
   const [preview, setPreview] = useState<SiteTemplate | null>(null);
   const [switching, setSwitching] = useState<SiteTemplate | null>(null);
+  const [choosing, setChoosing] = useState<SiteTemplate | null>(null);
   const [selecting, setSelecting] = useState<string | null>(null);
   const demos = new Set(demoSlugs);
 
@@ -79,17 +81,15 @@ export function TemplateGallery({
 
     return (
       <Button
-        asChild
         variant="brand"
         size={size}
         className="group/cta"
-        onClick={() => setSelecting(template.id)}
+        aria-label={`Use the ${template.name} design`}
+        onClick={() => setChoosing(template)}
       >
-        <Link href={`/app/new-project?templateId=${template.id}`}>
-          {selecting === template.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Use this design
-          <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
-        </Link>
+        {selecting === template.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        Use this design
+        <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
       </Button>
     );
   };
@@ -153,6 +153,20 @@ export function TemplateGallery({
         hasDemo={Boolean(preview && demos.has(preview.slug))}
         onOpenChange={(open) => !open && setPreview(null)}
         action={preview ? primaryAction(preview) : null}
+      />
+
+      <ConfirmDialog
+        open={Boolean(choosing)}
+        onOpenChange={(open) => !open && setChoosing(null)}
+        title={choosing ? `Use ${choosing.name}?` : "Use this design?"}
+        description="This becomes the design for your website. Next you'll answer a few questions about your business. Choosing it is free — credits are used when the site is written."
+        confirmLabel="Use this design"
+        pending={selecting !== null}
+        onConfirm={() => {
+          if (!choosing) return;
+          setSelecting(choosing.id);
+          router.push(`/app/new-project?templateId=${choosing.id}`);
+        }}
       />
 
       <SwitchDesignDialog
