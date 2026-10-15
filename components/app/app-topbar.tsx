@@ -9,9 +9,8 @@ import { CREDITS_CHANGED_EVENT } from "@/lib/credits/notify";
 import { useGenerationLock } from "@/components/app/generation-lock";
 import { cn } from "@/lib/utils";
 
-// App shell top bar — 66px white bar with a hairline bottom border: page title
-// on the left; token balance, theme toggle, and the account menu on the right,
-// separated by vertical hairlines (per the dashboard design).
+// App shell top bar — 95px #f4f4f4 strip from the sidebar study. Page title on
+// the left; token balance and the account menu on the right.
 
 const TITLES: [RegExp, string][] = [
   [/^\/app\/dashboard/, "Dashboard"],
@@ -24,6 +23,8 @@ const TITLES: [RegExp, string][] = [
   [/^\/app\/project\/[^/]+\/deployment/, "Deliver"],
   [/^\/app\/project\/[^/]+\/preview/, "Preview"],
   [/^\/app\/project/, "Project"],
+  [/^\/app\/admin\/clients/, "Clients"],
+  [/^\/app\/admin\/usage/, "Usage"],
   [/^\/app\/admin/, "Admin"],
 ];
 
@@ -33,7 +34,7 @@ function titleFor(pathname: string): string {
 }
 
 function Divider() {
-  return <span aria-hidden className="h-[66px] w-px bg-line" />;
+  return <span aria-hidden className="h-[95px] w-px bg-line" />;
 }
 
 export function AppTopbar({
@@ -79,7 +80,7 @@ export function AppTopbar({
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-[66px] items-center justify-between border-b border-line bg-white pl-[30px]">
+    <header className="sticky top-0 z-30 flex h-[95px] items-center justify-between bg-[#f4f4f4] pl-[30px]">
       <h1 className="text-lg font-medium leading-[1.2] text-black">{titleFor(pathname)}</h1>
 
       <div className="flex items-center gap-5 pr-6">
