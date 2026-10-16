@@ -5,12 +5,10 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { signIn, signUp } from "@/lib/auth/client";
+import { AFTER_AUTH_PATH, isUnverifiedEmailError, verifyEmailPath } from "@/lib/auth/email-gate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-/** Where both sign-in and sign-up land: the design library. */
-const AFTER_AUTH = "/app/templates";
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [loading, setLoading] = useState(false);
@@ -36,17 +34,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           name: name.trim() || email.split("@")[0],
           email: email.trim(),
           password,
-          callbackURL: AFTER_AUTH,
+          callbackURL: AFTER_AUTH_PATH,
         });
         if (error) throw new Error(error.message || "Could not create account");
-        toast.success("Welcome! Your free credits are ready.");
+        toast.success("Account created.");
       } else {
         const { error } = await signIn.email({
           email: email.trim(),
           password,
-          callbackURL: AFTER_AUTH,
+          callbackURL: AFTER_AUTH_PATH,
         });
-        if (error) throw new Error(error.message || "Invalid email or password");
+        if (error) {
+          if (isUnverifiedEmailError(error)) {
+            window.location.assign(verifyEmailPath(email.trim(), true));
+            return;
+          }
+          throw new Error(error.message || "Invalid email or password");
+        }
       }
 
       // Consent is recorded after the session exists, and never gates sign-in:
@@ -68,7 +72,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       // A full page load is what makes the new session cookie visible to the
       // server on the very next render. A client-side router.push() races with
       // the cookie write and silently leaves the user sitting on this form.
-      window.location.assign(AFTER_AUTH);
+      // Signup always lands on the check-inbox page; if SMTP is off and a
+      // session exists, that page sends them into the app.
+      window.location.assign(isSignup ? verifyEmailPath(email.trim()) : AFTER_AUTH_PATH);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);

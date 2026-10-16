@@ -10,9 +10,9 @@ export function SiteHeader() {
           <Logo />
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-medium text-ink-muted md:flex">
-          <a href="#how" className="transition-colors hover:text-ink">How it works</a>
-          <a href="#sections" className="transition-colors hover:text-ink">Sections</a>
-          <a href="#pricing" className="transition-colors hover:text-ink">Pricing</a>
+          <a href="/#how" className="transition-colors hover:text-ink">How it works</a>
+          <a href="/#sections" className="transition-colors hover:text-ink">Sections</a>
+          <a href="/#pricing" className="transition-colors hover:text-ink">Pricing</a>
         </nav>
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost">

@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo, BrandMark } from "@/components/brand/logo";
-import { getCurrentUserId } from "@/lib/auth/session";
+import { AFTER_AUTH_PATH, sessionCanEnterApp } from "@/lib/auth/email-gate";
+import { getCurrentSession } from "@/lib/auth/session";
+import { env } from "@/lib/env";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  const userId = await getCurrentUserId();
-  if (userId) redirect("/app/templates");
+  const session = await getCurrentSession();
+  if (sessionCanEnterApp(session?.user, env.notify.smtpEnabled)) {
+    redirect(AFTER_AUTH_PATH);
+  }
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">

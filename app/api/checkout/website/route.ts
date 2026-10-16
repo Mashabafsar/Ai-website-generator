@@ -36,6 +36,8 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode,
     line_items: lineItems,
+    // Charge in USD only; don't offer a local-currency (e.g. PKR) conversion.
+    adaptive_pricing: { enabled: false },
     success_url: successUrl,
     cancel_url: cancelUrl,
     customer_email: user.email ?? undefined,

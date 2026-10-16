@@ -45,6 +45,8 @@ export async function POST(req: Request) {
             },
           },
     ],
+    // Charge in USD only; don't offer a local-currency (e.g. PKR) conversion.
+    adaptive_pricing: { enabled: false },
     success_url: successUrl,
     cancel_url: cancelUrl,
     client_reference_id: user.id,

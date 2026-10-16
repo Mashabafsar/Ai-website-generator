@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
+import { sessionCanEnterApp, verifyEmailPath } from "@/lib/auth/email-gate";
 import { getCurrentSession } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/admin";
 import { isAccountDeactivated } from "@/lib/accounts/deactivation";
@@ -9,6 +10,7 @@ import { getBalance } from "@/lib/credits/credits";
 import { ensureLeadRegistered } from "@/lib/crm/scoring";
 import { runCrmOutbox } from "@/lib/crm/sync";
 import { AppShell } from "@/components/app/app-shell";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session?.user) redirect("/login");
 
   const userId = session.user.id;
+  if (!sessionCanEnterApp(session.user, env.notify.smtpEnabled)) {
+    redirect(verifyEmailPath(session.user.email));
+  }
   if (await isAccountDeactivated(userId)) {
     try {
       await auth.api.signOut({ headers: await headers() });

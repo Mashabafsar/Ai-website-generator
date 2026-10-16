@@ -36,7 +36,7 @@ The core product loop works end to end in this repo.
 
 ### Product flow
 
-1. **Auth** — Better Auth email signup/login. New accounts receive a starter credit bonus.
+1. **Auth** — Better Auth email signup/login. When SMTP is configured, new accounts must verify their email before they can use the app. New accounts receive a starter credit bonus.
 2. **Template library** — Users pick a complete, locked design (bespoke renderers such as ForgeTech, Techvantage, CraftedSpaces, plus standard-section designs). The AI fills content slots; it cannot invent layout.
 3. **Questionnaire** — Structured answers (business, audience, services, tone, style, pages, package). Optional **existing-website import** scrapes brand assets (logo, colors, images) with consent tracking.
 4. **Generate** — Heavy Cursor model, then a deterministic template fallback. Output is Zod-validated, sanitized, and forced onto the chosen template's slots.
@@ -44,7 +44,7 @@ The core product loop works end to end in this repo.
 6. **Credits** — Wallet + ledger with atomic spend, refund on failed generation, and Stripe credit packs. Customer credit prices stay separate from provider cost.
 7. **Admin AI usage** (`/app/admin/usage`) — Tokens and estimated provider dollars for each website, broken down by generation, pages and sections plan, scraper AI, photo analysis, and later edits. Starter-content fallbacks are counted here and are not billed. Admins review lead scores and marketing consent at `/app/admin/clients`.
 8. **Quote & pay** — Deterministic quote page; Stripe Checkout for website packages and credit packs; webhook + reconcile path.
-9. **Deliver** — ZIP export for self-hosting; after website-package payment, the static site is committed into **AI-WEBSITE-BUILDER-WEBSITE** at `clients/<slug>/`; Vercel deploy + subdomain assignment for managed hosting; HubSpot and Resend hooks when configured.
+9. **Deliver** — ZIP export for self-hosting; after website-package payment, the static site is committed into **AI-WEBSITE-BUILDER-WEBSITE** at `clients/<slug>/`; Vercel deploy + subdomain assignment for managed hosting; HubSpot and SMTP owner mail when configured.
 
 ### Platform work already done
 
@@ -148,7 +148,8 @@ See `.env.example` for the full list. Highlights:
 | `HUBSPOT_ASSOCIATIONS_API_VERSION` | Associations API version (default `2026-09`) |
 | `HUBSPOT_DEAL_PIPELINE` | Optional deal pipeline override. Default `941017774` (Preview Generated → Content Generation → Credit Bought → Quotation Generated → Closed Won) |
 | `CRON_SECRET` | Shared secret for `/api/cron/hubspot`. Unset disables the scheduled drain |
-| `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL` | Email when a site goes live or the ZIP is ready |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` | SMTP for account verification and owner mail. Port defaults to `587`. Implicit TLS is used on `465`; other ports (including Mailtrap `2525`) use STARTTLS |
+| `NOTIFY_FROM_EMAIL` | Shared From address for verification mail and owner notify (ZIP ready / site live) |
 | `GITHUB_TOKEN`, `GITHUB_ORG` | Token needs **write** on **AI-WEBSITE-BUILDER-WEBSITE**. Org is the repo owner when `GITHUB_SITES_REPO` is unset |
 | `GITHUB_SITES_REPO` | Optional `owner/AI-WEBSITE-BUILDER-WEBSITE` override |
 | `GITHUB_REPO_VISIBILITY` | Unused for the shared sites repo (that repo already exists) |

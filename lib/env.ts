@@ -1,3 +1,5 @@
+import { isSmtpConfigured, isSmtpSecure, parseSmtpPort, resolveSmtpFrom } from "@/lib/notify/config";
+
 // Centralized, typed access to environment variables with sensible defaults.
 // Server-only secrets must never be imported into client components.
 
@@ -180,10 +182,28 @@ export const env = {
   },
 
   notify: {
-    resendApiKey: process.env.RESEND_API_KEY ?? "",
-    fromEmail: process.env.NOTIFY_FROM_EMAIL ?? "",
+    get fromEmail() {
+      return resolveSmtpFrom({
+        fromEmail: process.env.NOTIFY_FROM_EMAIL,
+        smtpUser: process.env.SMTP_USER,
+      });
+    },
+    smtpHost: process.env.SMTP_HOST ?? "",
+    smtpPort: parseSmtpPort(process.env.SMTP_PORT),
+    smtpUser: process.env.SMTP_USER ?? "",
+    smtpPass: process.env.SMTP_PASS ?? "",
+    get smtpSecure() {
+      return isSmtpSecure(this.smtpPort, process.env.SMTP_SECURE);
+    },
+    get smtpEnabled() {
+      return isSmtpConfigured({
+        host: process.env.SMTP_HOST,
+        fromEmail: process.env.NOTIFY_FROM_EMAIL,
+        smtpUser: process.env.SMTP_USER,
+      });
+    },
     get enabled() {
-      return Boolean(process.env.RESEND_API_KEY && process.env.NOTIFY_FROM_EMAIL);
+      return this.smtpEnabled;
     },
   },
 };

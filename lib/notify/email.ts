@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import { env } from "@/lib/env";
 
 export type OutboundEmail = {
@@ -8,38 +9,36 @@ export type OutboundEmail = {
 };
 
 /**
- * Send a transactional email via Resend. Missing config or API errors are
- * logged and never thrown — delivery notify must not fail export/deploy.
+ * Send a transactional email over SMTP.
+ * Missing config or delivery errors are logged and never thrown — notify
+ * must not fail signup, export, or deploy.
  */
 export async function sendEmail(message: OutboundEmail): Promise<boolean> {
   if (!env.notify.enabled) {
-    console.info("Owner notify skipped — RESEND_API_KEY or NOTIFY_FROM_EMAIL is not set.");
+    console.info("Outbound email skipped — SMTP_HOST and a From address are not set.");
     return false;
   }
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.notify.resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: env.notify.fromEmail,
-        to: [message.to],
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-      }),
+    const transport = nodemailer.createTransport({
+      host: env.notify.smtpHost,
+      port: env.notify.smtpPort,
+      secure: env.notify.smtpSecure,
+      requireTLS: !env.notify.smtpSecure,
+      auth: env.notify.smtpUser
+        ? { user: env.notify.smtpUser, pass: env.notify.smtpPass }
+        : undefined,
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error(`Resend ${res.status}: ${body.slice(0, 300)}`);
-      return false;
-    }
+    await transport.sendMail({
+      from: env.notify.fromEmail,
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+    });
     return true;
   } catch (err) {
-    console.error("Owner email failed:", err);
+    console.error("SMTP email failed:", err instanceof Error ? err.message : err);
     return false;
   }
 }

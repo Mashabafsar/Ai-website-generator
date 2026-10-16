@@ -15,8 +15,8 @@ export function SiteFooter() {
         <div className="flex flex-wrap gap-x-10 gap-y-4 text-sm text-ink-muted">
           <Link href="/signup" className="hover:text-ink">Get started</Link>
           <Link href="/login" className="hover:text-ink">Log in</Link>
-          <a href="#pricing" className="hover:text-ink">Pricing</a>
-          <a href="#how" className="hover:text-ink">How it works</a>
+          <a href="/#pricing" className="hover:text-ink">Pricing</a>
+          <a href="/#how" className="hover:text-ink">How it works</a>
         </div>
       </div>
       <div className="border-t border-line py-6 text-center text-xs text-ink-muted">

@@ -311,6 +311,10 @@ body {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 1.35s linear infinite;
+}
 
 @keyframes retro-grid {
   0% { transform: translateY(-50%); }
@@ -318,6 +322,129 @@ body {
 }
 .animate-retro-grid {
   animation: retro-grid 18s linear infinite;
+}
+
+/* System pages (loading / 404 / error) — transform & opacity only. */
+.system-stage {
+  background-image: linear-gradient(100deg, #5a12f0 0%, #4d71fb 48%, #24d5f6 100%);
+  background-size: 160% 160%;
+  animation: system-stage-drift 16s ease-in-out infinite;
+}
+@keyframes system-stage-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.system-digit {
+  display: inline-block;
+  animation:
+    system-digit-in 0.65s cubic-bezier(0.23, 1, 0.32, 1) both,
+    system-digit-float 3.6s ease-in-out infinite;
+}
+.system-digit:nth-child(1) { animation-delay: 0ms, 0.65s; }
+.system-digit:nth-child(2) {
+  animation-name: system-digit-in, system-digit-float-alt;
+  animation-delay: 70ms, 0.72s;
+}
+.system-digit:nth-child(3) { animation-delay: 140ms, 0.79s; }
+@keyframes system-digit-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes system-digit-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(-2.5deg); }
+}
+@keyframes system-digit-float-alt {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(2.8deg); }
+}
+
+.system-searcher {
+  animation: system-search 5.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes system-search {
+  0%, 100% { transform: translate(-4.25rem, 0.35rem) rotate(-14deg); }
+  28% { transform: translate(1.25rem, -1.7rem) rotate(10deg); }
+  54% { transform: translate(6.4rem, 0.15rem) rotate(-8deg); }
+  78% { transform: translate(2.1rem, 1.25rem) rotate(12deg); }
+}
+
+.system-float-mark {
+  position: absolute;
+  pointer-events: none;
+  animation: system-mark-drift 7s ease-in-out infinite;
+}
+.system-float-mark:nth-child(2) { animation-duration: 8.4s; animation-delay: -2.2s; }
+.system-float-mark:nth-child(3) { animation-duration: 6.2s; animation-delay: -3.8s; }
+@keyframes system-mark-drift {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(8deg); }
+}
+
+.loading-mark-a {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loading-mark-bob 1.7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.loading-mark-b {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loading-mark-bob 1.7s cubic-bezier(0.45, 0, 0.55, 1) infinite reverse;
+}
+@keyframes loading-mark-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(7deg); }
+}
+
+.loading-orbit {
+  animation: loading-orbit-spin 7.5s linear infinite;
+}
+@keyframes loading-orbit-spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-dot {
+  animation: loading-dot-pulse 1.05s ease-in-out infinite;
+}
+.loading-dot:nth-child(1) { animation-delay: 0ms; }
+.loading-dot:nth-child(2) { animation-delay: 140ms; }
+.loading-dot:nth-child(3) { animation-delay: 280ms; }
+@keyframes loading-dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+.loading-status {
+  display: grid;
+  min-height: 1.5em;
+}
+.loading-status span {
+  grid-area: 1 / 1;
+  opacity: 0;
+  animation: loading-status-swap 6.6s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+.loading-status span:first-child {
+  opacity: 1;
+}
+.loading-status span:nth-child(1) { animation-delay: 0s; }
+.loading-status span:nth-child(2) { animation-delay: 2.2s; }
+.loading-status span:nth-child(3) { animation-delay: 4.4s; }
+@keyframes loading-status-swap {
+  0%, 28% { opacity: 1; transform: translateY(0); }
+  36%, 100% { opacity: 0; transform: translateY(-8px); }
+}
+
+.loading-skel-bar {
+  transform-origin: left center;
+  animation: loading-skel-in 0.55s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.loading-skel-bar:nth-child(1) { animation-delay: 80ms; }
+.loading-skel-bar:nth-child(2) { animation-delay: 140ms; }
+.loading-skel-bar:nth-child(3) { animation-delay: 200ms; }
+@keyframes loading-skel-in {
+  from { opacity: 0; transform: scaleX(0.72); }
+  to { opacity: 1; transform: scaleX(1); }
 }
 
 /* Used inside generated website sections (preview + assembled sites). */
@@ -332,8 +459,31 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-retro-grid,
   .animate-fade-up,
-  .animate-float-slow {
+  .animate-float-slow,
+  .animate-shimmer,
+  .system-stage,
+  .system-digit,
+  .system-searcher,
+  .system-float-mark,
+  .loading-mark-a,
+  .loading-mark-b,
+  .loading-orbit,
+  .loading-dot,
+  .loading-status span,
+  .loading-skel-bar {
     animation: none;
+  }
+  .system-digit,
+  .loading-skel-bar {
+    opacity: 1;
+    transform: none;
+  }
+  .loading-status span:first-child {
+    opacity: 1;
+    transform: none;
+  }
+  .loading-status span:not(:first-child) {
+    display: none;
   }
 }
 
