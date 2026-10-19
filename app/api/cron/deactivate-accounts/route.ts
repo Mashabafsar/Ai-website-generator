@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { deactivateEligibleAccounts } from "@/lib/accounts/deactivation";
 
-export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 /**

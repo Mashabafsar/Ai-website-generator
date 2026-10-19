@@ -11,8 +11,6 @@ import { InsufficientCreditsError } from "@/lib/credits/credits";
 import { isPublishedTemplate } from "@/lib/templates/store";
 import { rateLimit } from "@/lib/rate-limit";
 
-export const maxDuration = 300;
-
 type Ctx = { params: Promise<{ projectId: string }> };
 
 /** Rebuilds an existing website on a different design, for the generation price. */

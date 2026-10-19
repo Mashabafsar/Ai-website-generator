@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { ImageProfile, OptimizedImage } from "@/lib/images/optimize";
 import { env } from "@/lib/env";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { publicMediaUrl, putObject } from "@/lib/storage/s3";
 
 // Every image the platform stores for a project — editor uploads and assets
 // pulled from a customer's existing website — lands here, so there is one place
@@ -124,45 +124,38 @@ export class StorageUploadError extends Error {
 }
 
 /**
- * Uploads one image to Supabase Storage and returns the public URL.
- * `filename` is the full object path inside the bucket.
+ * Uploads one image to the media bucket and returns its public URL.
+ * `filename` is the full object key inside the bucket.
  */
 export async function uploadScrapedImage(
   buffer: Buffer,
   filename: string,
   contentType: string
 ): Promise<string> {
-  const bucket = env.supabase.storageBucket;
-  if (!bucket) throw new StorageUploadError("Missing SUPABASE_STORAGE_BUCKET.");
-
-  let client: ReturnType<typeof getSupabaseAdminClient>;
-  try {
-    client = getSupabaseAdminClient();
-  } catch (err) {
-    throw new StorageUploadError("Supabase Storage is not configured.", err);
-  }
-
-  const { error } = await client.storage.from(bucket).upload(filename, buffer, {
-    contentType,
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (error) {
+  if (!env.storage.enabled || !env.storage.publicUrl) {
     throw new StorageUploadError(
-      `Failed to upload ${filename} to bucket ${bucket}: ${error.message}`,
-      error
+      "Media storage is not configured. Set the S3_* variables and S3_PUBLIC_URL."
     );
   }
 
-  const { data } = client.storage.from(bucket).getPublicUrl(filename);
-  if (!data?.publicUrl) {
-    throw new StorageUploadError(`Supabase did not return a public URL for ${filename}.`);
+  const bucket = env.storage.mediaBucket;
+  try {
+    await putObject({
+      bucket,
+      key: filename,
+      body: buffer,
+      contentType,
+      cacheControl: "public, max-age=31536000, immutable",
+    });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    throw new StorageUploadError(`Failed to upload ${filename} to bucket ${bucket}: ${reason}`, err);
   }
-  return data.publicUrl;
+  return publicMediaUrl(filename);
 }
 
 /**
- * Uploads an image into Supabase Storage and returns the URL the renderer and
+ * Uploads an image into the media bucket and returns the URL the renderer and
  * generated site can use directly. Callers that hand over third-party bytes
  * pass a profile so the file is downscaled and re-encoded before upload.
  */

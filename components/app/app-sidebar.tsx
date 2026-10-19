@@ -82,9 +82,16 @@ const PROJECTS: NavItem[] = [
   },
 ];
 
-const ACCOUNT: { label: string; icon: string }[] = [
+const ACCOUNT: (NavItem | { label: string; icon: string; href?: undefined })[] = [
   { label: "Help", icon: "/shell/help.svg" },
-  { label: "Settings", icon: "/shell/settings.svg" },
+  {
+    href: "/app/settings",
+    label: "Settings",
+    icon: "/shell/settings.svg",
+    activeIcon: "/shell/settings.svg",
+    gapClass: "gap-2.25",
+    match: "prefix",
+  },
 ];
 
 const SECTION_LABEL =
@@ -200,19 +207,52 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
       <div className="shrink-0 pb-6.5">
         <p className={SECTION_LABEL}>Account</p>
         <div className="mx-6.5 mt-1 overflow-hidden bg-[#272727]">
-          {ACCOUNT.map((item, index) => (
-            <div
-              key={item.label}
-              title={item.label}
-              className="relative flex h-12.5 items-center gap-2.25 px-3"
-            >
-              <Glyph src={item.icon} className="size-6" />
-              <span className={cn("text-[16px] font-medium leading-7.5 whitespace-nowrap", collapsed && "sr-only")}>
-                {item.label}
-              </span>
-              {index === 0 ? <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-[#535353]" /> : null}
-            </div>
-          ))}
+          {ACCOUNT.map((item, index) => {
+            if ("href" in item && item.href) {
+              const active = isActive(pathname, item);
+              return (
+                <ShellLink
+                  key={item.label}
+                  href={item.href}
+                  locked={locked}
+                  onBlocked={warnStay}
+                  title={item.label}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative flex h-12.5 items-center gap-2.25 px-3 text-[16px] font-medium leading-7.5 text-white focus-visible:shadow-[inset_0_0_0_1px_#4d71fb] focus-visible:outline-none",
+                    active && "shadow-[inset_0_0_0_1px_#4d71fb]",
+                    locked ? "cursor-not-allowed opacity-60" : undefined
+                  )}
+                >
+                  <Glyph src={active ? item.activeIcon : item.icon} className="size-6" />
+                  <span className={cn("whitespace-nowrap", collapsed && "sr-only")}>{item.label}</span>
+                  {active || index === ACCOUNT.length - 1 ? null : (
+                    <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-[#535353]" />
+                  )}
+                </ShellLink>
+              );
+            }
+            return (
+              <div
+                key={item.label}
+                title={item.label}
+                className="relative flex h-12.5 items-center gap-2.25 px-3"
+              >
+                <Glyph src={item.icon} className="size-6" />
+                <span
+                  className={cn(
+                    "text-[16px] font-medium leading-7.5 whitespace-nowrap",
+                    collapsed && "sr-only"
+                  )}
+                >
+                  {item.label}
+                </span>
+                {index === 0 ? (
+                  <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-[#535353]" />
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </div>
     </motion.aside>

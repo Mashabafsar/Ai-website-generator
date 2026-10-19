@@ -30,6 +30,7 @@ import {
   formatDealName,
   formatProgressNote,
   isHubSpotConfigured,
+  isPlatformOrLocalHost,
   splitDealDescription,
   upsertCompany,
   upsertContact,
@@ -71,24 +72,19 @@ function safeLineItems(json: string | null | undefined): QuoteLineItem[] {
   }
 }
 
-/** Hostname only when it looks like a real customer site, not our preview host. */
+/** Hostname only when it looks like a customer's own site, not one we host. */
 function companyDomainFromUrl(url: string | undefined): string | undefined {
-  if (!url?.trim()) return undefined;
-  try {
-    const host = new URL(url).hostname.replace(/^www\./i, "");
-    if (!host || host.includes("localhost") || host.endsWith(".vercel.app")) return undefined;
-    const appHost = (() => {
-      try {
-        return new URL(env.appUrl).hostname.replace(/^www\./i, "");
-      } catch {
-        return "";
-      }
-    })();
-    if (appHost && (host === appHost || host.endsWith(`.${appHost}`))) return undefined;
-    return host;
-  } catch {
-    return undefined;
-  }
+  if (!url?.trim() || !URL.canParse(url)) return undefined;
+  const host = new URL(url).hostname.replace(/^www\./i, "").toLowerCase();
+  if (!host || isPlatformOrLocalHost(host)) return undefined;
+  const appHost = appHostname();
+  if (appHost && (host === appHost || host.endsWith(`.${appHost}`))) return undefined;
+  return host;
+}
+
+function appHostname(): string {
+  if (!URL.canParse(env.appUrl)) return "";
+  return new URL(env.appUrl).hostname.replace(/^www\./i, "").toLowerCase();
 }
 
 /** Every paid credit pack for this account, priced from the catalog. */

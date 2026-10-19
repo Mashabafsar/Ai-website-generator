@@ -13,6 +13,10 @@ import { CrmJobKind } from "@/lib/crm/config";
 import { enqueueCrmJob } from "@/lib/crm/outbox";
 import { awardCreditPackPurchase, awardWebsitePackagePurchase } from "@/lib/crm/scoring";
 import { enqueueDealSyncForUser } from "@/lib/crm/sync";
+import {
+  recordCreditPackBilling,
+  recordWebsitePackageBilling,
+} from "@/lib/billing/records";
 
 /** Statuses that already mean the website was bought — never downgrade them. */
 const DELIVERED_STATUSES: string[] = [
@@ -68,6 +72,8 @@ export async function fulfillCreditPackCheckout(
   } catch (err) {
     console.error("[crm] credit pack score failed:", err instanceof Error ? err.message : err);
   }
+
+  await recordCreditPackBilling(session, userId, pack.credits, pack.id);
 
   // Always refresh the account deal (including Closed Won) so amount + line
   // items include this pack even when scoring throws. Scoring also enqueues a
@@ -132,6 +138,7 @@ export async function fulfillWebsiteCheckout(
           err instanceof Error ? err.message : err
         );
       }
+      await recordWebsitePackageBilling(session, project.userId);
     }
     // Deduped per user so questionnaire, credits, and website payment share one deal job.
     await enqueueCrmJob({

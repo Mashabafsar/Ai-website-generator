@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 const TITLES: [RegExp, string][] = [
   [/^\/app\/dashboard/, "Dashboard"],
+  [/^\/app\/settings/, "Settings"],
   [/^\/app\/templates/, "Templates"],
   [/^\/app\/credits/, "Credits"],
   [/^\/app\/new-project/, "New Website"],
@@ -59,8 +60,11 @@ export function AppTopbar({
         const res = await fetch("/api/credits/balance", { cache: "no-store" });
         const data = (await res.json()) as { balance?: unknown };
         if (!cancelled && typeof data.balance === "number") setBalance(data.balance);
-      } catch {
-        // Keep the last known server-rendered value.
+      } catch (err) {
+        console.error(
+          "[credits] balance refresh failed:",
+          err instanceof Error ? err.message : err
+        );
       }
     }
     void refresh();

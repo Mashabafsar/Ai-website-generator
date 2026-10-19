@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   questionnaireSchema,
@@ -15,27 +15,30 @@ import {
   VISUAL_STYLES,
   type QuestionnaireAnswers,
 } from "@/lib/questionnaire/schema";
-import { ColorField } from "@/components/theme/color-field";
 import { parseUserColor } from "@/lib/theme/parse-color";
+import {
+  CustomColorFields,
+  Field,
+  FontSelect,
+  OptionalSelect,
+  ServiceEditor,
+} from "@/components/questionnaire/questionnaire-fields";
 import { BrandImportChoice } from "@/components/questionnaire/brand-import-choice";
 import { SitePlanPreview } from "@/components/questionnaire/site-plan-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { hasImportedBrand, hasImportedTheme, parseImportedBrand } from "@/lib/branding/imported-brand";
-import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
+import {
+  ASSET_CONSENT_REQUIRED,
+  hasImportedBrand,
+  hasImportedTheme,
+  needsImportedAssetConsent,
+  parseImportedBrand,
+} from "@/lib/branding/imported-brand";
 import { notifyCreditsChanged } from "@/lib/credits/notify";
 import { GenerationLog } from "@/components/app/generation-log";
 import { useHoldGenerationLock } from "@/components/app/generation-lock";
@@ -104,10 +107,11 @@ function labelsFromAnswers(answers: QuestionnaireAnswers | null | undefined): st
   return filled;
 }
 
-const DESIGN_DEFAULT = "__design_default__";
-
 function resumeStep(answers: QuestionnaireAnswers | null): number {
   if (!answers?.hasWebsite) return 0;
+  if (needsImportedAssetConsent(parseImportedBrand(answers.importedBrand), answers.importedAssetConsent)) {
+    return 0;
+  }
   const name = answers.businessName?.trim() ?? "";
   const industry = answers.industry?.trim() ?? "";
   const description = answers.description?.trim() ?? "";
@@ -150,9 +154,9 @@ export function QuestionnaireWizard({
   const [sitePlan, setSitePlan] = useState<SitePlanView | null>(
     () => initialAnswers?.layoutPlan ?? null
   );
-  const [serviceInput, setServiceInput] = useState("");
   const [importing, setImporting] = useState(false);
   const [removingAssets, setRemovingAssets] = useState(false);
+  const [consentBlocked, setConsentBlocked] = useState(false);
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [importedSummary, setImportedSummary] = useState<string[]>(() =>
     labelsFromAnswers(initialAnswers)
@@ -248,8 +252,16 @@ export function QuestionnaireWizard({
   }
 
   async function next() {
+    const values = form.getValues();
+    const consentMissing =
+      step === 0 &&
+      needsImportedAssetConsent(parseImportedBrand(values.importedBrand), values.importedAssetConsent);
+    if (consentMissing) {
+      setConsentBlocked(true);
+      toast.error(ASSET_CONSENT_REQUIRED);
+    }
     const ok = await trigger(STEP_FIELDS[step]);
-    if (!ok) return;
+    if (!ok || consentMissing) return;
     if (step === 3 && !customColorsReady()) {
       toast.error("Enter a valid primary color, or pick a preset.");
       return;
@@ -320,6 +332,7 @@ export function QuestionnaireWizard({
           { shouldDirty: true }
         );
         setValue("importedAssetConsent", undefined, { shouldDirty: true });
+        setConsentBlocked(false);
       }
       if (filled.length === 0 && !brand) {
         toast.info("We read the site but couldn't pull out details — you can fill them in next.");
@@ -363,6 +376,7 @@ export function QuestionnaireWizard({
         );
       }
       setValue("importedAssetConsent", undefined, { shouldDirty: true });
+      setConsentBlocked(false);
       toast.success("Imported files deleted.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not delete the imported files.");
@@ -371,14 +385,13 @@ export function QuestionnaireWizard({
     }
   }
 
-  function addService() {
-    const v = serviceInput.trim();
-    if (!v) return;
-    if (!services.includes(v)) setValue("services", [...services, v], { shouldValidate: true });
-    setServiceInput("");
-  }
-
   async function onSubmit(values: QuestionnaireAnswers) {
+    if (needsImportedAssetConsent(parseImportedBrand(values.importedBrand), values.importedAssetConsent)) {
+      setConsentBlocked(true);
+      setStep(0);
+      toast.error(ASSET_CONSENT_REQUIRED);
+      return;
+    }
     if (values.colorPreference === CUSTOM_COLOR_PREFERENCE && !parseUserColor(values.customPrimary || "")) {
       toast.error("Enter a valid primary color, or pick a preset.");
       return;
@@ -565,13 +578,13 @@ export function QuestionnaireWizard({
                       setValue("importedThemeChoice", next, { shouldDirty: true, shouldValidate: true })
                     }
                     assetConsent={assetConsent}
-                    onAssetConsentChange={(granted) =>
-                      setValue(
-                        "importedAssetConsent",
-                        granted ? { granted: true } : undefined,
-                        { shouldDirty: true }
-                      )
-                    }
+                    onAssetConsentChange={(granted) => {
+                      if (granted) setConsentBlocked(false);
+                      setValue("importedAssetConsent", granted ? { granted: true } : undefined, {
+                        shouldDirty: true,
+                      });
+                    }}
+                    consentError={consentBlocked ? ASSET_CONSENT_REQUIRED : undefined}
                     onRemoveAssets={() => setConfirmKind("delete-assets")}
                     removingAssets={removingAssets}
                   />
@@ -637,52 +650,11 @@ export function QuestionnaireWizard({
                     {...register("goals")}
                   />
                 </Field>
-                <Field
-                  label="What do you offer?"
+                <ServiceEditor
+                  services={services}
                   error={err.services?.message as string | undefined}
-                  hint="Add each service or product, one at a time."
-                >
-                  <div className="flex gap-2">
-                    <Input
-                      value={serviceInput}
-                      onChange={(e) => setServiceInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addService();
-                        }
-                      }}
-                      placeholder="e.g. Teeth Whitening"
-                    />
-                    <Button type="button" variant="outline" onClick={addService}>
-                      <Plus className="h-4 w-4" /> Add
-                    </Button>
-                  </div>
-                  {services.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {services.map((s) => (
-                        <span
-                          key={s}
-                          className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm"
-                        >
-                          {s}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setValue(
-                                "services",
-                                services.filter((x) => x !== s),
-                                { shouldValidate: true }
-                              )
-                            }
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </Field>
+                  onChange={(next) => setValue("services", next, { shouldValidate: true })}
+                />
               </>
             )}
 
@@ -723,41 +695,14 @@ export function QuestionnaireWizard({
                       options={COLOR_CHOICES}
                     />
                     {watch("colorPreference") === CUSTOM_COLOR_PREFERENCE && (
-                      <div className="space-y-3 rounded-xl border bg-muted/30 p-3">
-                        <p className="text-sm text-muted-foreground">
-                          Type a color code if you have one, or pick a color above.
-                        </p>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <ColorField
-                            label="Primary"
-                            value={watch("customPrimary") || ""}
-                            allowEmpty
-                            onChange={(hex) =>
-                              setValue("customPrimary", hex, { shouldDirty: true, shouldValidate: true })
-                            }
-                          />
-                          <ColorField
-                            label="Secondary"
-                            value={watch("customSecondary") || ""}
-                            allowEmpty
-                            onChange={(hex) =>
-                              setValue("customSecondary", hex, { shouldDirty: true, shouldValidate: true })
-                            }
-                          />
-                          <ColorField
-                            label="Accent (optional)"
-                            value={watch("customAccent") || ""}
-                            allowEmpty
-                            className="sm:col-span-2"
-                            onChange={(hex) =>
-                              setValue("customAccent", hex, { shouldDirty: true, shouldValidate: true })
-                            }
-                          />
-                        </div>
-                        {watch("customPrimary") && !parseUserColor(watch("customPrimary") || "") ? (
-                          <p className="text-sm text-destructive">Enter a valid primary color.</p>
-                        ) : null}
-                      </div>
+                      <CustomColorFields
+                        primary={watch("customPrimary") || ""}
+                        secondary={watch("customSecondary") || ""}
+                        accent={watch("customAccent") || ""}
+                        onChange={(field, hex) =>
+                          setValue(field, hex, { shouldDirty: true, shouldValidate: true })
+                        }
+                      />
                     )}
                     <FontSelect
                       value={watch("fontFamily")}
@@ -949,96 +894,6 @@ function stepConfirm(kind: ConfirmKind, generateCost: number, importCost: number
     description: `Writing the site uses ${generateCost} credits and usually takes about a minute. Stay on this page until it finishes.`,
     confirmLabel: `Write it (${generateCost} credits)`,
   };
-}
-
-function Field({
-  label,
-  error,
-  hint,
-  children,
-}: {
-  label: string;
-  error?: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
-      {children}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </div>
-  );
-}
-
-function OptionalSelect<T extends string>({
-  label,
-  error,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  error?: string;
-  value?: string;
-  onChange: (value: T | "") => void;
-  options: readonly T[];
-}) {
-  return (
-    <Field label={`${label} (optional)`} error={error}>
-      <Select
-        value={value || DESIGN_DEFAULT}
-        onValueChange={(next) => onChange(next === DESIGN_DEFAULT ? "" : (next as T))}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Use this design’s look" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={DESIGN_DEFAULT}>Use this design’s look</SelectItem>
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Field>
-  );
-}
-
-function FontSelect({
-  value,
-  onChange,
-}: {
-  value?: string;
-  onChange: (value: string) => void;
-}) {
-  const selected = THEME_FONTS.find((f) => f.id === value) ?? null;
-  return (
-    <Field label="Font (optional)">
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link rel="stylesheet" href={FONT_CATALOG_HREF} />
-      <Select
-        value={value || DESIGN_DEFAULT}
-        onValueChange={(next) => onChange(next === DESIGN_DEFAULT ? "" : next)}
-      >
-        <SelectTrigger>
-          <span style={selected ? { fontFamily: selected.stack } : undefined}>
-            {selected ? selected.name : "Use this design’s font"}
-          </span>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={DESIGN_DEFAULT}>Use this design’s font</SelectItem>
-          {THEME_FONTS.map((font) => (
-            <SelectItem key={font.id} value={font.id}>
-              <span style={{ fontFamily: font.stack }}>{font.name}</span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Field>
-  );
 }
 
 function WebsiteChoice({

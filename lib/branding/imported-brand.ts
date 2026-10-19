@@ -17,14 +17,19 @@ export const MAX_IMPORTED_IMAGES = 12;
 
 /** Assets always land in this project's own upload folder — never hot-linked. */
 const legacyUploadPath = /^\/uploads\/[A-Za-z0-9][A-Za-z0-9._/-]*$/;
-const supabasePublicUploadPath =
-  /^https:\/\/[^/]+\/storage\/v1\/object\/public\/[A-Za-z0-9._-]+\/[A-Za-z0-9][A-Za-z0-9._/-]*$/i;
+// The media origin is server config, so the browser only checks the shape.
+// `isProjectImportPath` pins the origin and project folder on the server.
+// Production media is https. Local Garage is plain http on loopback, because
+// that is the origin a browser on this machine can fetch.
+const httpsMediaUrl = /^https:\/\/[^/?#]+\/[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+const loopbackMediaUrl =
+  /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\/[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 
 const uploadPath = z
   .string()
   .max(2_000)
   .refine(
-    (v) => legacyUploadPath.test(v) || supabasePublicUploadPath.test(v),
+    (v) => legacyUploadPath.test(v) || httpsMediaUrl.test(v) || loopbackMediaUrl.test(v),
     "Imported assets must be stored upload URLs"
   )
   .refine((v) => !v.includes(".."), "Invalid upload path");
@@ -91,6 +96,9 @@ export type ImportedBrand = z.infer<typeof importedBrandSchema>;
 export const ASSET_CONSENT_STATEMENT =
   "I own or have the right to use the images and logo on this website.";
 
+/** Shown after Next or Save is blocked because imported files are still unconfirmed. */
+export const ASSET_CONSENT_REQUIRED = "Confirm these files belong to you before you continue.";
+
 /**
  * A customer's confirmation that the imported assets are theirs to reuse.
  * Every field except `granted` is written by the server; the wizard sends only
@@ -117,6 +125,14 @@ export function importedAssetPaths(brand: ImportedBrand | null | undefined): str
 /** True when the import produced files that need a licence confirmation. */
 export function hasImportedAssets(brand: ImportedBrand | null | undefined): boolean {
   return importedAssetPaths(brand).length > 0;
+}
+
+/** True when imported files are waiting on the single ownership confirmation. */
+export function needsImportedAssetConsent(
+  brand: ImportedBrand | null | undefined,
+  consent: { granted?: boolean } | null | undefined
+): boolean {
+  return hasImportedAssets(brand) && consent?.granted !== true;
 }
 
 /** Parses a consent stored in questionnaire answers, dropping anything malformed. */

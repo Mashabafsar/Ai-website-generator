@@ -2,6 +2,7 @@ import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { env } from "@/lib/env";
 import { getOwnedProject } from "@/lib/projects/projects";
 import { getStripe } from "@/lib/stripe/stripe";
+import { ensureStripeCustomer } from "@/lib/stripe/customer";
 import { buildPackageCheckout } from "@/lib/stripe/packages";
 import { generateAndSaveQuote } from "@/lib/quote/quote";
 import { isPackageType, PaymentType, PaymentStatus } from "@/lib/constants";
@@ -33,6 +34,12 @@ export async function POST(req: Request) {
   const successUrl = `${env.appUrl}/app/project/${project.id}/deployment?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${env.appUrl}/app/project/${project.id}/quote?checkout=cancelled`;
 
+  const customerId = await ensureStripeCustomer({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+  });
+
   const session = await stripe.checkout.sessions.create({
     mode,
     line_items: lineItems,
@@ -40,7 +47,7 @@ export async function POST(req: Request) {
     adaptive_pricing: { enabled: false },
     success_url: successUrl,
     cancel_url: cancelUrl,
-    customer_email: user.email ?? undefined,
+    customer: customerId,
     client_reference_id: user.id,
     metadata: {
       type: PaymentType.WEBSITE_PACKAGE,

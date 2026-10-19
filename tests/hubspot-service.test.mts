@@ -168,7 +168,7 @@ describe("purchase deal", () => {
     dealName: formatDealName("Bright Smile Dental", 557),
     amount: 557,
     currency: "USD",
-    websiteUrl: "https://bright-smile.vercel.app",
+    websiteUrl: "https://bright-smile.sites.example.com",
     lineItems: [
       { name: "Website creation", amount: 499 },
       { name: "Monthly hosting", amount: 29 },
@@ -244,7 +244,7 @@ describe("purchase deal", () => {
 
   it("puts the website URL, project details, and breakdown on the description", () => {
     const { description, overflowBody } = splitDealDescription(deal);
-    assert.match(description, /Website: https:\/\/bright-smile.vercel.app/);
+    assert.match(description, /Website: https:\/\/bright-smile.sites.example.com/);
     assert.match(description, /Business: Bright Smile Dental/);
     assert.match(description, /Website creation: 499 USD/);
     assert.match(description, /Total paid: 557 USD/);
@@ -275,7 +275,7 @@ describe("purchase deal", () => {
     assert.equal(props.amount, "557");
     assert.equal(props.pipeline, "941017774");
     assert.equal(props.dealstage, "1450553354");
-    assert.match(props.description, /Website: https:\/\/bright-smile.vercel.app/);
+    assert.match(props.description, /Website: https:\/\/bright-smile.sites.example.com/);
     assert.match(props.description, /Business: Bright Smile Dental/);
     assert.ok(props.closedate);
     assert.ok(!("website_builder_payment_id" in props));
@@ -396,6 +396,42 @@ describe("purchase deal", () => {
     const props = (create.body as { properties: Record<string, string> }).properties;
     assert.equal(props.name, "Frontier Logistics");
     assert.equal(props.domain, "frontierlogistics.com");
+  });
+
+  it("does not store a hosted subdomain or localhost as the company domain", async () => {
+    const previous = process.env.PLATFORM_DOMAIN;
+    process.env.PLATFORM_DOMAIN = "sites.example.com";
+    try {
+      calls = [];
+      stubHubSpot([
+        (c) =>
+          c.method === "POST" && c.url.includes("/companies/search")
+            ? json({ results: [] })
+            : undefined,
+        (c) => (c.method === "POST" && c.url.endsWith("/companies") ? json({ id: "co-hosted" }) : undefined),
+      ]);
+
+      await upsertCompany({ name: "Bright Smile", domain: "bright-smile.sites.example.com" });
+      const hosted = calls.find((c) => c.method === "POST" && c.url.endsWith("/companies"))!;
+      const hostedProps = (hosted.body as { properties: Record<string, string> }).properties;
+      assert.equal(hostedProps.name, "Bright Smile");
+      assert.equal("domain" in hostedProps, false);
+
+      calls = [];
+      await upsertCompany({ name: "Local Shop", domain: "localhost" });
+      const local = calls.find((c) => c.method === "POST" && c.url.endsWith("/companies"))!;
+      const localProps = (local.body as { properties: Record<string, string> }).properties;
+      assert.equal("domain" in localProps, false);
+
+      calls = [];
+      await upsertCompany({ name: "Frontier Logistics", domain: "frontierlogistics.com" });
+      const real = calls.find((c) => c.method === "POST" && c.url.endsWith("/companies"))!;
+      const realProps = (real.body as { properties: Record<string, string> }).properties;
+      assert.equal(realProps.domain, "frontierlogistics.com");
+    } finally {
+      if (previous === undefined) delete process.env.PLATFORM_DOMAIN;
+      else process.env.PLATFORM_DOMAIN = previous;
+    }
   });
 });
 

@@ -534,7 +534,7 @@ export async function associateContactWithCompany(
 
 /**
  * Find a company by exact name. Prefer this over search-by-domain so a
- * vercel/preview URL never creates a junk company.
+ * hosted subdomain or preview URL never creates a junk company.
  */
 export async function findCompanyIdByName(name: string): Promise<string | null> {
   const trimmed = name.trim();
@@ -564,9 +564,37 @@ export async function findCompanyIdByName(name: string): Promise<string | null> 
   }
 }
 
+function customerDomain(domain: string | null | undefined): string | undefined {
+  const trimmed = domain?.trim();
+  if (!trimmed || isPlatformOrLocalHost(trimmed)) return undefined;
+  return trimmed;
+}
+
+function hostnameOf(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  if (!URL.canParse(candidate)) return null;
+  const host = new URL(candidate).hostname.replace(/^www\./i, "").toLowerCase();
+  return host || null;
+}
+
+/**
+ * Localhost and hosts under PLATFORM_DOMAIN belong to us. They must not be
+ * stored as a customer's own website domain.
+ */
+export function isPlatformOrLocalHost(hostOrUrl: string): boolean {
+  const host = hostnameOf(hostOrUrl);
+  if (!host) return false;
+  if (host.includes("localhost")) return true;
+  const platform = env.deployment.platformDomain;
+  if (!platform) return false;
+  return host === platform || host.endsWith(`.${platform}`);
+}
+
 /**
  * Create or reuse the HubSpot company for a business name.
- * Domain is optional — only set when it is a real customer website, not a preview URL.
+ * Domain is optional — only set when it is a real customer website, not a site we host.
  */
 export async function upsertCompany(params: {
   name: string;
@@ -577,7 +605,7 @@ export async function upsertCompany(params: {
   if (!name) return null;
 
   const properties: Record<string, string> = { name };
-  const domain = params.domain?.trim();
+  const domain = customerDomain(params.domain);
   if (domain) properties.domain = domain;
 
   if (params.knownCompanyId) {

@@ -1,0 +1,180 @@
+# Production stack for one VPS. See "Deploy on a VPS" in README.md.
+# Secrets and hostnames come from .env, which compose also reads for the
+# ${...} values below. Caddy publishes 80/443 on all interfaces. Postgres is
+# published only on 127.0.0.1:5433 so host-side `npm run dev` can connect
+# when a local Postgres already owns 5432, without exposing the database.
+# Garage's S3 API is published only on 127.0.0.1:3900 for the same host-side
+# dev server. The website endpoint is on 127.0.0.1:3902 so a browser on this
+# machine can read media without publishing Garage on every interface.
+# The app container still uses S3_ENDPOINT=http://garage:3900.
+
+name: website-builder
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-build-args: &build-args
+  NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://${DOMAIN:?Set DOMAIN in .env}}
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+  S3_PUBLIC_URL: ${S3_PUBLIC_URL:-https://${MEDIA_DOMAIN:?Set MEDIA_DOMAIN in .env}}
+
+# Inside the stack the database and S3 API are always the sibling containers,
+# whatever DATABASE_URL / S3_ENDPOINT say in .env for local development.
+x-app-environment: &app-environment
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-website_builder}?schema=public
+  S3_ENDPOINT: http://garage:3900
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-website_builder}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *logging
+
+  garage:
+    image: dxflrs/garage:v2.4.1
+    restart: unless-stopped
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?Set GARAGE_RPC_SECRET in .env (openssl rand -hex 32)}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?Set GARAGE_ADMIN_TOKEN in .env (openssl rand -base64 32)}
+      # The health check opens an RPC connection every minute; keep those out of the log.
+      RUST_LOG: garage=info,garage_net=warn,garage_api_admin=warn
+    volumes:
+      - ./deploy/garage/garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    ports:
+      - "127.0.0.1:3900:3900"
+      - "127.0.0.1:3902:3902"
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 2s
+    logging: *logging
+
+  migrate:
+    build:
+      context: .
+      target: tools
+      args: *build-args
+    env_file:
+      - path: "${ENV_FILE:-.env}"
+        required: true
+    environment: *app-environment
+    command: ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    logging: *logging
+
+  app:
+    build:
+      context: .
+      target: runner
+      args: *build-args
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: "${ENV_FILE:-.env}"
+        required: true
+    environment: *app-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+      MEDIA_DOMAIN: ${MEDIA_DOMAIN:?Set MEDIA_DOMAIN in .env}
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:?Set PLATFORM_DOMAIN in .env}
+      CADDY_TLS_MODE: ${CADDY_TLS_MODE:-public}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - garage
+    logging: *logging
+
+  cron:
+    build: ./deploy/cron
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+      APP_URL: http://app:3000
+    depends_on:
+      - app
+    logging: *logging
+
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    entrypoint: ["sh", "/usr/local/bin/backup.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-app}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PGDATABASE: ${POSTGRES_DB:-website_builder}
+      BACKUP_HOUR: ${BACKUP_HOUR:-3}
+      BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-7}
+      BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-4}
+    volumes:
+      - ./deploy/backup/backup.sh:/usr/local/bin/backup.sh:ro
+      - backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  postgres_data:
+  garage_meta:
+  garage_data:
+  caddy_data:
+  caddy_config:
+  backups:

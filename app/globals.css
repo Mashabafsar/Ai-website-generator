@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
-/* Scratch theme sources reference images that aren't in the repo, and Vercel
-   CLI uploads have no .git, so Tailwind can't rely on .gitignore to skip them. */
+/* Scratch theme sources reference images that aren't in the repo, and Docker
+   builds have no .git, so Tailwind can't rely on .gitignore to skip them. */
 @source not "../tmp";
 @source not "../tmp-theme-inspect";
 

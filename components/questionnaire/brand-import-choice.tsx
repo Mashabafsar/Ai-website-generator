@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, type ReactNode } from "react";
 import { Check, Info, Loader2, Trash2 } from "lucide-react";
 import { FONT_CATALOG_HREF, THEME_FONTS } from "@/templates/shared/fonts";
 import {
@@ -21,6 +22,7 @@ export function BrandImportChoice({
   onChange,
   assetConsent,
   onAssetConsentChange,
+  consentError,
   onRemoveAssets,
   removingAssets,
 }: {
@@ -29,6 +31,8 @@ export function BrandImportChoice({
   onChange: (value: "imported" | "custom") => void;
   assetConsent: boolean;
   onAssetConsentChange: (value: boolean) => void;
+  /** Set after Next or save is blocked because the confirmation is still open. */
+  consentError?: string;
   onRemoveAssets: () => void;
   removingAssets: boolean;
 }) {
@@ -36,9 +40,17 @@ export function BrandImportChoice({
   const colors = brand.colors;
   const photoCount = brand.images.length;
   const assets = hasImportedAssets(brand);
+  const consentNote = consentNoteFor(assetConsent, consentError, brand.logoUrl, photoCount);
   const swatches = colors
     ? [colors.primary, colors.accent, colors.secondary, colors.background, colors.foreground]
     : [];
+
+  useEffect(() => {
+    if (!consentError) return;
+    const box = document.getElementById("imported-asset-consent");
+    box?.focus();
+    box?.scrollIntoView({ block: "nearest" });
+  }, [consentError]);
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4">
@@ -143,7 +155,12 @@ export function BrandImportChoice({
       </div>
 
       {assets && (
-        <div className="rounded-xl border border-input bg-background p-4">
+        <div
+          className={cn(
+            "rounded-xl border bg-background p-4",
+            consentError && !assetConsent ? "border-destructive" : "border-input"
+          )}
+        >
           <div className="flex items-start gap-3">
             <input
               id="imported-asset-consent"
@@ -151,7 +168,10 @@ export function BrandImportChoice({
               type="checkbox"
               checked={assetConsent}
               onChange={(event) => onAssetConsentChange(event.target.checked)}
-              aria-describedby="imported-asset-consent-note"
+              aria-describedby={consentNote ? "imported-asset-consent-note" : undefined}
+              aria-invalid={consentError ? true : undefined}
+              aria-required="true"
+              required
               className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
             />
             <div className="min-w-0 space-y-1.5">
@@ -161,11 +181,17 @@ export function BrandImportChoice({
               >
                 {ASSET_CONSENT_STATEMENT}
               </label>
-              <p id="imported-asset-consent-note" className="text-xs text-muted-foreground">
-                {assetConsent
-                  ? `We'll reuse ${assetList(brand.logoUrl, photoCount)} on your new site under either option above — your look choice only changes the colors and font.`
-                  : `Until you confirm this, we'll leave ${assetList(brand.logoUrl, photoCount)} out and use stock photography instead. Everything else the import filled in stays either way.`}
-              </p>
+              {consentNote ? (
+                <p
+                  id="imported-asset-consent-note"
+                  className={cn(
+                    "text-xs",
+                    consentError && !assetConsent ? "text-destructive" : "text-muted-foreground"
+                  )}
+                >
+                  {consentNote}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -199,6 +225,16 @@ export function BrandImportChoice({
   );
 }
 
+function consentNoteFor(
+  assetConsent: boolean,
+  consentError: string | undefined,
+  logoUrl: string | undefined,
+  photoCount: number
+): string | undefined {
+  if (!assetConsent) return consentError;
+  return `We'll reuse ${assetList(logoUrl, photoCount)} on your new site under either option above — your look choice only changes the colors and font.`;
+}
+
 function assetList(logoUrl: string | undefined, photoCount: number): string {
   const parts = [
     logoUrl ? "your logo" : null,
@@ -218,7 +254,7 @@ function ChoiceCard({
   onClick: () => void;
   title: string;
   desc: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button

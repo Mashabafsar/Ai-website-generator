@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { runCrmOutbox } from "@/lib/crm/sync";
 
-export const maxDuration = 300;
 // The queue must be read at request time, never prerendered or cached.
 export const dynamic = "force-dynamic";
 
@@ -11,8 +10,8 @@ export const dynamic = "force-dynamic";
  * after each request handles the happy case, and this catches everything that
  * was queued while HubSpot was down.
  *
- * Requires `CRON_SECRET`, sent either as a bearer token (Vercel Cron does this
- * automatically) or as `?key=`. Without the secret configured the route is off,
+ * Requires `CRON_SECRET`, sent either as a bearer token (the cron container
+ * does this) or as `?key=`. Without the secret configured the route is off,
  * so a misconfigured deploy can't expose an unauthenticated worker trigger.
  */
 async function drain(req: Request) {

@@ -1,0 +1,30 @@
+# Single-node Garage for one VPS.
+# rpc_secret comes from GARAGE_RPC_SECRET and admin_token from
+# GARAGE_ADMIN_TOKEN (set in docker-compose.yml), so no secret lives here.
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "lmdb"
+metadata_auto_snapshot_interval = "6h"
+
+replication_factor = 1
+
+rpc_bind_addr = "0.0.0.0:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "0.0.0.0:3900"
+root_domain = ".s3.garage.internal"
+
+# The media bucket is served through a global alias equal to MEDIA_DOMAIN
+# (see deploy/garage/init.sh), so the Host header Caddy forwards selects it.
+# root_domain only matters for <bucket>.web.garage.internal style hosts, which
+# nothing outside the Docker network can reach.
+[s3_web]
+bind_addr = "0.0.0.0:3902"
+root_domain = ".web.garage.internal"
+index = "index.html"
+
+[admin]
+api_bind_addr = "0.0.0.0:3903"

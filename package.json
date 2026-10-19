@@ -9,11 +9,13 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "templates:validate": "ts-node --transpile-only --project templates/tsconfig.validate.json templates/validate.ts",
     "icons:validate": "tsx scripts/validate-icons.ts",
     "templates:locks": "tsx scripts/validate-template-locks.ts",
+    "templates:populate": "node --env-file-if-exists=.env --import tsx scripts/populate-templates.ts",
     "test": "node --import tsx --test tests/*.test.mts",
     "hubspot:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-hubspot.ts",
     "hubspot:backfill": "node --env-file-if-exists=.env --import tsx scripts/backfill-hubspot-leads.ts",
@@ -25,9 +27,10 @@
     "sonar": "node --env-file-if-exists=.env.local ./node_modules/sonarqube-scanner/bin/sonar-scanner.js"
   },
   "prisma": {
-    "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
     "@cursor/sdk": "^1.0.23",
     "@hookform/resolvers": "^3.9.1",
     "@octokit/rest": "^21.0.2",
@@ -42,8 +45,6 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.4",
-    "@supabase/supabase-js": "^2.116.0",
-    "@vercel/analytics": "^2.0.1",
     "archiver": "^7.0.1",
     "better-auth": "^1.1.14",
     "cheerio": "^1.2.0",

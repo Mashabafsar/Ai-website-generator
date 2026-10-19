@@ -10,8 +10,6 @@ import { scheduleCrmDrain } from "@/lib/crm/sync";
 import { trySyncProjectToGitHub } from "@/lib/github/github";
 import { publishManagedSiteIfDue } from "@/lib/deployment/deploy";
 
-export const maxDuration = 300;
-
 // Stripe requires the raw request body to verify the signature.
 export async function POST(req: Request) {
   const stripe = getStripe();

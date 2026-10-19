@@ -1,7 +1,0 @@
-# Local scratch folders. Tailwind scans every uploaded file on the build
-# server, and theme sources here reference assets that don't exist.
-/tmp
-/tmp-theme-inspect
-/.agents
-/.claude
-/.cursor

@@ -35,8 +35,6 @@ import {
 // keeps the text prefill. Token usage still lands in the admin ledger as `scrape_extract`,
 // and the look at each imported photo as `image_analysis`.
 
-export const maxDuration = 300;
-
 type Body = { url?: string; projectId?: string };
 
 export async function POST(req: Request) {

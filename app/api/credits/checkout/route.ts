@@ -1,6 +1,7 @@
 import { requireUser, jsonOk, jsonError, readJson } from "@/lib/http";
 import { env } from "@/lib/env";
 import { getStripe, getCreditPack, creditPackPriceId } from "@/lib/stripe/stripe";
+import { ensureStripeCustomer } from "@/lib/stripe/customer";
 import { PaymentType } from "@/lib/constants";
 import type { CreditPackId } from "@/lib/constants";
 
@@ -29,6 +30,12 @@ export async function POST(req: Request) {
   const successUrl = `${env.appUrl}/app/credits?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${env.appUrl}/app/credits?purchase=cancelled`;
 
+  const customerId = await ensureStripeCustomer({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+  });
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     // Use the configured price id when present; otherwise build an inline price
@@ -49,6 +56,7 @@ export async function POST(req: Request) {
     adaptive_pricing: { enabled: false },
     success_url: successUrl,
     cancel_url: cancelUrl,
+    customer: customerId,
     client_reference_id: user.id,
     metadata: {
       type: PaymentType.CREDIT_PACK,

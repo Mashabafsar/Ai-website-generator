@@ -7,8 +7,6 @@ import { persistUsageEvents } from "@/lib/ai/usage-record";
 
 type Ctx = { params: Promise<{ projectId: string }> };
 
-export const maxDuration = 300;
-
 function asText(value: unknown): string {
   return typeof value === "string" ? value : "";
 }

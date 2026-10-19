@@ -73,7 +73,7 @@ export function DeliveryPanel({
     if (autoStarted.current) return;
     autoStarted.current = true;
     void deploy();
-    // Publish as soon as managed hosting is paid — same as the original Vercel flow.
+    // Publish as soon as managed hosting is paid.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaid, isManaged, isLive, deployment?.status]);
 

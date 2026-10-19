@@ -1,0 +1,97 @@
+# Caddy fronts the whole stack. Hostnames come from the environment:
+#   DOMAIN           the app, for example app.example.com
+#   MEDIA_DOMAIN     uploaded images, for example media.example.com
+#   PLATFORM_DOMAIN  customer sites live at <sub>.PLATFORM_DOMAIN
+#   CADDY_TLS_MODE   "public" (Let's Encrypt / ZeroSSL, default) or "internal"
+#                    (Caddy's local CA, for testing without public DNS).
+# Names under .localhost always use the local CA, whatever the mode.
+{
+	# Certificates for customer subdomains are issued on first visit, and only
+	# when the app confirms the subdomain is a deployed site.
+	on_demand_tls {
+		ask http://app:3000/api/sites/tls-check
+	}
+}
+
+(tls_public) {
+}
+
+(tls_internal) {
+	tls internal
+}
+
+(sites_tls_public) {
+	tls {
+		on_demand
+	}
+}
+
+(sites_tls_internal) {
+	tls internal {
+		on_demand
+	}
+}
+
+(common_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}
+
+# AI generation requests can run for about five minutes, so the upstream
+# timeouts stay well above that. Streaming responses are flushed immediately.
+(app_upstream) {
+	reverse_proxy app:3000 {
+		flush_interval -1
+		transport http {
+			dial_timeout 10s
+			response_header_timeout 10m
+			read_timeout 10m
+			write_timeout 10m
+		}
+	}
+}
+
+{$DOMAIN} {
+	import tls_{$CADDY_TLS_MODE:public}
+	import common_headers
+	encode zstd gzip
+
+	# Customer sites are only served on PLATFORM_DOMAIN subdomains.
+	@site_host path /site-host /site-host/*
+	respond @site_host 404
+
+	import app_upstream
+}
+
+{$MEDIA_DOMAIN} {
+	import tls_{$CADDY_TLS_MODE:public}
+	import common_headers
+	header X-Content-Type-Options nosniff
+	encode zstd gzip
+
+	@read method GET HEAD
+	handle @read {
+		reverse_proxy garage:3902
+	}
+	respond 405
+}
+
+*.{$PLATFORM_DOMAIN} {
+	import sites_tls_{$CADDY_TLS_MODE:public}
+	import common_headers
+	encode zstd gzip
+
+	# `/` would become `/site-host/`, and Next.js then redirects that trailing
+	# slash back to `/site-host`. Handle the homepage as `/site-host` exactly.
+	@homepage path /
+	handle @homepage {
+		rewrite * /site-host
+		import app_upstream
+	}
+	handle {
+		rewrite * /site-host{uri}
+		import app_upstream
+	}
+}

@@ -207,6 +207,52 @@ export async function switchProjectTemplate(params: {
   });
 }
 
+/**
+ * Rebuild the current design after questionnaire edits. Same credit cost and
+ * paid-status rules as a template switch; uses a fresh spend key so retries
+ * are not free.
+ */
+export async function regenerateWebsite(params: {
+  userId: string;
+  projectId: string;
+  onProgress?: (id: GenerationStepId) => void;
+}): Promise<GenerateResult> {
+  const { userId, projectId, onProgress } = params;
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId },
+    include: { questionnaire: true },
+  });
+  if (!project) throw new Error("Project not found");
+  if (!project.questionnaire) throw new NoQuestionnaireError();
+  if (!project.templateId) throw new NoTemplateError();
+  if (!project.blueprint) {
+    throw new Error("Write your website once before regenerating.");
+  }
+
+  if (project.status === ProjectStatus.GENERATING) {
+    const ageMs = Date.now() - new Date(project.updatedAt).getTime();
+    if (ageMs < 2 * 60_000) throw new GenerationInProgressError();
+  }
+
+  const template = await getTemplateById(project.templateId);
+  if (!template) throw new NoTemplateError();
+
+  const answers = parseQuestionnaireAnswers(project.questionnaire.answers);
+  const designVersion = project.designVersion + 1;
+
+  return runGeneration({
+    userId,
+    projectId,
+    template,
+    answers,
+    spendKey: `heavy_generate:${projectId}:regen:v${designVersion}`,
+    designVersion,
+    keepPaidStatus: PAID_STATUSES.has(project.status),
+    onProgress,
+  });
+}
+
 const MOCK_MODE_REASON =
   "AI_USE_MOCK is enabled, so the deterministic template built this site without calling a model.";
 
@@ -216,7 +262,7 @@ function summarizeFailure(failure: AiFailure) {
 
 const PAID_STATUSES = PAID_PROJECT_STATUSES;
 
-/** Time a generation may use before optional steps are skipped; Vercel stops at 300s. */
+/** Time a generation may use before optional steps are skipped. */
 const GENERATION_BUDGET_MS = 280_000;
 
 /**
@@ -305,7 +351,7 @@ async function runGeneration(params: {
   const { userId, projectId, template, answers, spendKey, designVersion, keepPaidStatus, onProgress } =
     params;
   const report = (id: GenerationStepId) => onProgress?.(id);
-  // Optional steps (photo vision) must finish inside the 300s function limit.
+  // Optional steps (photo vision) must finish inside the generation budget.
   const deadline = Date.now() + GENERATION_BUDGET_MS;
 
   report("answers");

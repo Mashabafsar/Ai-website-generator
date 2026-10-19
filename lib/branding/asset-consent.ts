@@ -6,11 +6,12 @@ import {
   type ImportedBrand,
   type ImportedBrandImage,
 } from "@/lib/branding/imported-brand";
+import { mediaKeyFromUrl } from "@/lib/storage/s3";
 
 // Licence consent for imported assets. A customer's colours and typeface are
 // not copyrightable expression in the way their photographs and logo are, so
-// only the files are gated here: the theme choice stays independent, and the
-// gate applies on both theme paths.
+// only the files are gated here: the theme choice stays independent, and one
+// confirmation covers every imported file.
 //
 // Server-only: the digest and the timestamp must not be computable-and-supplied
 // by the caller they are meant to constrain.
@@ -34,17 +35,8 @@ export function isProjectImportPath(url: string, projectId: string): boolean {
   if (url.startsWith(`/uploads/${projectId}/imported/`) && !url.includes("..")) {
     return true;
   }
-
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return false;
-    const match = parsed.pathname.match(/^\/storage\/v1\/object\/public\/[^/]+\/(.+)$/i);
-    if (!match) return false;
-    const objectPath = decodeURIComponent(match[1] || "");
-    return objectPath.startsWith(`${projectId}/imported/`) && !objectPath.includes("..");
-  } catch {
-    return false;
-  }
+  const key = mediaKeyFromUrl(url);
+  return Boolean(key?.startsWith(`${projectId}/imported/`));
 }
 
 export type AssetConsentDenial =
@@ -110,18 +102,22 @@ export function recordAssetConsent(params: {
   now?: Date;
 }): ImportedAssetConsent | undefined {
   const { granted, brand, previous, now } = params;
-  if (!granted || !brand || !importedAssetPaths(brand).length) return undefined;
+  if (!granted || !brand || importedAssetPaths(brand).length === 0) return undefined;
 
   const assetDigest = importedAssetDigest(brand);
-  const unchanged =
-    previous?.granted === true &&
-    previous.assetDigest === assetDigest &&
-    previous.sourceUrl === brand.sourceUrl &&
-    Boolean(previous.confirmedAt);
+  const unchanged = Boolean(
+    previous?.granted &&
+      previous.confirmedAt &&
+      previous.assetDigest === assetDigest &&
+      previous.sourceUrl === brand.sourceUrl
+  );
+
+  const confirmedAt =
+    unchanged && previous?.confirmedAt ? previous.confirmedAt : (now ?? new Date()).toISOString();
 
   return {
     granted: true,
-    confirmedAt: unchanged ? previous!.confirmedAt : (now ?? new Date()).toISOString(),
+    confirmedAt,
     sourceUrl: brand.sourceUrl,
     statement: ASSET_CONSENT_STATEMENT,
     assetDigest,

@@ -4,8 +4,6 @@ import { editSectionWithAi, SectionNotFoundError } from "@/lib/agents/editor";
 import { InsufficientCreditsError } from "@/lib/credits/credits";
 import { rateLimit } from "@/lib/rate-limit";
 
-export const maxDuration = 300;
-
 export async function POST(req: Request) {
   const { user, response } = await requireUser();
   if (!user) return response;

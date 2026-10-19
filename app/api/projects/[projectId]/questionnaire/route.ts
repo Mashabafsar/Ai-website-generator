@@ -6,9 +6,11 @@ import { awardOneTimeAction } from "@/lib/crm/scoring";
 import { enqueueDealSyncForUser, scheduleCrmDrain } from "@/lib/crm/sync";
 import { questionnaireSchema } from "@/lib/questionnaire/schema";
 import {
+  ASSET_CONSENT_REQUIRED,
   parseImportedBrand,
   parseAssetConsent,
   importedAssetPaths,
+  needsImportedAssetConsent,
 } from "@/lib/branding/imported-brand";
 import { isProjectImportPath, recordAssetConsent } from "@/lib/branding/asset-consent";
 import { getTemplateById, getTemplateBySlug } from "@/lib/templates/store";
@@ -74,8 +76,12 @@ export async function POST(req: Request, { params }: Ctx) {
   }
 
   answers.importedBrand = brand ?? undefined;
+  const clientConsent = answers.importedAssetConsent;
+  if (needsImportedAssetConsent(brand, clientConsent)) {
+    return jsonError(ASSET_CONSENT_REQUIRED, 400, "ASSET_CONSENT_REQUIRED");
+  }
   answers.importedAssetConsent = recordAssetConsent({
-    granted: Boolean(answers.importedAssetConsent?.granted),
+    granted: Boolean(clientConsent?.granted),
     brand,
     previous: parseAssetConsent(prev.importedAssetConsent),
   });

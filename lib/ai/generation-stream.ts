@@ -28,15 +28,17 @@ function isStepId(value: unknown): value is GenerationStepId {
  */
 export async function streamWebsiteGeneration(
   projectId: string,
-  onStep: (id: GenerationStepId) => void
+  onStep: (id: GenerationStepId) => void,
+  options?: { mode?: "generate" | "regenerate" }
 ): Promise<GenerationStreamResult> {
+  const mode = options?.mode === "regenerate" ? "regenerate" : undefined;
   const res = await fetch("/api/ai/generate", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/x-ndjson",
     },
-    body: JSON.stringify({ projectId }),
+    body: JSON.stringify(mode ? { projectId, mode } : { projectId }),
   });
 
   const type = res.headers.get("content-type") || "";

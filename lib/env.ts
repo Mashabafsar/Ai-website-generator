@@ -20,9 +20,8 @@ export const env = {
     cursorApiKey: process.env.CURSOR_API_KEY ?? "",
     heavyModel: process.env.HEAVY_MODEL_NAME ?? "claude-opus-5",
     lightModel: process.env.LIGHT_MODEL_NAME ?? "composer-2.5",
-    // Vercel Hobby kills serverless functions at 300s, so these waits stay
-    // under that. Leave a little room to cancel Cursor and return a fallback
-    // instead of an abrupt platform timeout.
+    // Kept under five minutes so a stuck model call is cancelled and the
+    // deterministic fallback returns before the client gives up waiting.
     cursorTimeoutMs: num(process.env.CURSOR_TIMEOUT_MS, 270_000),
     cursorLightTimeoutMs: num(process.env.CURSOR_LIGHT_TIMEOUT_MS, 270_000),
     // Explicit mock mode only. When false: Cursor, then a deterministic template.
@@ -61,15 +60,19 @@ export const env = {
     },
   },
 
-  supabase: {
-    url: process.env.SUPABASE_URL ?? "",
-    serviceRoleKey:
-      process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "",
-    storageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "scraped-assets",
+  /** S3-compatible object storage (Garage on the VPS). */
+  storage: {
+    endpoint: process.env.S3_ENDPOINT ?? "",
+    region: process.env.S3_REGION ?? "garage",
+    accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+    mediaBucket: process.env.S3_MEDIA_BUCKET ?? "media",
+    sitesBucket: process.env.S3_SITES_BUCKET ?? "sites",
+    /** Public origin of the media bucket, e.g. `https://media.example.com`. */
+    publicUrl: (process.env.S3_PUBLIC_URL ?? "").trim().replace(/\/+$/, ""),
     get enabled() {
       return Boolean(
-        process.env.SUPABASE_URL &&
-          (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)
+        process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
       );
     },
   },
@@ -86,6 +89,17 @@ export const env = {
     creditPackLarge: process.env.STRIPE_CREDIT_PACK_LARGE_PRICE_ID ?? "",
     get enabled() {
       return Boolean(process.env.STRIPE_SECRET_KEY);
+    },
+  },
+
+  /**
+   * AES-256-GCM key for BillingRecord payloads. Prefer 32 raw bytes as base64
+   * (44 chars) or 64 hex chars. Never store card PANs — only summaries.
+   */
+  billing: {
+    encryptionKey: process.env.BILLING_ENCRYPTION_KEY ?? "",
+    get enabled() {
+      return Boolean(process.env.BILLING_ENCRYPTION_KEY?.trim());
     },
   },
 
@@ -112,14 +126,18 @@ export const env = {
   },
 
   deployment: {
-    provider: process.env.DEPLOYMENT_PROVIDER ?? "vercel",
-    token: process.env.DEPLOYMENT_TOKEN ?? "",
-    teamId: process.env.DEPLOYMENT_TEAM_ID || process.env.VERCEL_TEAM_ID || process.env.VERCEL_ORG_ID || "",
-    // Testing uses Vercel's assigned host (`*.vercel.app`). Leave this empty
-    // until a real custom domain exists — do not default to agencypartner.site.
-    platformDomain: (process.env.PLATFORM_DOMAIN ?? "").trim(),
+    /** Stored on Deployment.provider. Publishing always uses the sites bucket. */
+    provider: process.env.DEPLOYMENT_PROVIDER ?? "s3",
+    /**
+     * Parent hostname for managed sites, for example `sites.example.com`.
+     * A published site is served at `https://<subdomain>.<PLATFORM_DOMAIN>`.
+     */
+    get platformDomain() {
+      return (process.env.PLATFORM_DOMAIN ?? "").trim().replace(/^\.+|\.+$/g, "").toLowerCase();
+    },
+    /** Live publishing needs object storage and a platform domain. */
     get enabled() {
-      return Boolean(process.env.DEPLOYMENT_TOKEN);
+      return env.storage.enabled && Boolean(env.deployment.platformDomain);
     },
   },
 

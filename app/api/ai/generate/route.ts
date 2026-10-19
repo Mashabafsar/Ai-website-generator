@@ -2,15 +2,15 @@ import { requireUser, jsonError, readJson } from "@/lib/http";
 import { getOwnedProject } from "@/lib/projects/projects";
 import {
   generateWebsite,
+  regenerateWebsite,
   AlreadyGeneratedError,
   GenerationInProgressError,
   NoQuestionnaireError,
+  NoTemplateError,
 } from "@/lib/agents/orchestrator";
 import { InsufficientCreditsError } from "@/lib/credits/credits";
 import { rateLimit } from "@/lib/rate-limit";
 import type { GenerationStepId } from "@/lib/ai/generation-steps";
-
-export const maxDuration = 300;
 
 type StreamEvent =
   | { type: "step"; id: GenerationStepId }
@@ -55,19 +55,28 @@ export async function POST(req: Request) {
     });
   }
 
-  const body = await readJson<{ projectId: string }>(req);
+  const body = await readJson<{ projectId: string; mode?: string }>(req);
   if (!body?.projectId) return jsonError("We couldn't find your website project.", 400);
+
+  const mode = body.mode === "regenerate" ? "regenerate" : "generate";
 
   const project = await getOwnedProject(user.id, body.projectId);
   if (!project) return jsonError("We couldn't find that website project.", 404, "NOT_FOUND");
 
   return streamGeneration(async (send) => {
     try {
-      const result = await generateWebsite({
-        userId: user.id,
-        projectId: project.id,
-        onProgress: (id) => send({ type: "step", id }),
-      });
+      const result =
+        mode === "regenerate"
+          ? await regenerateWebsite({
+              userId: user.id,
+              projectId: project.id,
+              onProgress: (id) => send({ type: "step", id }),
+            })
+          : await generateWebsite({
+              userId: user.id,
+              projectId: project.id,
+              onProgress: (id) => send({ type: "step", id }),
+            });
       send({ type: "done", result });
     } catch (err) {
       if (err instanceof InsufficientCreditsError) {
@@ -88,6 +97,10 @@ export async function POST(req: Request) {
       }
       if (err instanceof NoQuestionnaireError) {
         send({ type: "error", error: err.message, code: "NO_QUESTIONNAIRE" });
+        return;
+      }
+      if (err instanceof NoTemplateError) {
+        send({ type: "error", error: err.message, code: "NO_TEMPLATE" });
         return;
       }
       console.error("Generation error:", err);

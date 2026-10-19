@@ -107,6 +107,31 @@ export async function isAccountDeactivated(userId: string): Promise<boolean> {
   return Boolean(user?.deactivatedAt);
 }
 
+export const DEACTIVATION_REASON_USER = "User requested account deactivation";
+
+/**
+ * Soft-lock an account: set deactivatedAt + reason and revoke all sessions.
+ * Does not delete user data.
+ */
+export async function deactivateAccount(
+  userId: string,
+  reason = DEACTIVATION_REASON_USER
+): Promise<void> {
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        deactivatedAt: now,
+        deactivatedReason: reason.slice(0, 500),
+      },
+    }),
+    prisma.session.deleteMany({
+      where: { userId },
+    }),
+  ]);
+}
+
 /**
  * Mark eligible accounts deactivated and revoke their sessions.
  * Returns how many were deactivated.

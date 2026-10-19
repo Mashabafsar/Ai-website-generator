@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, LogOut, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "@/lib/auth/client";
+import { OPEN_ACCOUNT_SETTINGS } from "@/components/settings/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -79,7 +80,19 @@ export function UserMenu({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="gap-2" disabled={navigationLocked}>
+        <DropdownMenuItem
+          className="gap-2"
+          disabled={navigationLocked}
+          onSelect={(event) => {
+            event.preventDefault();
+            if (navigationLocked) {
+              onBlocked?.();
+              return;
+            }
+            window.dispatchEvent(new Event(OPEN_ACCOUNT_SETTINGS));
+            router.push("/app/settings?tab=account");
+          }}
+        >
           <UserIcon className="h-4 w-4" /> Account
         </DropdownMenuItem>
         <DropdownMenuItem

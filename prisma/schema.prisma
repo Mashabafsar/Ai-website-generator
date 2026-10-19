@@ -1,5 +1,5 @@
 // Agency Partner Interactive — AI Website Builder
-// Supabase Postgres + Prisma. Enum-like fields are stored as strings; allowed
+// Postgres + Prisma. Enum-like fields are stored as strings; allowed
 // values live in TypeScript constants (see lib/constants).
 
 generator client {
@@ -7,9 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------
@@ -23,21 +22,24 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   isAdmin       Boolean   @default(false)
+  /// Stripe Customer id for Checkout + Billing Portal. Never a card PAN.
+  stripeCustomerId String? @unique
   /// Set when the account is locked out (stale unpaid accounts, etc.).
   deactivatedAt     DateTime?
   deactivatedReason String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions     Session[]
-  accounts     Account[]
-  project      Project?
-  wallet       CreditWallet?
-  ledger       CreditLedger[]
-  aiUsage      AiUsage[]
-  crmProfile   CrmProfile?
-  scoreEvents  CrmScoreEvent[]
-  crmJobs      CrmOutbox[]
+  sessions       Session[]
+  accounts       Account[]
+  project        Project?
+  wallet         CreditWallet?
+  ledger         CreditLedger[]
+  aiUsage        AiUsage[]
+  crmProfile     CrmProfile?
+  scoreEvents    CrmScoreEvent[]
+  crmJobs        CrmOutbox[]
+  billingRecords BillingRecord[]
 
   @@index([deactivatedAt, createdAt])
   @@map("user")
@@ -226,7 +228,10 @@ model Deployment {
   status     String   @default("PENDING") // DeploymentStatus
   subdomain  String?
   liveUrl    String?
-  provider   String   @default("vercel")
+  provider   String   @default("s3")
+  // Release folder visitors are served from. Switched only after every file
+  // of a new publish is uploaded, so a site changes version in one step.
+  release    String?
   logs       String?  // JSON array of status log entries
 
   createdAt DateTime @default(now())
@@ -261,6 +266,34 @@ model CreditLedger {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+/// Encrypted billing snapshot (amounts, Stripe ids, optional card brand/last4).
+/// Card PANs are never stored — only non-sensitive payment summaries.
+model BillingRecord {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// website_package | credit_pack | invoice | payment_method
+  kind String
+
+  /// Idempotency / lookup keys (plaintext for indexing; payload is encrypted).
+  stripeSessionId      String? @unique
+  stripeInvoiceId      String? @unique
+  stripePaymentIntentId String?
+  stripeSubscriptionId  String?
+
+  /// AES-256-GCM ciphertext of the billing payload (base64).
+  ciphertext String
+  iv         String
+  authTag    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([kind])
 }
 
 // Raw LLM token consumption per AI call, for the admin usage ledger. Recorded
