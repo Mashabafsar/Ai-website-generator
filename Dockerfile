@@ -27,7 +27,7 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
   S3_PUBLIC_URL=${S3_PUBLIC_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate && npx next build
+RUN npx prisma generate && NODE_OPTIONS="--max-old-space-size=2048" npx next build
 
 # Full source and node_modules, for migrations, the seed and one-off scripts.
 FROM builder AS tools

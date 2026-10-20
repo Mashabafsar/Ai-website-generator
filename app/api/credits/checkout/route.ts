@@ -54,6 +54,9 @@ export async function POST(req: Request) {
     ],
     // Charge in USD only; don't offer a local-currency (e.g. PKR) conversion.
     adaptive_pricing: { enabled: false },
+    // Cards only. Link still inserts a "Bank" row with "$5 back" unless Checkout hides Link.
+    payment_method_types: ["card"],
+    wallet_options: { link: { display: "never" } },
     success_url: successUrl,
     cancel_url: cancelUrl,
     customer: customerId,
