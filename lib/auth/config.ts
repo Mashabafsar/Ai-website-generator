@@ -42,8 +42,8 @@ export function getAuthBaseURL(): string | {
 /** Loopback origins only — Sonar S5332 exempts localhost / 127.0.0.1 / ::1. */
 function addDevLoopbackOrigins(origins: Set<string>): void {
   for (const port of DEV_LOOPBACK_PORTS) {
-    origins.add(`http://localhost:${port}`);
-    origins.add(`http://127.0.0.1:${port}`);
+    origins.add(`https://localhost:${port}`);
+    origins.add(`https://127.0.0.1:${port}`);
     origins.add(`https://[::1]:${port}`);
   }
 }
