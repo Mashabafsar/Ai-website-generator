@@ -10,7 +10,9 @@ export function slugify(input: string): string {
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    // Runs are collapsed above, so at most one dash can sit on each end.
+    .replace(/^-/, "")
+    .replace(/-$/, "")
     .slice(0, 48)
     || "site";
 }
