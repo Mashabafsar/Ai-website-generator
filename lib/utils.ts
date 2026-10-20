@@ -25,5 +25,6 @@ export function formatCurrency(amount: number, currency = "USD"): string {
 
 /** Small stable id generator for section ids etc. (not cryptographic). */
 export function shortId(prefix = "id"): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}`;
+  const [rand] = crypto.getRandomValues(new Uint32Array(1));
+  return `${prefix}_${rand.toString(36).slice(0, 6)}${Date.now().toString(36).slice(-4)}`;
 }

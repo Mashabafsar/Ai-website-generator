@@ -122,7 +122,8 @@ function sleep(ms: number): Promise<void> {
 function backoffMs(attempt: number): number {
   const base = Math.min(1000 * 2 ** attempt, 15_000);
   // Jitter keeps concurrent workers from retrying in lockstep.
-  return base / 2 + Math.random() * (base / 2);
+  const [rand] = crypto.getRandomValues(new Uint32Array(1));
+  return base / 2 + (rand / 2 ** 32) * (base / 2);
 }
 
 async function once<T>(path: string, init: RequestInit): Promise<T> {

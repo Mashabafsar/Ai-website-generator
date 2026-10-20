@@ -15,7 +15,8 @@ const LEASE_MS = 60_000;
 
 function backoffMs(attempts: number): number {
   const base = Math.min(30_000 * 2 ** Math.max(0, attempts - 1), 30 * 60_000);
-  return base / 2 + Math.random() * (base / 2);
+  const [rand] = crypto.getRandomValues(new Uint32Array(1));
+  return base / 2 + (rand / 2 ** 32) * (base / 2);
 }
 
 /**
