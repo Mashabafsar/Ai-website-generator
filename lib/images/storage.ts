@@ -43,7 +43,7 @@ export function sniffImageType(bytes: Buffer): StoredImageType | null {
     return "image/png";
   }
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-  if (bytes.subarray(0, 6).toString("latin1").match(/^GIF8[79]a$/)) return "image/gif";
+  if (/^GIF8[79]a$/.exec(bytes.subarray(0, 6).toString("latin1"))) return "image/gif";
   if (
     bytes.subarray(0, 4).toString("latin1") === "RIFF" &&
     bytes.subarray(8, 12).toString("latin1") === "WEBP"

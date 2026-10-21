@@ -24,7 +24,7 @@ function RetroGrid({
   cellSize = 60,
   opacity = 0.3,
   lineColor = "rgba(77, 113, 251, 0.18)",
-}: NonNullable<HeroSectionProps["gridOptions"]>) {
+}: Readonly<NonNullable<HeroSectionProps["gridOptions"]>>) {
   const styles = {
     "--grid-angle": `${angle}deg`,
     "--cell-size": `${cellSize}px`,

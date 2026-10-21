@@ -7,9 +7,7 @@ let cached: Stripe | null = null;
 /** Lazily create the Stripe client. Returns null when Stripe isn't configured. */
 export function getStripe(): Stripe | null {
   if (!env.stripe.enabled) return null;
-  if (!cached) {
-    cached = new Stripe(env.stripe.secretKey);
-  }
+  cached ??= new Stripe(env.stripe.secretKey);
   return cached;
 }
 

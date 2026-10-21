@@ -151,7 +151,7 @@ function cssRules(css: string): CssRule[] {
 // ---- colours ---------------------------------------------------------------
 
 const BRAND_VAR = /--[\w-]*(brand|primary|accent|theme|main|highlight)[\w-]*/i;
-const BRAND_SELECTOR = /(\.|#|^)?(btn|button|cta|primary|brand|header|navbar|nav\b|hero|badge|tag)/;
+const BRAND_SELECTOR = /btn|button|cta|primary|brand|header|navbar|nav\b|hero|badge|tag/;
 
 /** Resolves one level of `var(--x)` indirection using the site's own tokens. */
 function resolveVar(value: string, vars: Map<string, string>): string {

@@ -26,7 +26,7 @@ export function ConfirmDialog({
   onConfirm,
   pending = false,
   destructive = false,
-}: {
+}: Readonly<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -36,7 +36,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
   pending?: boolean;
   destructive?: boolean;
-}) {
+}>) {
   const shown = useRef({ title, description, confirmLabel, destructive });
   if (open) shown.current = { title, description, confirmLabel, destructive };
   const copy = shown.current;

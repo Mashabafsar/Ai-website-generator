@@ -122,6 +122,21 @@ export function importedAssetPaths(brand: ImportedBrand | null | undefined): str
   return [...(brand.logoUrl ? [brand.logoUrl] : []), ...brand.images.map((img) => img.url)];
 }
 
+/**
+ * Code-unit order, identical to what `Array#sort` does with no comparator.
+ * Consent digests already stored against past imports depend on this order,
+ * so it must not be swapped for a locale-aware comparison.
+ */
+function byCodeUnit(a: string, b: string): number {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+/** Asset paths in a stable order, for digests and change comparisons. */
+export function sortedImportedAssetPaths(brand: ImportedBrand | null | undefined): string[] {
+  return importedAssetPaths(brand).sort(byCodeUnit);
+}
+
 /** True when the import produced files that need a licence confirmation. */
 export function hasImportedAssets(brand: ImportedBrand | null | undefined): boolean {
   return importedAssetPaths(brand).length > 0;

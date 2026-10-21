@@ -60,10 +60,10 @@ function webp(bytes: Buffer): ImageSize | null {
 
 function svg(bytes: Buffer): ImageSize | null {
   const head = bytes.subarray(0, 2048).toString("utf8");
-  const viewBox = head.match(/viewBox\s*=\s*["']\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/i);
+  const viewBox = /viewBox\s*=\s*["']\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/i.exec(head);
   if (viewBox) return { width: Math.round(+viewBox[1]), height: Math.round(+viewBox[2]) };
-  const w = head.match(/\bwidth\s*=\s*["']?([\d.]+)/i);
-  const h = head.match(/\bheight\s*=\s*["']?([\d.]+)/i);
+  const w = /\bwidth\s*=\s*["']?([\d.]+)/i.exec(head);
+  const h = /\bheight\s*=\s*["']?([\d.]+)/i.exec(head);
   if (w && h) return { width: Math.round(+w[1]), height: Math.round(+h[1]) };
   return null;
 }

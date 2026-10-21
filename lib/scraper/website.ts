@@ -411,9 +411,22 @@ async function runLightPrompt(prompt: string): Promise<string> {
   return output;
 }
 
+/**
+ * Scraped markup carries stray control characters. They become spaces rather
+ * than being dropped, so removing one cannot weld two words together.
+ */
+function blankControlCharacters(value: string): string {
+  let out = "";
+  for (const char of value) {
+    const code = char.codePointAt(0) ?? 0;
+    out += code < 32 || code === 127 ? " " : char;
+  }
+  return out;
+}
+
 function sanitize(value: unknown): unknown {
   if (typeof value === "string") {
-    return value.replace(/[-]/g, "").replace(/\s+/g, " ").trim();
+    return blankControlCharacters(value).replace(/\s+/g, " ").trim();
   }
   return value;
 }

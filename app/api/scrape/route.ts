@@ -23,8 +23,8 @@ import { defaultQuestionnaire } from "@/lib/questionnaire/schema";
 import {
   hasImportedBrand,
   hasImportedTheme,
-  importedAssetPaths,
   parseImportedBrand,
+  sortedImportedAssetPaths,
   type ImportedBrand,
 } from "@/lib/branding/imported-brand";
 
@@ -252,8 +252,8 @@ function importedAssetsChanged(
   previous: ImportedBrand | null,
   next: ImportedBrand | null
 ): boolean {
-  const prevAssets = previous ? importedAssetPaths(previous).slice().sort() : [];
-  const nextAssets = next ? importedAssetPaths(next).slice().sort() : [];
+  const prevAssets = sortedImportedAssetPaths(previous);
+  const nextAssets = sortedImportedAssetPaths(next);
   if (prevAssets.length !== nextAssets.length) return true;
   for (let i = 0; i < prevAssets.length; i += 1) {
     if (prevAssets[i] !== nextAssets[i]) return true;

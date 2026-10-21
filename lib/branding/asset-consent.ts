@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   ASSET_CONSENT_STATEMENT,
   importedAssetPaths,
+  sortedImportedAssetPaths,
   type ImportedAssetConsent,
   type ImportedBrand,
   type ImportedBrandImage,
@@ -25,7 +26,7 @@ const DIGEST_PREFIX = "v1";
  * a photo after the fact — invalidates the consent instead of inheriting it.
  */
 export function importedAssetDigest(brand: ImportedBrand): string {
-  const paths = importedAssetPaths(brand).slice().sort();
+  const paths = sortedImportedAssetPaths(brand);
   const canonical = [DIGEST_PREFIX, brand.sourceUrl, ...paths].join("\n");
   return createHash("sha256").update(canonical, "utf8").digest("hex");
 }
